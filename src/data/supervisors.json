@@ -1,0 +1,28 @@
+
+[
+  {
+    "id": "1",
+    "name": "Ahmed Hassan",
+    "email": "ahmed.hassan@example.com"
+  },
+  {
+    "id": "2",
+    "name": "Sarah Mohamed",
+    "email": "sarah.mohamed@example.com"
+  },
+  {
+    "id": "3",
+    "name": "Omar Nabil",
+    "email": "omar.nabil@example.com"
+  },
+  {
+    "id": "4",
+    "name": "Nour Adel",
+    "email": "nour.adel@example.com"
+  },
+  {
+    "id": "5",
+    "name": "Khaled Mahmoud",
+    "email": "khaled.mahmoud@example.com"
+  }
+]

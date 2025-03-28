@@ -1,35 +1,62 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
 
-function App() {
-  const [count, setCount] = useState(0)
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { UserProvider } from "./context/UserContext";
+import Index from './pages/Index';
+import Login from './pages/Auth/Login';
+import OtpVerification from './pages/Auth/OtpVerification';
+import Schedule from './pages/Attendance/Schedule';
+import LostFound from './pages/LostFound/LostFound';
+import StudentVerification from './pages/Management/StudentVerification';
+import AttendanceInsights from './pages/Attendance/AttendanceInsights';
+import ManageMyItems from './pages/LostFound/ManageMyItems';
+import SupervisorManagement from './pages/Management/SupervisorManagement';
+import Announcements from './pages/Announcement/Announcements';
+import TrackManagement from './pages/Management/TrackManagement';
+import ReportLostFound from './pages/LostFound/ReportLostFound';
+import Profile from './pages/Account/Profile';
+import PreviousCourses from "./pages/Attendance/PreviousCourses";
+import NotFound from './pages/NotFound';
+import Register from "./pages/Auth/Register";
+import ForgetPassword from "./pages/Auth/ForgetPassword";
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
 
-export default App
+const queryClient = new QueryClient();
+
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <UserProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<Index />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forget-password" element={<ForgetPassword />} />
+            <Route path="/otp-verification" element={<OtpVerification />} />
+            <Route path="/schedule" element={<Schedule />} />
+            <Route path="/lost-found" element={<LostFound />} />
+            <Route path="/student-verification" element={<StudentVerification />} />
+            <Route path="/tracks" element={<TrackManagement />} />
+            <Route path="/report-lost-found" element={<ReportLostFound />} />
+            <Route path="/profile" element={<Profile />} />
+            <Route path="/previous-courses" element={<PreviousCourses />} />
+            <Route path="/attendance-insights" element={<AttendanceInsights />} />
+            <Route path="/my-items" element={<ManageMyItems />} />
+            <Route path="/supervisors" element={<SupervisorManagement />} />
+            <Route path="/announcements" element={<Announcements />} />
+            
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </BrowserRouter>
+      </TooltipProvider>
+    </UserProvider>
+  </QueryClientProvider>
+);
+
+export default App;
