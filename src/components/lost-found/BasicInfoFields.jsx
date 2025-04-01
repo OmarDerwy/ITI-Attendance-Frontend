@@ -21,7 +21,7 @@ const BasicInfoFields = ({ form }) => {
         )}
       />
       
-      <FormField
+      {/* <FormField
         control={form.control}
         name="category"
         render={({ field }) => (
@@ -47,7 +47,7 @@ const BasicInfoFields = ({ form }) => {
             <FormMessage />
           </FormItem>
         )}
-      />
+      /> */}
     </div>
   );
 };

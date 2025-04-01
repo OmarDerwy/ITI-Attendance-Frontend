@@ -8,7 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 const ImageUploadField = ({ images, setImages }) => {
   const { toast } = useToast();
   const [uploading, setUploading] = useState(false);
-
+// TODO: solving the image upload issue
   // Handle image upload
   const handleImageUpload = () => {
     setUploading(true);

@@ -37,9 +37,10 @@ const DateLocationFields = ({ form }) => {
             </FormLabel>
             <div className="flex">
               <FormControl>
+                {/*TODO: right corners radius  */}
                 <Input placeholder="Enter location" className="rounded-r-none" {...field} />
               </FormControl>
-              <TooltipProvider>
+              {/* <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button 
@@ -58,7 +59,7 @@ const DateLocationFields = ({ form }) => {
                     <p>Select location on map</p>
                   </TooltipContent>
                 </Tooltip>
-              </TooltipProvider>
+              </TooltipProvider> */}
             </div>
             <FormMessage />
           </FormItem>

@@ -11,7 +11,7 @@ export const reportFormSchema = z.object({
   description: z.string().min(10, "Please provide a detailed description (min 10 characters)"),
   contactInfo: z.string().optional(),
 });
-
+//TODO: delete the category field from the form 
 // Item categories
 export const categories = [
   "Electronics",

@@ -33,7 +33,7 @@ const ReportLostFound = () => {
     defaultValues: {
       type: "lost",
       itemName: "",
-      category: "",
+      // category: "",
       date: new Date().toISOString().split("T")[0],
       location: "",
       description: "",
@@ -73,7 +73,8 @@ const ReportLostFound = () => {
               <BasicInfoFields form={form} />
               <DateLocationFields form={form} />
               <DescriptionField form={form} />
-              <ContactInfoField form={form} />
+              {/* TODO: delete contact info */}
+              {/* <ContactInfoField form={form} /> */}
               <ImageUploadField images={images} setImages={setImages} />
               <FormActions />
             </form>
