@@ -1,24 +1,17 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import axios from "axios";
 import { Flag } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import Layout from "@/components/layout/Layout";
 import PageTitle from "@/components/ui/page-title";
 import { Card } from "@/components/ui/card";
-import { Form } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 
-// Import form schema
-import { reportFormSchema } from "@/components/lost-found/FormSchema";
-
-// Import form components
+// Import components
 import ReportTypeField from "@/components/lost-found/ReportTypeField";
 import BasicInfoFields from "@/components/lost-found/BasicInfoFields";
 import DateLocationFields from "@/components/lost-found/DateLocationFields";
 import DescriptionField from "@/components/lost-found/DescriptionField";
-import ContactInfoField from "@/components/lost-found/ContactInfoField";
 import ImageUploadField from "@/components/lost-found/ImageUploadField";
 import FormActions from "@/components/lost-found/FormActions";
 
@@ -26,35 +19,141 @@ const ReportLostFound = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
   const [images, setImages] = useState([]);
+  const [cloudinaryImageUrl, setCloudinaryImageUrl] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initialize form
-  const form = useForm({
-    resolver: zodResolver(reportFormSchema),
-    defaultValues: {
-      type: "lost",
-      itemName: "",
-      // category: "",
-      date: new Date().toISOString().split("T")[0],
-      location: "",
-      description: "",
-      contactInfo: "",
-    },
+  // Form state
+  const [formData, setFormData] = useState({
+    type: "lost",
+    itemName: "",
+    location: "",
+    description: "",
   });
 
+  // Form state for passing to components
+  const form = {
+    values: formData,
+    setValue: (name, value) => {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    handleChange: (e) => {
+      const { name, value } = e.target;
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+    },
+    getValues: () => formData,
+  };
+
+  // Handle image upload completion
+  const handleImageUploaded = (imageUrl) => {
+    setCloudinaryImageUrl(imageUrl);
+  };
+
   // Handle form submission
-  const onSubmit = (data) => {
-    console.log("Form data:", data);
-    console.log("Images:", images);
-    
-    // In a real app, this would send the data to your backend
-    
-    toast({
-      title: `Item ${data.type === "lost" ? "Lost" : "Found"} Report Submitted`,
-      description: "Your report has been submitted successfully.",
-    });
-    
-    // Redirect to the lost & found page
-    navigate("/lost-found");
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    console.log("Form submitted with data:", formData);
+    setIsSubmitting(true);
+
+    try {
+      // Validate form data
+      if (!formData.itemName.trim()) {
+        toast({
+          title: "Error",
+          description: "Item name is required",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.location.trim()) {
+        toast({
+          title: "Error",
+          description: "Location is required",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!formData.description.trim()) {
+        toast({
+          title: "Error",
+          description: "Description is required",
+          variant: "destructive",
+        });
+        setIsSubmitting(false);
+        return;
+      }
+
+      // Determine endpoint based on the report type
+      const endpoint =
+        formData.type === "lost"
+          ? "http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/"
+          : "http://127.0.0.1:8000/api/v1/lost-and-found/found-items/";
+
+      // Create payload with the exact required format
+      const payload = {
+        name: formData.itemName,
+        description: formData.description,
+        place: formData.location,
+      };
+
+      // Add image URL to payload if we have one
+      if (cloudinaryImageUrl) {
+        payload.image = cloudinaryImageUrl;
+      }
+
+      console.log("Submitting payload in required format:", payload);
+
+      // Send request to the API with the exact payload format
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0MjEyMjg0LCJpYXQiOjE3NDM2MDc0ODQsImp0aSI6IjYzMjBmMjA4ODAwYzRhM2FiMGZjZjQzODMyZWZiNDMxIiwidXNlcl9pZCI6MzR9.56iBnwHptULMt3zYm1uGmCNXZpMZpm_gUeaLkrY0Ass`,
+        },
+      });
+
+      console.log("API response:", response.data);
+
+      toast({
+        title: `Item ${
+          formData.type === "lost" ? "Lost" : "Found"
+        } Report Submitted`,
+        description: "Your report has been submitted successfully.",
+      });
+
+      // Reset form and images
+      setFormData({
+        type: "lost",
+        itemName: "",
+        location: "",
+        description: "",
+      });
+      setImages([]);
+      setCloudinaryImageUrl(null);
+
+      // Redirect to the lost & found page
+      navigate("/lost-found");
+    } catch (error) {
+      console.error("Error submitting form:", error);
+
+      toast({
+        title: "Error",
+        description:
+          error.response?.data?.message ||
+          "Failed to submit report. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -67,18 +166,18 @@ const ReportLostFound = () => {
 
       <div className="max-w-3xl mx-auto">
         <Card className="p-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <ReportTypeField form={form} />
-              <BasicInfoFields form={form} />
-              <DateLocationFields form={form} />
-              <DescriptionField form={form} />
-              {/* TODO: delete contact info */}
-              {/* <ContactInfoField form={form} /> */}
-              <ImageUploadField images={images} setImages={setImages} />
-              <FormActions />
-            </form>
-          </Form>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <ReportTypeField form={form} />
+            <BasicInfoFields form={form} />
+            <DateLocationFields form={form} />
+            <DescriptionField form={form} />
+            <ImageUploadField
+              images={images}
+              setImages={setImages}
+              onImageUploaded={handleImageUploaded}
+            />
+            <FormActions isSubmitting={isSubmitting} />
+          </form>
         </Card>
       </div>
     </Layout>

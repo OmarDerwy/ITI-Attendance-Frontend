@@ -1,39 +1,25 @@
-
-import { Search, Flag } from "lucide-react";
-import { FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Button } from "@/components/ui/button";
-import { reportTypeOptions } from "./FormSchema";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 
 const ReportTypeField = ({ form }) => {
   return (
-    <FormField
-      control={form.control}
-      name="type"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Report Type</FormLabel>
-          <div className="grid grid-cols-2 gap-4">
-            {reportTypeOptions.map((option) => (
-              <Button
-                key={option.value}
-                type="button"
-                variant={field.value === option.value ? "default" : "outline"}
-                className="w-full justify-start"
-                onClick={() => field.onChange(option.value)}
-              >
-                {option.value === "lost" ? (
-                  <Search className="mr-2 h-4 w-4" />
-                ) : (
-                  <Flag className="mr-2 h-4 w-4" />
-                )}
-                {option.label}
-              </Button>
-            ))}
-          </div>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="space-y-2">
+      <Label>Report Type</Label>
+      <RadioGroup
+        value={form.values.type}
+        onValueChange={(value) => form.setValue("type", value)}
+        className="flex space-x-4"
+      >
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="lost" id="lost" />
+          <Label htmlFor="lost">Lost Item</Label>
+        </div>
+        <div className="flex items-center space-x-2">
+          <RadioGroupItem value="found" id="found" />
+          <Label htmlFor="found">Found Item</Label>
+        </div>
+      </RadioGroup>
+    </div>
   );
 };
 
