@@ -1,30 +1,46 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { axiosBackendInstance } from '@/api/config';
+import { useUser } from '@/context/UserContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
+  const user = useUser(); 
+  const navigate = useNavigate();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    axiosBackendInstance.post('accounts/auth/jwt/create/', {
+      email,
+      password,
+    })
+      .then((response) => {
+        console.log(response.data)
+        // DONE set token in storage
+        return axiosBackendInstance.get('accounts/auth/users/me/')
+
+      }).then((response)=>{
+        console.log(response.data)
+        user.setUserRole(response.data.groups[0])
+        user.setUserName(response.data.email)
+      }).finally(() => {
+        console.log(user)
+        setIsLoading(false)
+        navigate('/')
+
+      })
+    }
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Login attempt with:", { email, password });
-      setIsLoading(false);
-      // Redirect would happen here after successful login
-    }, 1500);
-  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background p-4">

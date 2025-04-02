@@ -4,8 +4,8 @@ import { createContext, useContext, useState } from "react";
 const UserContext = createContext(undefined);
 
 export const UserProvider = ({ children }) => {
-  const [userRole, setUserRole] = useState("student");
-  const [userName, setUserName] = useState("John Doe");
+  const [userRole, setUserRole] = useState("");
+  const [userName, setUserName] = useState("");
   const [userItems, setUserItems] = useState([]);
   const [userProfilePic, setUserProfilePic] = useState("/placeholder.svg");
   const [userAnnouncements, setUserAnnouncements] = useState([]);
