@@ -22,6 +22,8 @@ import PreviousCourses from "./pages/Attendance/PreviousCourses";
 import NotFound from './pages/NotFound';
 import Register from "./pages/Auth/Register";
 import ForgetPassword from "./pages/Auth/ForgetPassword";
+import BranchManagement from "./pages/Management/BranchManagement";
+import BranchForm from "./pages/Management/BranchForm";
 
 
 const queryClient = new QueryClient();
@@ -50,7 +52,9 @@ const App = () => (
             <Route path="/my-items" element={<ManageMyItems />} />
             <Route path="/supervisors" element={<SupervisorManagement />} />
             <Route path="/announcements" element={<Announcements />} />
-            
+            <Route path="/branches" element={<BranchManagement />} />
+            <Route path="/branches/add" element={<BranchForm />} />
+            <Route path="/branches/edit/:branchId" element={<BranchForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
