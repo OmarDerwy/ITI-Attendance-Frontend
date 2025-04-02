@@ -73,8 +73,8 @@ const CsvUpload = ({ onSuccess }: CsvUploadProps) => {
             return;
           }
           
-          let response = await axiosBackendInstance.post('/accounts/users/bulkcreate/', {
-            students: studentsData.map(student => ({
+          let response = await axiosBackendInstance.post('/accounts/bulkcreate/', {
+            users: studentsData.map(student => ({
               email: student.email,
               first_name: student.first_name,
               last_name: student.last_name,
