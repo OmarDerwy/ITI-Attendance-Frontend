@@ -22,6 +22,7 @@ import PreviousCourses from "./pages/Attendance/PreviousCourses";
 import NotFound from './pages/NotFound';
 import Register from "./pages/Auth/Register";
 import ForgetPassword from "./pages/Auth/ForgetPassword";
+import Activate from "./pages/Auth/Activate";
 import BranchManagement from "./pages/Management/BranchManagement";
 import BranchForm from "./pages/Management/BranchForm";
 import TrackForm from './pages/Management/TrackForm';
@@ -40,6 +41,7 @@ const App = () => (
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/activate/:token" element={<Activate />} />
             <Route path="/forget-password" element={<ForgetPassword />} />
             <Route path="/otp-verification" element={<OtpVerification />} />
             <Route path="/schedule" element={<Schedule />} />
