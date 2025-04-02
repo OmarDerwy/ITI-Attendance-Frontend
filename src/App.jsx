@@ -23,6 +23,9 @@ import NotFound from './pages/NotFound';
 import Register from "./pages/Auth/Register";
 import ForgetPassword from "./pages/Auth/ForgetPassword";
 import Activate from "./pages/Auth/Activate";
+import BranchManagement from "./pages/Management/BranchManagement";
+import BranchForm from "./pages/Management/BranchForm";
+import TrackForm from './pages/Management/TrackForm';
 
 
 const queryClient = new QueryClient();
@@ -44,7 +47,6 @@ const App = () => (
             <Route path="/schedule" element={<Schedule />} />
             <Route path="/lost-found" element={<LostFound />} />
             <Route path="/student-verification" element={<StudentVerification />} />
-            <Route path="/tracks" element={<TrackManagement />} />
             <Route path="/report-lost-found" element={<ReportLostFound />} />
             <Route path="/profile" element={<Profile />} />
             <Route path="/previous-courses" element={<PreviousCourses />} />
@@ -52,7 +54,12 @@ const App = () => (
             <Route path="/my-items" element={<ManageMyItems />} />
             <Route path="/supervisors" element={<SupervisorManagement />} />
             <Route path="/announcements" element={<Announcements />} />
-            
+            <Route path="/branches" element={<BranchManagement />} />
+            <Route path="/branches/add" element={<BranchForm />} />
+            <Route path="/branches/edit/:branchId" element={<BranchForm />} />
+            <Route path="/tracks" element={<TrackManagement />} />
+            <Route path="/tracks/add" element={<TrackForm />} />
+            <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

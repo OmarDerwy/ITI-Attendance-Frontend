@@ -18,6 +18,7 @@ import {
   UserCheck,
   Flag,
   Brain,
+  Building,
   Megaphone
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -113,8 +114,10 @@ const Sidebar = () => {
     
     // Admin only
     { icon: Megaphone, label: "Announcements", to: "/announcements", roles: ["admin"] },
+    { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: MapPin, label: "Tracks", to: "/tracks", roles: ["admin"] },
     { icon: Users, label: "Supervisors", to: "/supervisors", roles: ["admin"] },
+
 
     { icon: Flag, label: "Report Item", to: "/report-lost-found", roles: ["student", "supervisor", "admin"] },
     { icon: Search, label: "Lost & Found", to: "/lost-found", roles: ["student", "supervisor", "admin"] },
