@@ -67,8 +67,6 @@ const Schedule = () => {
     branch: "1", // Default branch ID
   });
 
-  // const { data: defaultBranch } = useApi("/api/default-branch");
-  // add static data
   const { data: defaultBranch } = { id: "1", name: "Main Branch" };
   useEffect(() => {
     if (defaultBranch) {
@@ -192,9 +190,12 @@ const Schedule = () => {
     }));
   };
 
-  const openAddDialog = (selectInfo) => {
+  const handleOpenAddDialog = (selectInfo) => {
     if (currentView === 'dayGridMonth') {
       return;
+    }
+    if (new Date(selectInfo.start) < new Date()) {
+      return; // Prevent selecting past dates
     }
 
     setNewEvent({
@@ -344,7 +345,7 @@ const Schedule = () => {
           initialView="timeGridWeek"
           selectable={userRole === "supervisor"}
           editable={userRole === "supervisor" && currentView !== "dayGridMonth"} // Modified line
-          select={openAddDialog}
+          select={handleOpenAddDialog} // Use renamed function
           events={filteredEvents.filter(event => !event.allDay)} // Exclude all-day events
           eventClick={(clickInfo) =>
             openEditDialog(events.find((e) => e.id === clickInfo.event.id))
@@ -357,7 +358,7 @@ const Schedule = () => {
             right: "dayGridMonth,timeGridWeek,timeGridDay",
           }}
           height="auto"
-          // validRange={{ start: new Date() }}
+          validRange={{ start: new Date() }}
           timeZone="local"
           slotMinTime="09:00:00"
           slotMaxTime="17:00:00"
