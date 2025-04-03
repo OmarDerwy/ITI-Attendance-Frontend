@@ -1,10 +1,10 @@
-import React, { useEffect } from 'react';
-import Layout from '@/components/layout/Layout';
-import { useUser } from '@/context/UserContext';
-import AdminDashboard from './Dashboard/AdminDashboard';
-import SupervisorDashboard from './Dashboard/SupervisorDashboard';
-import StudentDashboard from './Dashboard/StudentDashboard';
-import { useNavigate } from 'react-router-dom';
+import React, { useEffect } from "react";
+import Layout from "@/components/layout/Layout";
+import { useUser } from "@/context/UserContext";
+import AdminDashboard from "./Dashboard/AdminDashboard";
+import SupervisorDashboard from "./Dashboard/SupervisorDashboard";
+import StudentDashboard from "./Dashboard/StudentDashboard";
+import { useNavigate } from "react-router-dom";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const Index = () => {
 
   useEffect(() => {
     if (!userRole) {
-      navigate('/login');
+      navigate("/login");
     }
   }, [userRole]);
 
@@ -20,9 +20,9 @@ const Index = () => {
 
   return (
     <Layout>
-      {userRole === "admin" && <AdminDashboard />}
-      {userRole === "supervisor" && <SupervisorDashboard />}
-      {userRole === "student" && <StudentDashboard />}
+      {/* {userRole === "admin" && <AdminDashboard />}
+      {userRole === "supervisor" && <SupervisorDashboard />} */}
+      {/* {userRole === "student" && <StudentDashboard />} */}
     </Layout>
   );
 };
