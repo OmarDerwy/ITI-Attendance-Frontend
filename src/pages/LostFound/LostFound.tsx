@@ -57,7 +57,7 @@ const LostFound = () => {
           "http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/",
           {
             headers: {
-              Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0MjI4MjI5LCJpYXQiOjE3NDM2MjM0MjksImp0aSI6IjZiZDk5MzEzYjRmYjQ1NGJhZWVmODJjOWE4NTc5OWI5IiwidXNlcl9pZCI6MX0.oyCIwqIqADfzjWE0pDp4CsO8RloyIhz4AIiD-jacvYE`, // Include authorization token if required
+              Authorization: `Bearer ${localStorage.getItem("access")}`, // Include authorization token if required
             },
           }
         );
@@ -67,7 +67,7 @@ const LostFound = () => {
           "http://127.0.0.1:8000/api/v1/lost-and-found/found-items/",
           {
             headers: {
-              Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0MjI4MjI5LCJpYXQiOjE3NDM2MjM0MjksImp0aSI6IjZiZDk5MzEzYjRmYjQ1NGJhZWVmODJjOWE4NTc5OWI5IiwidXNlcl9pZCI6MX0.oyCIwqIqADfzjWE0pDp4CsO8RloyIhz4AIiD-jacvYE`, // Include authorization token if required
+              Authorization: `Bearer ${localStorage.getItem("access")}`, // Include authorization token if required
             },
           }
         );
