@@ -2,7 +2,7 @@ import axios  from 'axios';
 import { useNavigate } from 'react-router-dom';
 
 const axiosBackendInstance = axios.create({
-    baseURL: 'http://192.168.1.115:8000/api/v1',
+    baseURL: import.meta.env.VITE_API_BASE_URL,
 })
 
 axiosBackendInstance.interceptors.request.use((config) => {

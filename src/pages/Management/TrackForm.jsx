@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useUser } from "@/context/UserContext";
@@ -9,46 +9,17 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { CalendarIcon, MapPin, Search } from "lucide-react";
 import { format } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
-import PageTitle from '../../components/ui/page-title';
-import axiosInstance from "../../apis/config";
-
-const mockTracks = [
-  {
-    id: "1",
-    name: "Web Development",
-    description: "Modern web development using React, Node.js and other technologies",
-    supervisor: "1",
-    startDate: new Date(2023, 8, 1),
-    trackType: "9-month",
-    intake: "43",
-    branchId: "1"
-  },
-  {
-    id: "2",
-    name: "Mobile Development",
-    description: "Mobile app development for iOS and Android",
-    supervisor: "2",
-    startDate: new Date(2023, 8, 15),
-    trackType: "4-month",
-    intake: "42",
-    branchId: "2"
-  },
-  {
-    id: "3",
-    name: "Data Science",
-    description: "Data analysis, machine learning and AI",
-    supervisor: "3",
-    startDate: new Date(2023, 9, 1),
-    trackType: "9-month",
-    intake: "43",
-    branchId: "3"
-  }
-];
+import PageTitle from "../../components/ui/page-title";
+import { axiosBackendInstance } from '@/api/config';
 
 const TrackFormPage = () => {
   const { trackId } = useParams();
@@ -56,13 +27,13 @@ const TrackFormPage = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
-  
+
   // Form state
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [supervisor, setSupervisor] = useState("");
   const [startDate, setStartDate] = useState();
-  const [trackType, setTrackType] = useState("9-month");
+  const [trackType, setTrackType] = useState("nine_months");
   const [intake, setIntake] = useState("");
   const [branchId, setBranchId] = useState("");
   const [supervisorSearchTerm, setSupervisorSearchTerm] = useState("");
@@ -73,98 +44,143 @@ const TrackFormPage = () => {
   const [branches, setBranches] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [supervisorsRes, branchesRes] = await Promise.all([
-          axiosInstance.get("/attendance/branches/"),
-          axiosInstance.get("/attendance/supervisors/"),
-        ]);
-        setSupervisors(supervisorsRes.data);
-        setBranches(branchesRes.data);
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: "Failed to fetch supervisors or branches.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchData();
-  }, [toast]);
-
-  useEffect(() => {
-    // Check if user is admin, redirect otherwise
     if (userRole !== "admin") {
+      toast({
+        title: "Access Denied",
+        description: "You do not have permission to access this page.",
+        variant: "destructive",
+      });
       navigate("/");
       return;
     }
 
-    // If editing, load track data
-    if (trackId && trackId !== "add") {
-      const trackData = mockTracks.find(t => t.id === trackId);
-      if (!trackData) {
+    const fetchData = async () => {
+      try {
+        const [branchesRes, supervisorsRes] = await Promise.all([
+          axiosBackendInstance.get("/attendance/branches/"),
+          axiosBackendInstance.get("/accounts/users/supervisors/"),
+        ]);
+
+        const formattedBranches = branchesRes.data.results.map((b) => ({
+          branch_id: b.id, // Use branch_id instead of id
+          name: b.name,
+        }));
+
+        const formattedSupervisors = supervisorsRes.data.map((s) => ({
+          supervisor_id: s.id, // Use supervisor_id instead of id
+          name:
+            s.first_name && s.last_name
+              ? `${s.first_name} ${s.last_name}`
+              : s.email,
+        }));
+
+        setBranches(formattedBranches);
+        setSupervisors(formattedSupervisors);
+
+        if (trackId && trackId !== "add") {
+          const trackRes = await axiosBackendInstance.get(`/attendance/tracks/${trackId}/`);
+          const trackData = trackRes.data;
+          setName(trackData.name || "");
+          setDescription(trackData.description || "");
+          setSupervisor(trackData.supervisor_id || "");
+          setStartDate(
+            trackData.start_date ? new Date(trackData.start_date) : undefined
+          );
+          setTrackType(trackData.program_type || "nine_months");
+          setIntake(trackData.intake || "");
+          setBranchId(trackData.branch_id || "");
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
         toast({
-          title: "Track not found",
-          description: "The requested track could not be found.",
+          title: "Error",
+          description: "Failed to fetch data. Please try again later.",
           variant: "destructive",
         });
-        navigate("/tracks");
-      } else {
-        setName(trackData.name || "");
-        setDescription(trackData.description || "");
-        setSupervisor(trackData.supervisor || "");
-        setStartDate(trackData.startDate ? new Date(trackData.startDate) : undefined);
-        setTrackType(trackData.trackType || "9-month");
-        setIntake(trackData.intake || "");
-        setBranchId(trackData.branchId || "");
       }
-    }
-    
-    setIsLoading(false);
+      setIsLoading(false);
+    };
+
+    fetchData();
   }, [trackId, userRole, navigate, toast]);
 
-  const filteredSupervisors = supervisorSearchTerm
-    ? supervisors.filter(s => 
-        s.name.toLowerCase().includes(supervisorSearchTerm.toLowerCase()) || 
-        s.email.toLowerCase().includes(supervisorSearchTerm.toLowerCase())
-      )
-    : supervisors;
-    
-  const filteredBranches = branchSearchTerm
-    ? branches.filter(b => b.name.toLowerCase().includes(branchSearchTerm.toLowerCase()))
-    : branches;
+  const filteredSupervisors = useMemo(() => {
+    return supervisorSearchTerm
+      ? supervisors.filter(
+          (s) =>
+            (s.name && s.name.toLowerCase().includes(supervisorSearchTerm.toLowerCase())) ||
+            (s.email && s.email.toLowerCase().includes(supervisorSearchTerm.toLowerCase()))
+        )
+      : supervisors;
+  }, [supervisorSearchTerm, supervisors]);
 
-  const handleSubmit = () => {
-    // Basic validation
-    if (!name) {
+  const filteredBranches = useMemo(() => {
+    return branchSearchTerm
+      ? branches.filter((b) =>
+          b.name.toLowerCase().includes(branchSearchTerm.toLowerCase())
+        )
+      : branches;
+  }, [branchSearchTerm, branches]);
+
+  const handleSupervisorSelect = (id) => {
+    console.log("Selected Supervisor ID:", id); // Debugging log
+    setSupervisor(id);
+    setSupervisorSearchTerm("");
+  };
+
+  const handleBranchSelect = (id) => {
+    console.log("Selected Branch ID:", id); // Debugging log
+    setBranchId(id);
+    setBranchSearchTerm("");
+  };
+
+  const handleSubmit = async () => {
+    if (!name || !intake || !supervisor || !branchId || !startDate) {
       toast({
         title: "Validation Error",
-        description: "Track name is required",
+        description: "All fields are required.",
         variant: "destructive",
       });
       return;
     }
 
-    // Prepare track data
     const trackData = {
-      id: trackId && trackId !== "add" ? trackId : `track-${Date.now()}`,
       name,
       description,
-      supervisor,
-      startDate,
-      trackType,
+      supervisor_id: supervisor, // Use supervisor_id
+      start_date: startDate ? format(startDate, "yyyy-MM-dd") : null,
+      program_type: trackType,
       intake,
-      branchId
+      branch_id: branchId, // Use branch_id
+      ...(trackId && trackId !== "add" && { track_id: trackId }), // Include trackId in edit mode
     };
 
-    // In a real app, would save to API/database
-    toast({
-      title: trackId && trackId !== "add" ? "Track Updated" : "Track Added",
-      description: `${trackData.name} has been ${trackId && trackId !== "add" ? "updated" : "added"} successfully.`
-    });
-    
-    navigate("/tracks");
+    try {
+      if (trackId && trackId !== "add") {
+        console.log("Payload for PUT request:", trackData); // Log payload
+        await axiosBackendInstance.put(`/attendance/tracks/${trackId}/`, trackData);
+        toast({
+          title: "Track Updated",
+          description: `${trackData.name} has been updated successfully.`,
+        });
+      } else {
+        console.log("Track Data:", trackData);
+
+        await axiosBackendInstance.post("/attendance/tracks/", trackData);
+        toast({
+          title: "Track Added",
+          description: `${trackData.name} has been added successfully.`,
+        });
+      }
+      navigate("/tracks");
+    } catch (error) {
+      console.error("Error saving track:", error);
+      toast({
+        title: "Error",
+        description: "Failed to save track. Please try again later.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -180,13 +196,15 @@ const TrackFormPage = () => {
   return (
     <Layout>
       <div className="space-y-6 p-6 min-h-screen">
-      <div className="space-y-6">
-      <PageTitle
-    title= {trackId && trackId !== "add" ? "Edit Track" : "Add New Track"} 
-    subtitle="Provide details about the branch location" 
-    icon={<MapPin className="h-6 w-6" />}
-      />
-          
+        <div className="space-y-6">
+          <PageTitle
+            title={
+              trackId && trackId !== "add" ? "Edit Track" : "Add New Track"
+            }
+            subtitle="Provide details about the branch location"
+            icon={<MapPin className="h-6 w-6" />}
+          />
+
           <Card className="border shadow-sm">
             <CardContent className="p-6">
               <div className="grid gap-6">
@@ -226,18 +244,22 @@ const TrackFormPage = () => {
 
                 <div className="grid gap-2">
                   <Label>Track Type</Label>
-                  <RadioGroup 
+                  <RadioGroup
                     value={trackType}
                     onValueChange={(value) => setTrackType(value)}
                     className="flex items-center space-x-6"
                   >
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="9-month" id="nine-month" />
-                      <Label htmlFor="nine-month" className="cursor-pointer">9-Month Track</Label>
+                      <RadioGroupItem value="nine_months" id="nine_months" />
+                      <Label htmlFor="nine_months" className="cursor-pointer">
+                        9-Month Track
+                      </Label>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="4-month" id="four-month" />
-                      <Label htmlFor="four-month" className="cursor-pointer">Intensive (4-Month)</Label>
+                      <RadioGroupItem value="intensive" id="intensive" />
+                      <Label htmlFor="intensive" className="cursor-pointer">
+                        Intensive Program
+                      </Label>
                     </div>
                   </RadioGroup>
                 </div>
@@ -246,8 +268,8 @@ const TrackFormPage = () => {
                   <Label>Start Date</Label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className={cn(
                           "w-full justify-start text-left font-normal",
                           !startDate && "text-muted-foreground"
@@ -278,9 +300,7 @@ const TrackFormPage = () => {
                         role="combobox"
                         className="w-full justify-between"
                       >
-                        {supervisor
-                          ? supervisors.find((s) => s.id === supervisor)?.name || "Select supervisor"
-                          : "Select supervisor"}
+                        {supervisors.find((s) => s.supervisor_id === supervisor)?.name || "Select supervisor"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
@@ -297,24 +317,18 @@ const TrackFormPage = () => {
                         {filteredSupervisors.length > 0 ? (
                           filteredSupervisors.map((s) => (
                             <Button
-                              key={s.id}
-                              variant="ghost"
-                              className="w-full justify-start font-normal"
-                              onClick={() => {
-                                setSupervisor(s.id);
-                                setSupervisorSearchTerm("");
-                              }}
+                              key={s.supervisor_id}
+                              variant={s.supervisor_id === supervisor ? "default" : "ghost"}
+                              className={`w-full justify-start font-normal ${
+                                s.supervisor_id === supervisor ? "bg-primary text-white" : ""
+                              }`}
+                              onClick={() => handleSupervisorSelect(s.supervisor_id)}
                             >
-                              <div className="flex flex-col items-start">
-                                <span>{s.name}</span>
-                                <span className="text-xs text-muted-foreground">{s.email}</span>
-                              </div>
+                              {s.name}
                             </Button>
                           ))
                         ) : (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            No supervisors found.
-                          </div>
+                          <p className="p-3 text-muted-foreground">No supervisors found.</p>
                         )}
                       </div>
                     </PopoverContent>
@@ -330,9 +344,7 @@ const TrackFormPage = () => {
                         role="combobox"
                         className="w-full justify-between"
                       >
-                        {branchId
-                          ? branches.find((b) => b.id === branchId)?.name || "Select branch"
-                          : "Select branch"}
+                        {branches.find((b) => b.branch_id === branchId)?.name || "Select branch"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
@@ -349,21 +361,18 @@ const TrackFormPage = () => {
                         {filteredBranches.length > 0 ? (
                           filteredBranches.map((b) => (
                             <Button
-                              key={b.id}
-                              variant="ghost"
-                              className="w-full justify-start font-normal"
-                              onClick={() => {
-                                setBranchId(b.id);
-                                setBranchSearchTerm("");
-                              }}
+                              key={b.branch_id}
+                              variant={b.branch_id === branchId ? "default" : "ghost"}
+                              className={`w-full justify-start font-normal ${
+                                b.branch_id === branchId ? "bg-primary text-white" : ""
+                              }`}
+                              onClick={() => handleBranchSelect(b.branch_id)}
                             >
-                              <span>{b.name}</span>
+                              {b.name}
                             </Button>
                           ))
                         ) : (
-                          <div className="p-4 text-center text-sm text-muted-foreground">
-                            No branches found.
-                          </div>
+                          <p className="p-3 text-muted-foreground">No branches found.</p>
                         )}
                       </div>
                     </PopoverContent>
