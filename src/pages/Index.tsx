@@ -7,6 +7,7 @@ import StudentDashboard from "./Dashboard/StudentDashboard";
 import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
+import BranchManagement from "./Management/BranchManagement";
 
 const Index = () => {
   const navigate = useNavigate();
@@ -38,8 +39,12 @@ const Index = () => {
   return (
     <Layout>
       {/* {userRole === "admin" && <AdminDashboard />}
-      {userRole === "supervisor" && <SupervisorDashboard />} */}
-      {/* {userRole === "student" && <StudentDashboard />} */}
+      {userRole === "supervisor" && <SupervisorDashboard />} 
+      {userRole === "student" && <StudentDashboard />}  */}
+
+      {userRole === "admin" && <AdminDashboard />}
+      {userRole === "supervisor" && <SupervisorDashboard />}
+      {userRole === "student" && <StudentDashboard />}
     </Layout>
   );
 };

@@ -123,7 +123,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                 </div>
                 <div className="p-1">
                   {/* Development-only role switcher */}
-                  <div className="border-b p-2">
+                  {/* <div className="border-b p-2">
                     <p className="text-xs text-muted-foreground mb-2">
                       Dev: Switch Role
                     </p>
@@ -162,7 +162,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                         Admin
                       </button>
                     </div>
-                  </div>
+                  </div> */}
 
                   <Link
                     to="/profile"

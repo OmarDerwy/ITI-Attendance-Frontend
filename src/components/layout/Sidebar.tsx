@@ -206,17 +206,13 @@ const Sidebar = () => {
         )}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b bg-card/80">
-          {expanded ? (
+          {expanded && (
             <Link to="/" className="flex items-center gap-x-2">
               <div className="mb-2 flex items-center justify-center w-8 h-9 rounded-md  text-primary-foreground font-bold">
                 <img src="/public/images/iti-logo.png" alt="logo" />
               </div>
               <span className="text-lg font-semibold">Attendance</span>
             </Link>
-          ) : (
-            <div className="flex items-center justify-center w-8 h-8 rounded-md bg-primary text-primary-foreground font-bold mx-auto">
-              A
-            </div>
           )}
 
           <button
