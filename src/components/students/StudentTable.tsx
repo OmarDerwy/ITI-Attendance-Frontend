@@ -8,9 +8,10 @@ interface StudentTableProps {
   getFullName: (user: User) => string;
   getStatus: (user: User) => string;
   onViewDetails: (studentId: number) => void;
+  onViewDetailsValue?: number;
 }
 
-const StudentTable = ({ students, getFullName, getStatus, onViewDetails }: StudentTableProps) => {
+const StudentTable = ({ students, getFullName, getStatus, onViewDetails, onViewDetailsValue }: StudentTableProps) => {
   return (
     <div className="overflow-auto rounded-md border">
       <table className="w-full text-sm">
@@ -53,7 +54,7 @@ const StudentTable = ({ students, getFullName, getStatus, onViewDetails }: Stude
                   <Badge 
                     variant={
                       getStatus(student) === "verified" ? "default" : 
-                      getStatus(student) === "rejected" ? "destructive" : 
+                      getStatus(student) === "pending" ? "secondary" : 
                       "outline"
                     }
                     className="capitalize"
@@ -62,25 +63,15 @@ const StudentTable = ({ students, getFullName, getStatus, onViewDetails }: Stude
                   </Badge>
                 </td>
                 <td className="py-3 px-4 text-right">
-                  {getStatus(student) === "pending" ? (
-                    <div className="flex justify-end gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => onViewDetails(student.id)}
-                      >
-                        Review
-                      </Button>
-                    </div>
-                  ) : (
+
                     <Button 
-                      variant="ghost" 
-                      size="sm"
-                      onClick={() => onViewDetails(student.id)}
+                    variant="ghost" 
+                    size="sm"
+                    onClick={() => onViewDetails(onViewDetailsValue === student.id ? null : student.id)}
                     >
-                      Details
+                    {onViewDetailsValue === student.id ? "Close" : "Details"}
                     </Button>
-                  )}
+
                 </td>
               </tr>
             ))
