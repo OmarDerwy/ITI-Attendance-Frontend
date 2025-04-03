@@ -71,7 +71,7 @@ const StudentVerification = () => {
   // Helper function to get status (you may need to adjust based on actual data structure)
   const getStatus = (user: User) => {
     if (user.is_active === undefined) return "pending";
-    return user.is_active ? "verified" : "rejected";
+    return user.is_active ? "verified" : "pending";
   };
 
   // Helper function to get full name
@@ -160,6 +160,7 @@ const StudentVerification = () => {
             getFullName={getFullName}
             getStatus={getStatus}
             onViewDetails={setSelectedStudent}
+            onViewDetailsValue={selectedStudent}
           />
         </Card>
 
