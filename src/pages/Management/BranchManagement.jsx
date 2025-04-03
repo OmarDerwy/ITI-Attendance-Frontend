@@ -25,7 +25,7 @@ import {
 import PageTitle from "@/components/ui/page-title";
 import Layout from "@/components/layout/Layout";
 import { useUser } from "@/context/UserContext";
-import axiosInstance from "../../apis/config";
+import { axiosBackendInstance } from '@/api/config';
 
 const BranchManagement = () => {
   const [branches, setBranches] = useState([]);
@@ -43,7 +43,7 @@ const BranchManagement = () => {
       return;
     }
 
-    axiosInstance.get("/attendance/branches/")
+    axiosBackendInstance.get("/attendance/branches/")
       .then(response => setBranches(response.data.results))
       .catch(() => toast({ title: "Error", description: "Failed to load branches", variant: "destructive" }))
       .finally(() => setIsLoading(false));
@@ -55,7 +55,7 @@ const BranchManagement = () => {
 
   const handleDeleteBranch = () => {
     if (selectedBranch) {
-      axiosInstance.delete(`/attendance/branches/${selectedBranch.id}/`)
+      axiosBackendInstance.delete(`/attendance/branches/${selectedBranch.id}/`)
         .then(() => {
           setBranches(branches.filter(branch => branch.id !== selectedBranch.id));
           toast({ title: "Branch deleted", description: `${selectedBranch.name} has been removed.` });

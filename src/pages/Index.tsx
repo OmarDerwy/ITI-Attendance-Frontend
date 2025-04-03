@@ -5,18 +5,35 @@ import AdminDashboard from "./Dashboard/AdminDashboard";
 import SupervisorDashboard from "./Dashboard/SupervisorDashboard";
 import StudentDashboard from "./Dashboard/StudentDashboard";
 import { useNavigate } from "react-router-dom";
+import { Card } from "@/components/ui/card";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { userRole } = useUser();
+  const { userRole, isLoading } = useUser();
 
   useEffect(() => {
-    if (!userRole) {
+    if (!isLoading && !userRole) {
       navigate("/login");
     }
-  }, [userRole]);
+  }, [userRole, isLoading, navigate]);
 
-  if (!userRole) return null; // Block UI rendering if userRole is null
+  // Show loading state while checking authentication
+  if (isLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center h-[50vh]">
+          <Card className="p-8 text-center">
+            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-semibold">Loading your dashboard...</h2>
+          </Card>
+        </div>
+      </Layout>
+    );
+  }
+
+  // Don't render anything if not authenticated (redirect will happen)
+  if (!userRole) return null;
 
   return (
     <Layout>
