@@ -16,30 +16,35 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const user = useUser(); 
   const navigate = useNavigate();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    axiosBackendInstance.post('accounts/auth/jwt/create/', {
-      email,
-      password,
-    })
-      .then((response) => {
-        console.log(response.data)
-        // DONE set token in storage
-        return axiosBackendInstance.get('accounts/auth/users/me/')
-
-      }).then((response)=>{
-        console.log(response.data)
-        user.setUserRole(response.data.groups[0])
-        user.setUserName(response.data.email)
-      }).finally(() => {
-        console.log(user)
-        setIsLoading(false)
-        navigate('/')
-
-      })
-    }
     
+    try {
+      const authResponse = await axiosBackendInstance.post('accounts/auth/jwt/create/', {
+        email,
+        password,
+      });
+      
+      // Store tokens properly
+      const { access, refresh } = authResponse.data;
+      localStorage.setItem('access', access);
+      localStorage.setItem('refresh', refresh);
+      
+      // Get user info
+      const userResponse = await axiosBackendInstance.get('accounts/auth/users/me/');
+      user.setUserRole(userResponse.data.groups[0]);
+      user.setUserName(userResponse.data.email);
+      
+      navigate('/');
+    } catch (error) {
+      console.error("Login failed:", error);
+      // Handle login errors here - show error message to user
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-primary/5 to-background p-4">
