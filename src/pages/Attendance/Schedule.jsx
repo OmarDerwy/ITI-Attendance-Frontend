@@ -140,7 +140,26 @@ const Schedule = () => {
       )
     );
   };
-
+  const updateSelectedEvent = (field, value) => {
+    setSelectedEvent((prev) => ({
+      ...prev,
+      [field]: value,
+      ...(field === "isOnline"
+        ? {
+            backgroundColor: value
+              ? "hsl(var(--primary))"
+              : "hsl(var(--accent))",
+            borderColor: value
+              ? "hsl(var(--primary))"
+              : "hsl(var(--accent))", // Ensure borderColor is updated
+            textColor: value
+              ? "hsl(var(--primary-foreground))"
+              : "hsl(var(--accent-foreground))",
+            ...(value ? { branch: null } : {}), // Clear branch if online
+          }
+        : {}),
+    }));
+  };
   const toggleEventType = (eventId) => {
     setEvents((prev) =>
       prev.map((event) =>
@@ -171,24 +190,7 @@ const Schedule = () => {
     );
   };
 
-  const updateSelectedEvent = (field, value) => {
-    setSelectedEvent((prev) => ({
-      ...prev,
-      [field]: value,
-      ...(field === "isOnline"
-        ? {
-            backgroundColor: value
-              ? "hsl(var(--primary))"
-              : "hsl(var(--accent))",
-            borderColor: value ? "hsl(var(--primary))" : "hsl(var(--accent))",
-            textColor: value
-              ? "hsl(var(--primary-foreground))"
-              : "hsl(var(--accent-foreground))",
-            ...(value ? { branch: null } : {}), // Clear branch if online
-          }
-        : {}),
-    }));
-  };
+
 
   const handleOpenAddDialog = (selectInfo) => {
     if (currentView === 'dayGridMonth') {
@@ -374,7 +376,7 @@ const Schedule = () => {
         />
       </Card>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px]"> {/* Increased modal width */}
           <DialogHeader>
             <DialogTitle>
               {dialogMode === "add" ? "Add Event" : "Edit Event"}
@@ -395,7 +397,7 @@ const Schedule = () => {
                     ? setNewEvent({ ...newEvent, title: e.target.value })
                     : updateSelectedEvent("title", e.target.value)
                 }
-                className="col-span-3"
+                className="col-span-3 truncate" // Allow long text
               />
             </div>
             {(dialogMode === "add"
@@ -462,44 +464,39 @@ const Schedule = () => {
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-start" className="text-right">
-                Start
+              <Label htmlFor="event-dates" className="text-right">
+                Dates
               </Label>
-              <Input
-                id="event-start"
-                type="datetime-local"
-                value={
-                  dialogMode === "add"
-                    ? newEvent.start?.slice(0, 16)
-                    : selectedEvent.start?.slice(0, 16)
-                }
-                onChange={(e) =>
-                  dialogMode === "add"
-                    ? setNewEvent({ ...newEvent, start: e.target.value })
-                    : updateSelectedEvent("start", e.target.value)
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-end" className="text-right">
-                End
-              </Label>
-              <Input
-                id="event-end"
-                type="datetime-local"
-                value={
-                  dialogMode === "add"
-                    ? newEvent.end?.slice(0, 16)
-                    : selectedEvent.end?.slice(0, 16)
-                }
-                onChange={(e) =>
-                  dialogMode === "add"
-                    ? setNewEvent({ ...newEvent, end: e.target.value })
-                    : updateSelectedEvent("end", e.target.value)
-                }
-                className="col-span-3"
-              />
+              <div className="flex space-x-2 col-span-3"> {/* Dates side by side */}
+                <Input
+                  id="event-start"
+                  type="datetime-local"
+                  value={
+                    dialogMode === "add"
+                      ? newEvent.start?.slice(0, 16)
+                      : selectedEvent.start?.slice(0, 16)
+                  }
+                  onChange={(e) =>
+                    dialogMode === "add"
+                      ? setNewEvent({ ...newEvent, start: e.target.value })
+                      : updateSelectedEvent("start", e.target.value)
+                  }
+                />
+                <Input
+                  id="event-end"
+                  type="datetime-local"
+                  value={
+                    dialogMode === "add"
+                      ? newEvent.end?.slice(0, 16)
+                      : selectedEvent.end?.slice(0, 16)
+                  }
+                  onChange={(e) =>
+                    dialogMode === "add"
+                      ? setNewEvent({ ...newEvent, end: e.target.value })
+                      : updateSelectedEvent("end", e.target.value)
+                  }
+                />
+              </div>
             </div>
           </div>
           <DialogFooter className="flex justify-between">
