@@ -45,23 +45,23 @@ const mockAnnouncements = [
 
 const StudentDashboard = () => {
   const { toast } = useToast();
-  const [checkInStatus, setCheckInStatus] = useState("not-checked-in");
+  // const [checkInStatus, setCheckInStatus] = useState("not-checked-in");
 
-  const handleCheckIn = () => {
-    setCheckInStatus("checked-in");
-    toast({
-      title: "Checked In Successfully",
-      description: "Your attendance has been recorded.",
-    });
-  };
+  // const handleCheckIn = () => {
+  //   setCheckInStatus("checked-in");
+  //   toast({
+  //     title: "Checked In Successfully",
+  //     description: "Your attendance has been recorded.",
+  //   });
+  // };
 
-  const handleCheckOut = () => {
-    setCheckInStatus("checked-out");
-    toast({
-      title: "Checked Out Successfully",
-      description: "Have a great day!",
-    });
-  };
+  // const handleCheckOut = () => {
+  //   setCheckInStatus("checked-out");
+  //   toast({
+  //     title: "Checked Out Successfully",
+  //     description: "Have a great day!",
+  //   });
+  // };
 
   // Attendance pie chart data
   const pieData = [
@@ -73,7 +73,7 @@ const StudentDashboard = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+        {/* <Card className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
           <CardContent className="pt-6">
             <div className="flex flex-col items-center justify-center p-4">
               <div className="rounded-full bg-primary/10 p-3 mb-4">
@@ -115,7 +115,7 @@ const StudentDashboard = () => {
               )}
             </div>
           </CardContent>
-        </Card>
+        </Card> */}
 
         <Card className="overflow-hidden">
           <CardContent className="pt-6">

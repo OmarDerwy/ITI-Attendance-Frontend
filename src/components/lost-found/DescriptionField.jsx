@@ -1,26 +1,20 @@
-
-import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 
 const DescriptionField = ({ form }) => {
   return (
-    <FormField
-      control={form.control}
-      name="description"
-      render={({ field }) => (
-        <FormItem>
-          <FormLabel>Description</FormLabel>
-          <FormControl>
-            <Textarea 
-              placeholder="Provide a detailed description of the item..."
-              className="min-h-32"
-              {...field} 
-            />
-          </FormControl>
-          <FormMessage />
-        </FormItem>
-      )}
-    />
+    <div className="space-y-2">
+      <Label htmlFor="description">Description</Label>
+      <Textarea
+        id="description"
+        name="description"
+        value={form.values.description || ""}
+        onChange={form.handleChange}
+        placeholder="Describe the item"
+        rows={4}
+        required
+      />
+    </div>
   );
 };
 

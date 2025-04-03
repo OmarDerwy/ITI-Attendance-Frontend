@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, LogIn, Mail, Lock, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -52,8 +51,8 @@ const Login = () => {
       <div className="w-full max-w-md animate-in slide-up fade-in duration-500">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-xl">
-              A
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground">
+              <UserCheck className="h-6 w-6" />
             </div>
           </div>
           <h1 className="mt-6 text-3xl font-bold tracking-tight">Welcome back</h1>

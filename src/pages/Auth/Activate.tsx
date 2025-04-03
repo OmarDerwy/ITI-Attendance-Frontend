@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle, XCircle, AlertCircle, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, AlertCircle, Loader2, UserCheck } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { axiosBackendInstance } from '@/api/config';
@@ -115,8 +115,8 @@ const Activate = () => {
       <div className="w-full max-w-md animate-in fade-in zoom-in duration-500">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground font-bold text-xl">
-              A
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground">
+              <UserCheck className="h-6 w-6" />
             </div>
           </div>
           <h1 className="mt-6 text-3xl font-bold tracking-tight">Account Activation</h1>
