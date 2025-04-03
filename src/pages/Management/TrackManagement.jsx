@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PageTitle from "@/components/ui/page-title";
-import axiosInstance from "../../apis/config";
+import { axiosBackendInstance } from '@/api/config';
 
 const ITEMS_PER_PAGE = 6;
 
@@ -62,7 +62,7 @@ const TrackManagement = () => {
   const fetchTracks = (page) => {
     setIsLoading(true);
 
-    axiosInstance
+    axiosBackendInstance
       .get(`/attendance/tracks/`, { params: { page } })
       .then((response) => {
         const data = response.data;
@@ -90,13 +90,25 @@ const TrackManagement = () => {
 
   const confirmDelete = () => {
     if (selectedTrack) {
-      setTracks(tracks.filter(track => track.id !== selectedTrack.id));
-      toast({
-        title: "Track Deleted",
-        description: "The track has been deleted successfully."
-      });
-      setIsDeleteDialogOpen(false);
-      setSelectedTrack(null);
+      axiosBackendInstance
+        .delete(`/attendance/tracks/${selectedTrack.id}/`)
+        .then(() => {
+          setTracks(tracks.filter(track => track.id !== selectedTrack.id));
+          toast({
+            title: "Track Deleted",
+            description: "The track has been deleted successfully."
+          });
+        })
+        .catch(() => {
+          toast({
+            title: "Error",
+            description: "Failed to delete the track. Please try again later."
+          });
+        })
+        .finally(() => {
+          setIsDeleteDialogOpen(false);
+          setSelectedTrack(null);
+        });
     }
   };
 
@@ -113,6 +125,10 @@ const TrackManagement = () => {
   const handlePageChange = (page) => {
     setCurrentPage(page);
   };
+
+  const filteredTracks = tracks.filter((track) =>
+    track.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (isLoading) {
     return (
@@ -160,11 +176,11 @@ const TrackManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tracks.length > 0 ? (
-                  tracks.map((track) => (
+                {filteredTracks.length > 0 ? (
+                  filteredTracks.map((track) => (
                     <TableRow key={track.id}>
                       <TableCell className="font-medium">{track.name}</TableCell>
-                      <TableCell>{track.program_type}</TableCell>
+                      <TableCell>{track.program_type_display}</TableCell>
                       <TableCell>{track.intake || "N/A"}</TableCell>
                       <TableCell>{formatDate(track.start_date)}</TableCell>
                       <TableCell>{track.supervisor}</TableCell>

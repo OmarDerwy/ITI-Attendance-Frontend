@@ -8,7 +8,7 @@ import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/layout/Layout";
 import PageTitle from "@/components/ui/page-title";
-import axiosInstance from "../../apis/config";
+import { axiosBackendInstance } from '@/api/config';
 
 const BranchFormPage = () => {
   const { branchId } = useParams();
@@ -27,7 +27,7 @@ const BranchFormPage = () => {
     if (branchId && branchId !== "add") {
       const fetchBranchData = async () => {
         try {
-          const response = await axiosInstance.get(`/attendance/branches/${branchId}/`);
+          const response = await axiosBackendInstance.get(`/attendance/branches/${branchId}/`);
           setBranch(response.data);
         } catch (error) {
           toast({ title: "Branch not found", description: "The requested branch could not be found.", variant: "destructive" });
@@ -45,7 +45,7 @@ const BranchFormPage = () => {
   const handleSaveBranch = async (branchData) => {
     try {
       const endpoint = branchId && branchId !== "add" ? `/attendance/branches/${branchData.id}/` : "/attendance/branches/";
-      const method = branchId && branchId !== "add" ? axiosInstance.put : axiosInstance.post;
+      const method = branchId && branchId !== "add" ? axiosBackendInstance.put : axiosBackendInstance.post;
       await method(endpoint, branchData);
 
       toast({
