@@ -228,9 +228,6 @@ const Schedule = () => {
   const renderEventContent = (eventInfo) => {
     const event = events.find((e) => e.id === eventInfo.event.id);
     const isOnline = event ? event.isOnline : false;
-    const branchId = event ? event.branch : "1";
-    const branchName =
-      branches.find((b) => b.id === branchId)?.name || "Unknown";
 
     const bgColor = isOnline ? "bg-primary" : "bg-accent";
     const textColor = isOnline
@@ -253,44 +250,6 @@ const Schedule = () => {
           >
             {isOnline ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
           </button>
-
-          {!isOnline && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className={`${textColor} hover:opacity-80`}
-                  title="Select Branch"
-                >
-                  <MapPin size={16} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2">
-                <div className="space-y-2">
-                  <h3 className="font-medium">Select Branch</h3>
-                  <Select
-                    defaultValue={branchId}
-                    onValueChange={(value) => {
-                      updateEventBranch(eventInfo.event.id, value);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select branch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id}>
-                          {branch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Current: {branchName}</p>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-
           <button
             onClick={(e) => {
               e.stopPropagation();
@@ -302,6 +261,29 @@ const Schedule = () => {
             <Trash2 size={16} />
           </button>
         </div>
+      </div>
+    );
+  };
+
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  const handleDayHeaderClick = (day) => {
+    setSelectedDay(day);
+    setIsBranchModalOpen(true);
+  };
+
+  const renderDayHeaderContent = (headerInfo) => {
+    return (
+      <div className="flex items-center justify-between">
+        <span>{headerInfo.text}</span>
+        <button
+          onClick={() => handleDayHeaderClick(headerInfo.date)}
+          className="text-gray-500 hover:text-gray-700"
+          title="Select Branch"
+        >
+          <MapPin size={16} />
+        </button>
       </div>
     );
   };
@@ -372,7 +354,7 @@ const Schedule = () => {
           viewDidMount={(view) => {
             setCurrentView(view.view.type); // Track view changes
           }}
-          
+          dayHeaderContent={renderDayHeaderContent} // Add custom day header content
         />
       </Card>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -400,36 +382,6 @@ const Schedule = () => {
                 className="col-span-3 truncate" // Allow long text
               />
             </div>
-            {(dialogMode === "add"
-              ? !newEvent.isOnline
-              : !selectedEvent.isOnline) && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="event-branch" className="text-right">
-                  Branch
-                </Label>
-                <Select
-                  value={
-                    dialogMode === "add" ? newEvent.branch : selectedEvent.branch
-                  }
-                  onValueChange={(value) =>
-                    dialogMode === "add"
-                      ? setNewEvent({ ...newEvent, branch: value })
-                      : updateSelectedEvent("branch", value)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="event-online" className="text-right">
                 Online
@@ -447,7 +399,6 @@ const Schedule = () => {
                       ? setNewEvent((prev) => ({
                           ...prev,
                           isOnline: checked,
-                          branch: checked ? null : defaultBranch?.id || "1",
                         }))
                       : updateSelectedEvent("isOnline", checked)
                   }
@@ -518,6 +469,40 @@ const Schedule = () => {
                 {dialogMode === "add" ? "Add Event" : "Update Event"}
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isBranchModalOpen} onOpenChange={setIsBranchModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Select Branch</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Select a branch for {selectedDay ? new Date(selectedDay).toDateString() : ""}
+            </p>
+            <Select
+              onValueChange={(value) => {
+                console.log(`Branch ${value} selected for ${selectedDay}`);
+                setIsBranchModalOpen(false);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select branch" />
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsBranchModalOpen(false)}>
+              Cancel
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
