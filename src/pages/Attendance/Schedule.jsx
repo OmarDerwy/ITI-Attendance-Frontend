@@ -80,30 +80,32 @@ const Schedule = () => {
       return;
     }
 
+    console.log("Creating event with properties:", newEvent); // Log event properties
+
     setEvents((prev) => [
       ...prev,
       {
         id: String(Date.now()),
         title: newEvent.title,
+        description: "Event Description",
         start: newEvent.start,
         end: newEvent.end,
         isOnline: newEvent.isOnline,
         trackId: selectedTrack === "all" ? "1" : selectedTrack,
         branch: newEvent.isOnline ? null : newEvent.branch,
         backgroundColor: newEvent.isOnline
-          ? "hsl(var(--primary))"
-          : "hsl(var(--accent))",
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
         borderColor: newEvent.isOnline
-          ? "hsl(var(--primary))"
-          : "hsl(var(--accent))",
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
         textColor: newEvent.isOnline
-          ? "hsl(var(--primary-foreground))"
-          : "hsl(var(--accent-foreground))",
+          ? "hsl(var(--accent-foreground))"
+          : "hsl(var(--primary-foreground))",
       },
     ]);
     setIsDialogOpen(false);
   };
-
 
   const handleUpdateEvent = () => {
     if (!selectedEvent) return;
@@ -147,14 +149,12 @@ const Schedule = () => {
       ...(field === "isOnline"
         ? {
             backgroundColor: value
-              ? "hsl(var(--primary))"
-              : "hsl(var(--accent))",
-            borderColor: value
-              ? "hsl(var(--primary))"
-              : "hsl(var(--accent))", // Ensure borderColor is updated
+              ? "hsl(var(--accent))"
+              : "hsl(var(--primary))",
+            borderColor: value ? "hsl(var(--accent))" : "hsl(var(--primary))",
             textColor: value
-              ? "hsl(var(--primary-foreground))"
-              : "hsl(var(--accent-foreground))",
+              ? "hsl(var(--accent-foreground))"
+              : "hsl(var(--primary-foreground))",
             ...(value ? { branch: null } : {}), // Clear branch if online
           }
         : {}),
@@ -168,32 +168,22 @@ const Schedule = () => {
               ...event,
               isOnline: !event.isOnline,
               backgroundColor: !event.isOnline
-                ? "hsl(var(--primary))"
-                : "hsl(var(--accent))",
+                ? "hsl(var(--accent))"
+                : "hsl(var(--primary))",
               borderColor: !event.isOnline
-                ? "hsl(var(--primary))"
-                : "hsl(var(--accent))",
+                ? "hsl(var(--accent))"
+                : "hsl(var(--primary))",
               textColor: !event.isOnline
-                ? "hsl(var(--primary-foreground))"
-                : "hsl(var(--accent-foreground))",
+                ? "hsl(var(--accent-foreground))"
+                : "hsl(var(--primary-foreground))",
             }
           : event
       )
     );
   };
 
-  const updateEventBranch = (eventId, branchId) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === eventId ? { ...event, branch: branchId } : event
-      )
-    );
-  };
-
-
-
   const handleOpenAddDialog = (selectInfo) => {
-    if (currentView === 'dayGridMonth') {
+    if (currentView === "dayGridMonth") {
       return;
     }
     if (new Date(selectInfo.start) < new Date()) {
@@ -229,20 +219,28 @@ const Schedule = () => {
     const event = events.find((e) => e.id === eventInfo.event.id);
     const isOnline = event ? event.isOnline : false;
 
-    const bgColor = isOnline ? "bg-primary" : "bg-accent";
-    const textColor = isOnline
-      ? "text-primary-foreground"
-      : "text-accent-foreground";
+    const bgColor = isOnline ? "bg-accent" : "bg-primary";
+    const textColor = isOnline ? "text-accent-foreground" : "text-primary-foreground";
+    const subtextColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated subtext color
+    const branchColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated branch color
 
     return (
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
       >
-        <div className="flex-1 truncate mr-1">{eventInfo.event.title}</div>
+        {/* <div className="p-1 flex-col ">
+          <div className="flex-1 truncate mr-1">{eventInfo.event.title}</div> 
+        
+      </div> */}
+        <div className="p-1 flex-col">
+          <div className="whitespace-normal">{eventInfo.event.title}</div>
+          <div className={`text-xs ${subtextColor}`}>subtext</div> {/* Updated subtext */}
+        </div>
+        {/* <div className="flex-1 truncate mr-1">{eventInfo.event.title}</div> */}
         <div className="flex space-x-1">
           <button
             onClick={(e) => {
-              e.stopPropagation();
+              // e.stopPropagation();
               toggleEventType(eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80`}
@@ -252,7 +250,7 @@ const Schedule = () => {
           </button>
           <button
             onClick={(e) => {
-              e.stopPropagation();
+              // e.stopPropagation();
               handleDeleteEvent(eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80`}
@@ -260,6 +258,10 @@ const Schedule = () => {
           >
             <Trash2 size={16} />
           </button>
+        </div>
+        <div className="absolute bottom-1 left-1 flex items-center text-xs ${branchColor}">
+          <MapPin size={12} className="mr-1" />
+          <span>{event.branch ? branches.find(b => b.id === event.branch)?.name : "Default Branch"}</span>
         </div>
       </div>
     );
@@ -330,7 +332,7 @@ const Schedule = () => {
           selectable={userRole === "supervisor"}
           editable={userRole === "supervisor" && currentView !== "dayGridMonth"} // Modified line
           select={handleOpenAddDialog} // Use renamed function
-          events={filteredEvents.filter(event => !event.allDay)} // Exclude all-day events
+          events={filteredEvents.filter((event) => !event.allDay)} // Exclude all-day events
           eventClick={(clickInfo) =>
             openEditDialog(events.find((e) => e.id === clickInfo.event.id))
           }
@@ -345,8 +347,8 @@ const Schedule = () => {
           validRange={{ start: new Date() }}
           timeZone="local"
           slotMinTime="09:00:00"
-          slotMaxTime="17:00:00"
-          slotDuration="00:30:00" 
+          slotMaxTime="24:00:00"
+          slotDuration="00:30:00"
           snapDuration="00:30:00"
           allDaySlot={false} // Disable the all-day slot
           eventOverlap={false}
@@ -355,10 +357,17 @@ const Schedule = () => {
             setCurrentView(view.view.type); // Track view changes
           }}
           dayHeaderContent={renderDayHeaderContent} // Add custom day header content
+
+          // eventContent={(arg) => (
+          //   <div className="p-1">
+          //     <div className="whitespace-normal">{arg.event.title}</div>
+          //   </div> )}
         />
       </Card>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]"> {/* Increased modal width */}
+        <DialogContent className="sm:max-w-[600px]">
+          {" "}
+          {/* Increased modal width */}
           <DialogHeader>
             <DialogTitle>
               {dialogMode === "add" ? "Add Event" : "Edit Event"}
@@ -418,7 +427,9 @@ const Schedule = () => {
               <Label htmlFor="event-dates" className="text-right">
                 Dates
               </Label>
-              <div className="flex space-x-2 col-span-3"> {/* Dates side by side */}
+              <div className="flex space-x-2 col-span-3">
+                {" "}
+                {/* Dates side by side */}
                 <Input
                   id="event-start"
                   type="datetime-local"
@@ -479,7 +490,8 @@ const Schedule = () => {
           </DialogHeader>
           <div className="space-y-4">
             <p className="text-sm text-gray-500">
-              Select a branch for {selectedDay ? new Date(selectedDay).toDateString() : ""}
+              Select a branch for{" "}
+              {selectedDay ? new Date(selectedDay).toDateString() : ""}
             </p>
             <Select
               onValueChange={(value) => {
@@ -500,7 +512,10 @@ const Schedule = () => {
             </Select>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsBranchModalOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsBranchModalOpen(false)}
+            >
               Cancel
             </Button>
           </DialogFooter>
@@ -517,11 +532,19 @@ const Schedule = () => {
           border-color: #dc2626 !important;
         }
 
-
         .fc-event {
           cursor: pointer;
           font-size: 1.2rem;
           font-weight: 500;
+        }
+        .fc-event-title {
+          white-space: normal !important; /* Allow text wrapping */
+          overflow: visible !important; /* Show full text */
+          text-overflow: clip !important; /* Prevent ellipsis */
+          word-wrap: break-word !important; /* Break long words */
+        }
+        .fc-daygrid-event {
+          height: auto !important; /* Adjust event height */
         }
       `}</style>
     </Layout>
