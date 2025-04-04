@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 // import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/use-toast";
+import { debug } from "console";
 
 const Schedule = () => {
   const { userRole } = useUser();
@@ -64,7 +65,8 @@ const Schedule = () => {
   const [newEvent, setNewEvent] = useState({
     title: "",
     isOnline: false,
-    branch: "1", // Default branch ID
+    branch: "1", 
+    instructor: "", 
   });
 
   const { data: defaultBranch } = { id: "1", name: "Main Branch" };
@@ -79,31 +81,33 @@ const Schedule = () => {
       alert("Title is required.");
       return;
     }
-
+    console.log("Creating event with properties:", newEvent); // Log event properties
+    console.debug("Creating event with properties:"); // Log event properties
     setEvents((prev) => [
       ...prev,
       {
         id: String(Date.now()),
         title: newEvent.title,
+        description: "Event Description",
         start: newEvent.start,
         end: newEvent.end,
         isOnline: newEvent.isOnline,
         trackId: selectedTrack === "all" ? "1" : selectedTrack,
         branch: newEvent.isOnline ? null : newEvent.branch,
+        instructor: newEvent.instructor, // Include instructor
         backgroundColor: newEvent.isOnline
-          ? "hsl(var(--primary))"
-          : "hsl(var(--accent))",
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
         borderColor: newEvent.isOnline
-          ? "hsl(var(--primary))"
-          : "hsl(var(--accent))",
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
         textColor: newEvent.isOnline
-          ? "hsl(var(--primary-foreground))"
-          : "hsl(var(--accent-foreground))",
+          ? "hsl(var(--accent-foreground))"
+          : "hsl(var(--primary-foreground))",
       },
     ]);
     setIsDialogOpen(false);
   };
-
 
   const handleUpdateEvent = () => {
     if (!selectedEvent) return;
@@ -147,14 +151,12 @@ const Schedule = () => {
       ...(field === "isOnline"
         ? {
             backgroundColor: value
-              ? "hsl(var(--primary))"
-              : "hsl(var(--accent))",
-            borderColor: value
-              ? "hsl(var(--primary))"
-              : "hsl(var(--accent))", // Ensure borderColor is updated
+              ? "hsl(var(--accent))"
+              : "hsl(var(--primary))",
+            borderColor: value ? "hsl(var(--accent))" : "hsl(var(--primary))",
             textColor: value
-              ? "hsl(var(--primary-foreground))"
-              : "hsl(var(--accent-foreground))",
+              ? "hsl(var(--accent-foreground))"
+              : "hsl(var(--primary-foreground))",
             ...(value ? { branch: null } : {}), // Clear branch if online
           }
         : {}),
@@ -168,32 +170,22 @@ const Schedule = () => {
               ...event,
               isOnline: !event.isOnline,
               backgroundColor: !event.isOnline
-                ? "hsl(var(--primary))"
-                : "hsl(var(--accent))",
+                ? "hsl(var(--accent))"
+                : "hsl(var(--primary))",
               borderColor: !event.isOnline
-                ? "hsl(var(--primary))"
-                : "hsl(var(--accent))",
+                ? "hsl(var(--accent))"
+                : "hsl(var(--primary))",
               textColor: !event.isOnline
-                ? "hsl(var(--primary-foreground))"
-                : "hsl(var(--accent-foreground))",
+                ? "hsl(var(--accent-foreground))"
+                : "hsl(var(--primary-foreground))",
             }
           : event
       )
     );
   };
 
-  const updateEventBranch = (eventId, branchId) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === eventId ? { ...event, branch: branchId } : event
-      )
-    );
-  };
-
-
-
   const handleOpenAddDialog = (selectInfo) => {
-    if (currentView === 'dayGridMonth') {
+    if (currentView === "dayGridMonth") {
       return;
     }
     if (new Date(selectInfo.start) < new Date()) {
@@ -202,12 +194,14 @@ const Schedule = () => {
 
     setNewEvent({
       title: "",
+      instructor: "",
       isOnline: false,
       branch: defaultBranch?.id || "1",
       start: selectInfo.startStr,
       end: selectInfo.endStr,
     });
-    setDialogMode("add");
+ 
+         setDialogMode("add");
     setIsDialogOpen(true);
   };
 
@@ -228,24 +222,25 @@ const Schedule = () => {
   const renderEventContent = (eventInfo) => {
     const event = events.find((e) => e.id === eventInfo.event.id);
     const isOnline = event ? event.isOnline : false;
-    const branchId = event ? event.branch : "1";
-    const branchName =
-      branches.find((b) => b.id === branchId)?.name || "Unknown";
 
-    const bgColor = isOnline ? "bg-primary" : "bg-accent";
-    const textColor = isOnline
-      ? "text-primary-foreground"
-      : "text-accent-foreground";
+    const bgColor = isOnline ? "bg-accent" : "bg-primary";
+    const textColor = isOnline ? "text-accent-foreground" : "text-primary-foreground";
+    const subtextColor = isOnline ? "text-gray-700" : "text-white-500"; // Updated subtext color
+    const branchColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated branch color
 
     return (
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
       >
-        <div className="flex-1 truncate mr-1">{eventInfo.event.title}</div>
+        <div className="p-1 flex-col">
+          <div className="whitespace-normal">{eventInfo.event.title}</div>
+          <div className={`text-xs ${subtextColor}`}>
+            {eventInfo.event.extendedProps.instructor || "No Instructor"}
+          </div>
+        </div>
         <div className="flex space-x-1">
           <button
             onClick={(e) => {
-              e.stopPropagation();
               toggleEventType(eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80`}
@@ -253,47 +248,8 @@ const Schedule = () => {
           >
             {isOnline ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
           </button>
-
-          {!isOnline && (
-            <Popover>
-              <PopoverTrigger asChild>
-                <button
-                  onClick={(e) => e.stopPropagation()}
-                  className={`${textColor} hover:opacity-80`}
-                  title="Select Branch"
-                >
-                  <MapPin size={16} />
-                </button>
-              </PopoverTrigger>
-              <PopoverContent className="w-56 p-2">
-                <div className="space-y-2">
-                  <h3 className="font-medium">Select Branch</h3>
-                  <Select
-                    defaultValue={branchId}
-                    onValueChange={(value) => {
-                      updateEventBranch(eventInfo.event.id, value);
-                    }}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select branch" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {branches.map((branch) => (
-                        <SelectItem key={branch.id} value={branch.id}>
-                          {branch.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-gray-500">Current: {branchName}</p>
-                </div>
-              </PopoverContent>
-            </Popover>
-          )}
-
           <button
             onClick={(e) => {
-              e.stopPropagation();
               handleDeleteEvent(eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80`}
@@ -302,6 +258,33 @@ const Schedule = () => {
             <Trash2 size={16} />
           </button>
         </div>
+        <div className="absolute bottom-1 left-1 flex items-center text-xs ${branchColor}">
+          <MapPin size={12} className="mr-1" />
+          <span>{event.branch ? branches.find(b => b.id === event.branch)?.name : "Default Branch"}</span>
+        </div>
+      </div>
+    );
+  };
+
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+
+  const handleDayHeaderClick = (day) => {
+    setSelectedDay(day);
+    setIsBranchModalOpen(true);
+  };
+
+  const renderDayHeaderContent = (headerInfo) => {
+    return (
+      <div className="flex items-center justify-between">
+        <span>{headerInfo.text}</span>
+        <button
+          onClick={() => handleDayHeaderClick(headerInfo.date)}
+          className="text-gray-500 hover:text-gray-700"
+          title="Select Branch"
+        >
+          <MapPin size={16} />
+        </button>
       </div>
     );
   };
@@ -348,7 +331,7 @@ const Schedule = () => {
           selectable={userRole === "supervisor"}
           editable={userRole === "supervisor" && currentView !== "dayGridMonth"} // Modified line
           select={handleOpenAddDialog} // Use renamed function
-          events={filteredEvents.filter(event => !event.allDay)} // Exclude all-day events
+          events={filteredEvents.filter((event) => !event.allDay)} // Exclude all-day events
           eventClick={(clickInfo) =>
             openEditDialog(events.find((e) => e.id === clickInfo.event.id))
           }
@@ -363,8 +346,8 @@ const Schedule = () => {
           validRange={{ start: new Date() }}
           timeZone="local"
           slotMinTime="09:00:00"
-          slotMaxTime="17:00:00"
-          slotDuration="00:30:00" 
+          slotMaxTime="24:00:00"
+          slotDuration="00:30:00"
           snapDuration="00:30:00"
           allDaySlot={false} // Disable the all-day slot
           eventOverlap={false}
@@ -372,11 +355,18 @@ const Schedule = () => {
           viewDidMount={(view) => {
             setCurrentView(view.view.type); // Track view changes
           }}
-          
+          dayHeaderContent={renderDayHeaderContent} // Add custom day header content
+
+          // eventContent={(arg) => (
+          //   <div className="p-1">
+          //     <div className="whitespace-normal">{arg.event.title}</div>
+          //   </div> )}
         />
       </Card>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[600px]"> {/* Increased modal width */}
+        <DialogContent className="sm:max-w-[600px]">
+          {" "}
+          {/* Increased modal width */}
           <DialogHeader>
             <DialogTitle>
               {dialogMode === "add" ? "Add Event" : "Edit Event"}
@@ -400,36 +390,23 @@ const Schedule = () => {
                 className="col-span-3 truncate" // Allow long text
               />
             </div>
-            {(dialogMode === "add"
-              ? !newEvent.isOnline
-              : !selectedEvent.isOnline) && (
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="event-branch" className="text-right">
-                  Branch
-                </Label>
-                <Select
-                  value={
-                    dialogMode === "add" ? newEvent.branch : selectedEvent.branch
-                  }
-                  onValueChange={(value) =>
-                    dialogMode === "add"
-                      ? setNewEvent({ ...newEvent, branch: value })
-                      : updateSelectedEvent("branch", value)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Select branch" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {branches.map((branch) => (
-                      <SelectItem key={branch.id} value={branch.id}>
-                        {branch.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-instructor" className="text-right">
+                Instructor
+              </Label>
+              <Input
+                id="event-instructor"
+                value={
+                  dialogMode === "add" ? newEvent.instructor : selectedEvent.instructor
+                }
+                onChange={(e) =>
+                  dialogMode === "add"
+                    ? setNewEvent({ ...newEvent, instructor: e.target.value })
+                    : updateSelectedEvent("instructor", e.target.value)
+                }
+                className="col-span-3 truncate" // Allow long text
+              />
+            </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="event-online" className="text-right">
                 Online
@@ -447,7 +424,6 @@ const Schedule = () => {
                       ? setNewEvent((prev) => ({
                           ...prev,
                           isOnline: checked,
-                          branch: checked ? null : defaultBranch?.id || "1",
                         }))
                       : updateSelectedEvent("isOnline", checked)
                   }
@@ -467,7 +443,9 @@ const Schedule = () => {
               <Label htmlFor="event-dates" className="text-right">
                 Dates
               </Label>
-              <div className="flex space-x-2 col-span-3"> {/* Dates side by side */}
+              <div className="flex space-x-2 col-span-3">
+                {" "}
+                {/* Dates side by side */}
                 <Input
                   id="event-start"
                   type="datetime-local"
@@ -498,6 +476,7 @@ const Schedule = () => {
                 />
               </div>
             </div>
+
           </div>
           <DialogFooter className="flex justify-between">
             {dialogMode === "edit" && (
@@ -521,6 +500,44 @@ const Schedule = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={isBranchModalOpen} onOpenChange={setIsBranchModalOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>Select Branch</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-gray-500">
+              Select a branch for{" "}
+              {selectedDay ? new Date(selectedDay).toDateString() : ""}
+            </p>
+            <Select
+              onValueChange={(value) => {
+                console.log(`Branch ${value} selected for ${selectedDay}`);
+                setIsBranchModalOpen(false);
+              }}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select branch" />
+              </SelectTrigger>
+              <SelectContent>
+                {branches.map((branch) => (
+                  <SelectItem key={branch.id} value={branch.id}>
+                    {branch.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsBranchModalOpen(false)}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <style jsx global>{`
         .fc-button {
           background-color: #ef4444 !important;
@@ -532,11 +549,19 @@ const Schedule = () => {
           border-color: #dc2626 !important;
         }
 
-
         .fc-event {
           cursor: pointer;
           font-size: 1.2rem;
           font-weight: 500;
+        }
+        .fc-event-title {
+          white-space: normal !important; /* Allow text wrapping */
+          overflow: visible !important; /* Show full text */
+          text-overflow: clip !important; /* Prevent ellipsis */
+          word-wrap: break-word !important; /* Break long words */
+        }
+        .fc-daygrid-event {
+          height: auto !important; /* Adjust event height */
         }
       `}</style>
     </Layout>
