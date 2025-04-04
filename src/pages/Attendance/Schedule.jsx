@@ -4,42 +4,24 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import Layout from "@/components/layout/Layout";
-import {
-  Calendar,
-  MapPin,
-  Trash2,
-  ToggleLeft,
-  ToggleRight,
-  Edit,
-} from "lucide-react";
+import {Calendar,MapPin,Trash2,ToggleLeft,ToggleRight,Edit} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
 import { useUser } from "@/context/UserContext";
 import branches from "@/data/branches.json";
 import TrackDropdown from "@/components/schedule/TrackDropdown";
 import ShareScheduleButton from "@/components/schedule/ShareScheduleButton";
-import { Popover } from "@/components/ui/popover";
-import { PopoverTrigger } from "@/components/ui/popover";
-import { PopoverContent } from "@/components/ui/popover";
-import { Select } from "@/components/ui/select";
-import { SelectTrigger } from "@/components/ui/select";
-import { SelectValue } from "@/components/ui/select";
-import { SelectContent } from "@/components/ui/select";
-import { SelectItem } from "@/components/ui/select";
-import { Dialog } from "@/components/ui/dialog";
-import { DialogContent } from "@/components/ui/dialog";
-import { DialogTitle } from "@/components/ui/dialog";
-import { DialogHeader } from "@/components/ui/dialog";
+import { Select , SelectTrigger ,SelectValue , SelectItem ,SelectContent } from "@/components/ui/select";
+import { Dialog,DialogContent ,DialogTitle ,DialogHeader , DialogFooter} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-// import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/use-toast";
-
+import { axiosBackendInstance } from '@/api/config';
 const Schedule = () => {
   const { userRole } = useUser();
+  const [isLoading, setIsLoading] = useState(true); // Loading state
   const [isDialogOpen, setIsDialogOpen] = useState(false); // Unified dialog state
   const [dialogMode, setDialogMode] = useState("add"); // "add" or "edit"
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -47,38 +29,53 @@ const Schedule = () => {
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState("timeGridWeek"); // Track current view
   const { toast } = useToast();
-
   // dayselect states
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
 
-  const tracks = [
-    { id: "1", name: "Full Stack Web Development" },
-    { id: "2", name: "Mobile App Development" },
-    { id: "3", name: "Data Science & Machine Learning" },
-    { id: "4", name: "UI/UX Design" },
-  ];
-  const [selectedTrack, setSelectedTrack] = useState(tracks[0]?.id || ""); // Default to the first track
+  const [tracks, setTracks] = useState([]); 
+  const [defaultBranch, setDefaultBranch] = useState(null); // State to store the default branch
+  useEffect(() => {
+    const fetchTracks = async () => {
+      try {
+        const response = await axiosBackendInstance.get("attendance/tracks/");
+        const fetchedTracks = response.data.results;
+        setTracks(fetchedTracks); 
+        if (fetchedTracks.length > 0) {
+          setSelectedTrack(fetchedTracks[0].id); // Set the first track as default
+          setDefaultBranch(fetchedTracks[0].default_branch); // Set the default branch for the first track
+        }
+        else {
+          // show in html no tracks available
+        }
+      } catch (error) {
+        console.error("Error fetching tracks:", error);
+      } finally {
+        setIsLoading(false); // Stop loading after data is fetched
+      }
+    };
 
-  const filteredEvents =
-    selectedTrack === "all"
-      ? events
-      : events.filter((event) => event.trackId === selectedTrack);
+    fetchTracks();
+  }, []); 
+
+
+  // useEffect(() => {
+  //   if (defaultBranch) {
+  //     setNewEvent((prev) => ({ ...prev, branch: defaultBranch.id }));
+  //   }
+  // }, [defaultBranch]);
+  const [selectedTrack, setSelectedTrack] = useState(""); 
+  const filteredEvents = events.filter((event) => event.trackId === selectedTrack);
 
   const [newEvent, setNewEvent] = useState({
     title: "",
     isOnline: false,
-    branch: "1", 
+    branch: defaultBranch, 
     instructor: "", 
   });
 
-  const { data: defaultBranch } = { id: "1", name: "Main Branch" };
-  useEffect(() => {
-    if (defaultBranch) {
-      setNewEvent((prev) => ({ ...prev, branch: defaultBranch.id }));
-    }
-  }, [defaultBranch]);
+
 
   const handleAddEvent = () => {
     if (!newEvent.title) {
@@ -199,7 +196,7 @@ const Schedule = () => {
       title: "",
       instructor: "",
       isOnline: false,
-      branch: defaultBranch?.id || "1",
+      branch: selectedTrack?.defaultBranch,
       start: selectInfo.startStr,
       end: selectInfo.endStr,
     });
@@ -221,7 +218,10 @@ const Schedule = () => {
       handleUpdateEvent();
     }
   };
-
+  const handleDayHeaderClick = (day) => {
+    setSelectedDay(day);
+    setIsBranchModalOpen(true);
+  };
   const renderEventContent = (eventInfo) => {
     const event = events.find((e) => e.id === eventInfo.event.id);
     const isOnline = event ? event.isOnline : false;
@@ -268,12 +268,6 @@ const Schedule = () => {
       </div>
     );
   };
-
-  const handleDayHeaderClick = (day) => {
-    setSelectedDay(day);
-    setIsBranchModalOpen(true);
-  };
-
   const renderDayHeaderContent = (headerInfo) => {
     return (
       <div className="flex items-center justify-between">
@@ -281,7 +275,7 @@ const Schedule = () => {
         <button
           onClick={() => handleDayHeaderClick(headerInfo.date)}
           className="text-gray-500 hover:text-gray-700"
-          title="Select Branch"
+          title="Select a Custom branch"
         >
           <MapPin size={16} />
         </button>
@@ -291,80 +285,89 @@ const Schedule = () => {
 
   return (
     <Layout>
-      <PageTitle
-        title="Schedule"
-        subtitle={
-          userRole === "student"
-            ? "View your class schedule"
-            : "Manage class schedules"
-        }
-        icon={<Calendar />}
-      />
-
-      <Card className="p-6 bg-white border shadow-lg">
-        <div className="mb-4 flex flex-col md:flex-row items-center gap-4 md:justify-between">
-          {userRole === "supervisor" && (
-            <p className="text-red-700 font-medium md:order-1 md:w-auto w-full text-center md:text-left">
-              Click on a date to add a session.
-            </p>
-          )}
-          <div className="flex-1 md:order-2 w-full md:w-auto">
-            <TrackDropdown
-              tracks={tracks}
-              selectedTrack={selectedTrack}
-              onTrackChange={setSelectedTrack}
-            />
-          </div>
-          {userRole === "supervisor" && (
-            <div className="md:order-3">
-              <ShareScheduleButton
-                events={filteredEvents}
-                track={selectedTrack}
-              />
-            </div>
-          )}
+      {isLoading ? (
+        <div className="flex justify-center items-center h-screen">
+          <p className="text-gray-500">Loading...</p>
         </div>
-        <FullCalendar
-          ref={calendarRef}
-          plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
-          initialView="timeGridWeek"
-          selectable={userRole === "supervisor"}
-          editable={userRole === "supervisor" && currentView !== "dayGridMonth"} // Modified line
-          select={handleOpenAddDialog} // Use renamed function
-          events={filteredEvents.filter((event) => !event.allDay)} // Exclude all-day events
-          eventClick={(clickInfo) =>
-            openEditDialog(events.find((e) => e.id === clickInfo.event.id))
-          }
-          eventResize={handleEventResize}
-          eventContent={renderEventContent}
-          headerToolbar={{
-            left: "prev,next today",
-            center: "title",
-            right: "dayGridMonth,timeGridWeek,timeGridDay",
-          }}
-          height="auto"
-          validRange={{ start: new Date() }}
-          timeZone="local"
-          nowIndicator={true}
-          now={new Date()}
-          slotMinTime="09:00:00"
-          slotMaxTime="24:00:00"
-          slotDuration="00:30:00"
-          snapDuration="00:30:00"
-          allDaySlot={false} // Disable the all-day slot
-          eventOverlap={false}
-          eventDurationEditable={true}
-          viewDidMount={(view) => {
-            setCurrentView(view.view.type); // Track view changes
-          }}
-          dayHeaderContent={renderDayHeaderContent} // Add custom day header content
+      ) : (
+        <>
+          <PageTitle
+            title="Schedule"
+            subtitle={
+              userRole === "student"
+                ? "View your class schedule"
+                : "Manage class schedules"
+            }
+            icon={<Calendar />}
+          />
 
-          // eventContent={(arg) => (
-          //   <div className="p-1">
-          //     <div className="whitespace-normal">{arg.event.title}</div>
-          //   </div> )}
-        />
-      </Card>
+          {tracks.length === 0 ? (
+            <p className="text-gray-500 text-center">
+              No tracks assigned.
+            </p>
+          ) : (
+            <Card className="p-6 bg-white border shadow-lg">
+              <div className="mb-4 flex flex-col md:flex-row items-center gap-4 md:justify-between">
+                {userRole === "supervisor" && (
+                  <p className="text-red-700 font-medium md:order-1 md:w-auto w-full text-center md:text-left">
+                    Click on a date to add a session.
+                  </p>
+                )}
+                <div className="flex-1 md:order-2 w-full md:w-auto">
+                  <TrackDropdown
+                    tracks={tracks}
+                    selectedTrack={selectedTrack}
+                    onTrackChange={setSelectedTrack}
+                  />
+                </div>
+                {userRole === "supervisor" && (
+                  <div className="md:order-3">
+                    <ShareScheduleButton
+                      events={filteredEvents}
+                      track={selectedTrack}
+                    />
+                  </div>
+                )}
+              </div>
+              <FullCalendar
+                ref={calendarRef}
+                plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                initialView="timeGridWeek"
+                selectable={userRole === "supervisor"}
+                editable={userRole === "supervisor" && currentView !== "dayGridMonth"}
+                select={handleOpenAddDialog}
+                events={filteredEvents.filter((event) => !event.allDay)}
+                eventClick={(clickInfo) =>
+                  openEditDialog(events.find((e) => e.id === clickInfo.event.id))
+                }
+                eventResize={handleEventResize}
+                eventContent={renderEventContent}
+                headerToolbar={{
+                  left: "prev,next today",
+                  center: "title",
+                  right: "dayGridMonth,timeGridWeek,timeGridDay",
+                }}
+                height="auto"
+                validRange={{ start: new Date() }}
+                timeZone="local"
+                nowIndicator={true}
+                now={new Date()}
+                slotMinTime="09:00:00"
+                slotMaxTime="24:00:00"
+                slotDuration="00:30:00"
+                snapDuration="00:30:00"
+                allDaySlot={false}
+                eventOverlap={false}
+                eventDurationEditable={true}
+                viewDidMount={(view) => {
+                  setCurrentView(view.view.type);
+                }}
+                dayHeaderContent={renderDayHeaderContent}
+              />
+            </Card>
+          )}
+        </>
+      )}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
           {" "}
@@ -585,6 +588,7 @@ const Schedule = () => {
         .fc-daygrid-event {
           height: auto !important; /* Adjust event height */
         }
+
       `}</style>
     </Layout>
   );
