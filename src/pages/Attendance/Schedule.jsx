@@ -48,6 +48,11 @@ const Schedule = () => {
   const [currentView, setCurrentView] = useState("timeGridWeek"); // Track current view
   const { toast } = useToast();
 
+  // dayselect states
+  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
+  const [selectedDay, setSelectedDay] = useState(null);
+  const [selectedBranch, setSelectedBranch] = useState(null);
+
   const tracks = [
     { id: "1", name: "Full Stack Web Development" },
     { id: "2", name: "Mobile App Development" },
@@ -263,9 +268,6 @@ const Schedule = () => {
       </div>
     );
   };
-
-  const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
-  const [selectedDay, setSelectedDay] = useState(null);
 
   const handleDayHeaderClick = (day) => {
     setSelectedDay(day);
@@ -512,6 +514,26 @@ const Schedule = () => {
             </p>
             <Select
               onValueChange={(value) => {
+                // put logic here to handle branch selection
+                // handleUpdateEvent
+                setSelectedBranch(value);
+                const eventsToUpdateBranch = events.filter((event) => {
+                  return new Date(event.start).toLocaleDateString() === selectedDay.toLocaleDateString();
+                })
+                setEvents((prev) =>
+                  prev.map((event) =>
+                    eventsToUpdateBranch.some((e) => e.id === event.id)
+                      ? {
+                          ...event,
+                          branch: value,
+                        }
+                      : event
+                  )
+                );
+                toast({
+                  title: "Success",
+                  description: `Branch ${branches.find(b => b.id === value)?.name} selected for ${new Date(selectedDay).toDateString()}`,
+                });
                 console.log(`Branch ${value} selected for ${selectedDay}`);
                 setIsBranchModalOpen(false);
               }}
