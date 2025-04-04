@@ -37,7 +37,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 // import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/use-toast";
-import { debug } from "console";
 
 const Schedule = () => {
   const { userRole } = useUser();
@@ -82,7 +81,6 @@ const Schedule = () => {
       return;
     }
     console.log("Creating event with properties:", newEvent); // Log event properties
-    console.debug("Creating event with properties:"); // Log event properties
     setEvents((prev) => [
       ...prev,
       {
@@ -238,7 +236,7 @@ const Schedule = () => {
             {eventInfo.event.extendedProps.instructor || "No Instructor"}
           </div>
         </div>
-        <div className="flex space-x-1">
+        <div className="flex space-x-1 absolute right-1 top-1 items-center">
           <button
             onClick={(e) => {
               toggleEventType(eventInfo.event.id);
@@ -345,6 +343,8 @@ const Schedule = () => {
           height="auto"
           validRange={{ start: new Date() }}
           timeZone="local"
+          nowIndicator={true}
+          now={new Date()}
           slotMinTime="09:00:00"
           slotMaxTime="24:00:00"
           slotDuration="00:30:00"
