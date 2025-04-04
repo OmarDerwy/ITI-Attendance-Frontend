@@ -238,7 +238,7 @@ const Schedule = () => {
         <div className="p-1 flex-col">
           <div className="whitespace-normal">{eventInfo.event.title}</div>
           <div className={`text-xs ${subtextColor}`}>
-            {eventInfo.event.extendedProps.instructor || "No Instructor"}
+            {eventInfo.event.extendedProps.instructor || ""}
           </div>
         </div>
         <div className="flex space-x-1 absolute right-1 top-1 items-center">
