@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 // import { useApi } from "@/hooks/useApi";
 import { useToast } from "@/hooks/use-toast";
+import { debug } from "console";
 
 const Schedule = () => {
   const { userRole } = useUser();
@@ -64,7 +65,8 @@ const Schedule = () => {
   const [newEvent, setNewEvent] = useState({
     title: "",
     isOnline: false,
-    branch: "1", // Default branch ID
+    branch: "1", 
+    instructor: "", 
   });
 
   const { data: defaultBranch } = { id: "1", name: "Main Branch" };
@@ -79,9 +81,8 @@ const Schedule = () => {
       alert("Title is required.");
       return;
     }
-
     console.log("Creating event with properties:", newEvent); // Log event properties
-
+    console.debug("Creating event with properties:"); // Log event properties
     setEvents((prev) => [
       ...prev,
       {
@@ -93,6 +94,7 @@ const Schedule = () => {
         isOnline: newEvent.isOnline,
         trackId: selectedTrack === "all" ? "1" : selectedTrack,
         branch: newEvent.isOnline ? null : newEvent.branch,
+        instructor: newEvent.instructor, // Include instructor
         backgroundColor: newEvent.isOnline
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
@@ -192,12 +194,14 @@ const Schedule = () => {
 
     setNewEvent({
       title: "",
+      instructor: "",
       isOnline: false,
       branch: defaultBranch?.id || "1",
       start: selectInfo.startStr,
       end: selectInfo.endStr,
     });
-    setDialogMode("add");
+ 
+         setDialogMode("add");
     setIsDialogOpen(true);
   };
 
@@ -221,26 +225,22 @@ const Schedule = () => {
 
     const bgColor = isOnline ? "bg-accent" : "bg-primary";
     const textColor = isOnline ? "text-accent-foreground" : "text-primary-foreground";
-    const subtextColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated subtext color
+    const subtextColor = isOnline ? "text-gray-700" : "text-white-500"; // Updated subtext color
     const branchColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated branch color
 
     return (
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
       >
-        {/* <div className="p-1 flex-col ">
-          <div className="flex-1 truncate mr-1">{eventInfo.event.title}</div> 
-        
-      </div> */}
         <div className="p-1 flex-col">
           <div className="whitespace-normal">{eventInfo.event.title}</div>
-          <div className={`text-xs ${subtextColor}`}>subtext</div> {/* Updated subtext */}
+          <div className={`text-xs ${subtextColor}`}>
+            {eventInfo.event.extendedProps.instructor || "No Instructor"}
+          </div>
         </div>
-        {/* <div className="flex-1 truncate mr-1">{eventInfo.event.title}</div> */}
         <div className="flex space-x-1">
           <button
             onClick={(e) => {
-              // e.stopPropagation();
               toggleEventType(eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80`}
@@ -250,7 +250,6 @@ const Schedule = () => {
           </button>
           <button
             onClick={(e) => {
-              // e.stopPropagation();
               handleDeleteEvent(eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80`}
@@ -392,6 +391,23 @@ const Schedule = () => {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="event-instructor" className="text-right">
+                Instructor
+              </Label>
+              <Input
+                id="event-instructor"
+                value={
+                  dialogMode === "add" ? newEvent.instructor : selectedEvent.instructor
+                }
+                onChange={(e) =>
+                  dialogMode === "add"
+                    ? setNewEvent({ ...newEvent, instructor: e.target.value })
+                    : updateSelectedEvent("instructor", e.target.value)
+                }
+                className="col-span-3 truncate" // Allow long text
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="event-online" className="text-right">
                 Online
               </Label>
@@ -460,6 +476,7 @@ const Schedule = () => {
                 />
               </div>
             </div>
+
           </div>
           <DialogFooter className="flex justify-between">
             {dialogMode === "edit" && (
