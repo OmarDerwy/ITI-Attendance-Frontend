@@ -6,38 +6,43 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { axiosBackendInstance } from '@/api/config';
-import { useUser } from '@/context/UserContext';
+import { axiosBackendInstance } from "@/api/config";
+import { useUser } from "@/context/UserContext";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const user = useUser(); 
+  const user = useUser();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    
+
     try {
-      const authResponse = await axiosBackendInstance.post('accounts/auth/jwt/create/', {
-        email,
-        password,
-      });
-      
+      const authResponse = await axiosBackendInstance.post(
+        "accounts/auth/jwt/create/",
+        {
+          email,
+          password,
+        }
+      );
+
       // Store tokens properly
       const { access, refresh } = authResponse.data;
-      localStorage.setItem('access', access);
-      localStorage.setItem('refresh', refresh);
-      
+      localStorage.setItem("access", access);
+      localStorage.setItem("refresh", refresh);
+
       // Get user info
-      const userResponse = await axiosBackendInstance.get('accounts/auth/users/me/');
+      const userResponse = await axiosBackendInstance.get(
+        "accounts/auth/users/me/"
+      );
       user.setUserRole(userResponse.data.groups[0]);
       user.setUserName(userResponse.data.email);
-      
-      navigate('/');
+
+      navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
       // Handle login errors here - show error message to user
@@ -52,15 +57,17 @@ const Login = () => {
         <div className="absolute -top-[40%] -left-[10%] w-[70%] h-[70%] bg-primary/5 rounded-full blur-3xl opacity-60" />
         <div className="absolute -bottom-[30%] -right-[10%] w-[60%] h-[60%] bg-primary/5 rounded-full blur-3xl opacity-60" />
       </div>
-      
+
       <div className="w-full max-w-md animate-in slide-up fade-in duration-500">
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center">
-            <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-primary text-primary-foreground">
-              <UserCheck className="h-6 w-6" />
+            <div className="flex items-center justify-center w-12 h-12 rounded-xl  text-primary-foreground">
+              <img src="/public/images/iti-logo.png" alt="logo" />
             </div>
           </div>
-          <h1 className="mt-6 text-3xl font-bold tracking-tight">Welcome back</h1>
+          <h1 className="mt-6 text-3xl font-bold tracking-tight">
+            Welcome back
+          </h1>
           <p className="mt-2 text-muted-foreground">
             Sign in to your account to continue
           </p>
@@ -96,8 +103,8 @@ const Login = () => {
                   <Label htmlFor="password" className="text-sm font-medium">
                     Password
                   </Label>
-                  <Link 
-                    to="/forget-password" 
+                  <Link
+                    to="/forget-password"
                     className="text-xs text-primary hover:underline"
                   >
                     Forgot password?
@@ -134,7 +141,7 @@ const Login = () => {
               <Button
                 type="submit"
                 className={cn(
-                  "w-full h-11 font-medium transition-all duration-200 bg-primary hover:bg-primary/90", 
+                  "w-full h-11 font-medium transition-all duration-200 bg-primary hover:bg-primary/90",
                   isLoading && "opacity-90"
                 )}
                 disabled={isLoading}
@@ -158,7 +165,10 @@ const Login = () => {
         <div className="mt-6 text-center">
           <p className="text-sm text-muted-foreground">
             Don't have an account?{" "}
-            <Link to="/signup" className="text-primary font-medium hover:underline">
+            <Link
+              to="/signup"
+              className="text-primary font-medium hover:underline"
+            >
               Create an account
             </Link>
           </p>
