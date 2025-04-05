@@ -369,6 +369,7 @@ const Schedule = () => {
                 slotMaxTime="24:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:30:00"
+                
                 allDaySlot={false}
                 eventOverlap={false}
                 eventDurationEditable={true}
@@ -377,6 +378,13 @@ const Schedule = () => {
                 }}
                 dayHeaderContent={renderDayHeaderContent}
                 eventDrop={handleEventDrop} // Add this prop to handle event dragging
+                selectAllow={function(selectInfo) {
+                  const start = selectInfo.start;
+                  const end = selectInfo.end;
+                
+                  // Allow only if start and end are on the same calendar day
+                  return start.toDateString() === end.toDateString();
+                }}
               />
             </Card>
           )}
