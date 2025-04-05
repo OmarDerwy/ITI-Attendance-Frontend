@@ -23,51 +23,18 @@ const Schedule = () => {
   const { userRole } = useUser();
   const [isLoading, setIsLoading] = useState(true); // Loading state
   const [isDialogOpen, setIsDialogOpen] = useState(false); // Unified dialog state
-  const [dialogMode, setDialogMode] = useState("add"); // "add" or "edit"
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState("timeGridWeek"); // Track current view
   const { toast } = useToast();
-  // dayselect states
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
-
-  const [tracks, setTracks] = useState([]); 
-  const [defaultBranch, setDefaultBranch] = useState(null); // State to store the default branch
-  useEffect(() => {
-    const fetchTracks = async () => {
-      try {
-        const response = await axiosBackendInstance.get("attendance/tracks/");
-        const fetchedTracks = response.data.results;
-        setTracks(fetchedTracks); 
-        if (fetchedTracks.length > 0) {
-          setSelectedTrack(fetchedTracks[0].id); // Set the first track as default
-          setDefaultBranch(fetchedTracks[0].default_branch); // Set the default branch for the first track
-        }
-        else {
-          // show in html no tracks available
-        }
-      } catch (error) {
-        console.error("Error fetching tracks:", error);
-      } finally {
-        setIsLoading(false); // Stop loading after data is fetched
-      }
-    };
-
-    fetchTracks();
-  }, []); 
-
-
-  // useEffect(() => {
-  //   if (defaultBranch) {
-  //     setNewEvent((prev) => ({ ...prev, branch: defaultBranch.id }));
-  //   }
-  // }, [defaultBranch]);
   const [selectedTrack, setSelectedTrack] = useState(""); 
+  const [tracks, setTracks] = useState([]); 
+  const [defaultBranch, setDefaultBranch] = useState({ name : "", id: "" }); 
   const filteredEvents = events.filter((event) => event.trackId === selectedTrack);
-
   const [newEvent, setNewEvent] = useState({
     title: "",
     isOnline: false,
@@ -75,26 +42,58 @@ const Schedule = () => {
     instructor: "", 
   });
 
-
-
-  const handleAddEvent = () => {
-    if (!newEvent.title) {
-      alert("Title is required.");
-      return;
+  const updateTrackAndBranch = (trackId, tracks) => {
+    const selectedTrackData = tracks.find((track) => track.id === trackId);
+    if (selectedTrackData) {
+      setSelectedTrack(trackId);
+      setDefaultBranch({
+        name: selectedTrackData.default_branch,
+        id: selectedTrackData.branch_id,
+      });
     }
-    console.log("Creating event with properties:", newEvent); // Log event properties
-    setEvents((prev) => [
-      ...prev,
-      {
+  };
+
+  const handleTrackChange = (trackId) => {
+    updateTrackAndBranch(trackId, tracks);
+  };
+
+  useEffect(() => {
+    const fetchTracks = async () => {
+      try {
+        const response = await axiosBackendInstance.get("attendance/tracks/");
+        const fetchedTracks = response.data.results;
+        setTracks(fetchedTracks);
+        if (fetchedTracks.length > 0) {
+          updateTrackAndBranch(fetchedTracks[0].id, fetchedTracks); 
+        }
+      } catch (error) {
+        console.error("Error fetching tracks:", error); //DEV DEBUG
+      } finally {
+        setIsLoading(false); 
+      }
+    };
+    fetchTracks();
+  }, []); 
+
+  const handleEventSubmit = () => {
+    debugger;
+
+    if (!selectedEvent) {
+      // Add mode
+      if (!newEvent.title) {
+        alert("Title is required.");
+        return;
+      }
+      console.log("Creating event with properties:", newEvent); //DEV DEBUG
+      const newEventData = {
         id: String(Date.now()),
         title: newEvent.title,
-        description: "Event Description",
+        instructor: newEvent.instructor,
         start: newEvent.start,
         end: newEvent.end,
         isOnline: newEvent.isOnline,
         trackId: selectedTrack === "all" ? "1" : selectedTrack,
         branch: newEvent.isOnline ? null : newEvent.branch,
-        instructor: newEvent.instructor, // Include instructor
         backgroundColor: newEvent.isOnline
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
@@ -104,24 +103,22 @@ const Schedule = () => {
         textColor: newEvent.isOnline
           ? "hsl(var(--accent-foreground))"
           : "hsl(var(--primary-foreground))",
-      },
-    ]);
+      };
+      setEvents((prev) => [...prev, newEventData]); // Update events state
+    } else {
+      // Edit mode
+      setEvents((prev) =>
+        prev.map((event) =>
+          event.id === selectedEvent.id ? selectedEvent : event
+        )
+      );
+      toast({
+        title: "Success",
+        description: "Event updated successfully.",
+      });
+    }
     setIsDialogOpen(false);
-  };
-
-  const handleUpdateEvent = () => {
-    if (!selectedEvent) return;
-
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === selectedEvent.id ? selectedEvent : event
-      )
-    );
-    setIsDialogOpen(false);
-    toast({
-      title: "Success",
-      description: "Event updated successfully.",
-    });
+    setSelectedEvent(null); // Reset selectedEvent after submission
   };
 
   const handleDeleteEvent = (eventId) => {
@@ -191,33 +188,29 @@ const Schedule = () => {
     if (new Date(selectInfo.start) < new Date()) {
       return; // Prevent selecting past dates
     }
-
+    debugger;
+    // Check for events on the same day and use their branch if available
+    const eventsOnSameDay = events.filter((event) => {
+      return new Date(event.start).toLocaleDateString() === selectInfo.start.toLocaleDateString();
+    });
     setNewEvent({
       title: "",
       instructor: "",
       isOnline: false,
-      branch: selectedTrack?.defaultBranch,
+      branch: eventsOnSameDay.length > 0 ? eventsOnSameDay[0].branch : defaultBranch, 
       start: selectInfo.startStr,
       end: selectInfo.endStr,
     });
- 
-         setDialogMode("add");
+
+    setSelectedEvent(null); // Ensure selectedEvent is null for add mode
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (event) => {
     setSelectedEvent(event);
-    setDialogMode("edit");
     setIsDialogOpen(true);
   };
 
-  const handleDialogSubmit = () => {
-    if (dialogMode === "add") {
-      handleAddEvent();
-    } else if (dialogMode === "edit") {
-      handleUpdateEvent();
-    }
-  };
   const handleDayHeaderClick = (day) => {
     setSelectedDay(day);
     setIsBranchModalOpen(true);
@@ -225,12 +218,10 @@ const Schedule = () => {
   const renderEventContent = (eventInfo) => {
     const event = events.find((e) => e.id === eventInfo.event.id);
     const isOnline = event ? event.isOnline : false;
-
     const bgColor = isOnline ? "bg-accent" : "bg-primary";
     const textColor = isOnline ? "text-accent-foreground" : "text-primary-foreground";
     const subtextColor = isOnline ? "text-gray-700" : "text-white-500"; // Updated subtext color
     const branchColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated branch color
-
     return (
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
@@ -263,7 +254,8 @@ const Schedule = () => {
         </div>
         <div className="absolute bottom-1 left-1 flex items-center text-xs ${branchColor}">
           <MapPin size={12} className="mr-1" />
-          <span>{event.branch ? branches.find(b => b.id === event.branch)?.name : "Default Branch"}</span>
+          {/* here */}
+          <span> {eventInfo.event.extendedProps.branch.name }</span>
         </div>
       </div>
     );
@@ -274,7 +266,7 @@ const Schedule = () => {
         <span>{headerInfo.text}</span>
         <button
           onClick={() => handleDayHeaderClick(headerInfo.date)}
-          className="text-gray-500 hover:text-gray-700"
+          className="text-red-500 hover:text-gray-700 m-3"
           title="Select a Custom branch"
         >
           <MapPin size={16} />
@@ -282,7 +274,6 @@ const Schedule = () => {
       </div>
     );
   };
-
   return (
     <Layout>
       {isLoading ? (
@@ -317,7 +308,7 @@ const Schedule = () => {
                   <TrackDropdown
                     tracks={tracks}
                     selectedTrack={selectedTrack}
-                    onTrackChange={setSelectedTrack}
+                    onTrackChange={handleTrackChange}
                   />
                 </div>
                 {userRole === "supervisor" && (
@@ -336,7 +327,7 @@ const Schedule = () => {
                 selectable={userRole === "supervisor"}
                 editable={userRole === "supervisor" && currentView !== "dayGridMonth"}
                 select={handleOpenAddDialog}
-                events={filteredEvents.filter((event) => !event.allDay)}
+                events={filteredEvents}
                 eventClick={(clickInfo) =>
                   openEditDialog(events.find((e) => e.id === clickInfo.event.id))
                 }
@@ -370,11 +361,9 @@ const Schedule = () => {
       )}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[600px]">
-          {" "}
-          {/* Increased modal width */}
           <DialogHeader>
             <DialogTitle>
-              {dialogMode === "add" ? "Add Event" : "Edit Event"}
+              {selectedEvent ? "Edit Event" : "Add Event"}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
@@ -385,14 +374,14 @@ const Schedule = () => {
               <Input
                 id="event-title"
                 value={
-                  dialogMode === "add" ? newEvent.title : selectedEvent.title
+                  selectedEvent ? selectedEvent.title : newEvent.title
                 }
                 onChange={(e) =>
-                  dialogMode === "add"
-                    ? setNewEvent({ ...newEvent, title: e.target.value })
-                    : updateSelectedEvent("title", e.target.value)
+                  selectedEvent
+                    ? updateSelectedEvent("title", e.target.value)
+                    : setNewEvent({ ...newEvent, title: e.target.value })
                 }
-                className="col-span-3 truncate" // Allow long text
+                className="col-span-3 truncate" 
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -402,12 +391,12 @@ const Schedule = () => {
               <Input
                 id="event-instructor"
                 value={
-                  dialogMode === "add" ? newEvent.instructor : selectedEvent.instructor
+                  selectedEvent ? selectedEvent.instructor : newEvent.instructor
                 }
                 onChange={(e) =>
-                  dialogMode === "add"
-                    ? setNewEvent({ ...newEvent, instructor: e.target.value })
-                    : updateSelectedEvent("instructor", e.target.value)
+                  selectedEvent
+                    ? updateSelectedEvent("instructor", e.target.value)
+                    : setNewEvent({ ...newEvent, instructor: e.target.value })
                 }
                 className="col-span-3 truncate" // Allow long text
               />
@@ -420,25 +409,25 @@ const Schedule = () => {
                 <Switch
                   id="event-online"
                   checked={
-                    dialogMode === "add"
-                      ? newEvent.isOnline
-                      : selectedEvent.isOnline
+                    selectedEvent
+                      ? selectedEvent.isOnline
+                      : newEvent.isOnline
                   }
                   onCheckedChange={(checked) =>
-                    dialogMode === "add"
-                      ? setNewEvent((prev) => ({
+                    selectedEvent
+                      ? updateSelectedEvent("isOnline", checked)
+                      : setNewEvent((prev) => ({
                           ...prev,
                           isOnline: checked,
                         }))
-                      : updateSelectedEvent("isOnline", checked)
                   }
                 />
                 <span>
-                  {dialogMode === "add"
-                    ? newEvent.isOnline
+                  {selectedEvent
+                    ? selectedEvent.isOnline
                       ? "Online"
                       : "Offline"
-                    : selectedEvent.isOnline
+                    : newEvent.isOnline
                     ? "Online"
                     : "Offline"}
                 </span>
@@ -449,34 +438,32 @@ const Schedule = () => {
                 Dates
               </Label>
               <div className="flex space-x-2 col-span-3">
-                {" "}
-                {/* Dates side by side */}
                 <Input
                   id="event-start"
                   type="datetime-local"
                   value={
-                    dialogMode === "add"
-                      ? newEvent.start?.slice(0, 16)
-                      : selectedEvent.start?.slice(0, 16)
+                    selectedEvent
+                      ? selectedEvent.start?.slice(0, 16)
+                      : newEvent.start?.slice(0, 16)
                   }
                   onChange={(e) =>
-                    dialogMode === "add"
-                      ? setNewEvent({ ...newEvent, start: e.target.value })
-                      : updateSelectedEvent("start", e.target.value)
+                    selectedEvent
+                      ? updateSelectedEvent("start", e.target.value)
+                      : setNewEvent({ ...newEvent, start: e.target.value })
                   }
                 />
                 <Input
                   id="event-end"
                   type="datetime-local"
                   value={
-                    dialogMode === "add"
-                      ? newEvent.end?.slice(0, 16)
-                      : selectedEvent.end?.slice(0, 16)
+                    selectedEvent
+                      ? selectedEvent.end?.slice(0, 16)
+                      : newEvent.end?.slice(0, 16)
                   }
                   onChange={(e) =>
-                    dialogMode === "add"
-                      ? setNewEvent({ ...newEvent, end: e.target.value })
-                      : updateSelectedEvent("end", e.target.value)
+                    selectedEvent
+                      ? updateSelectedEvent("end", e.target.value)
+                      : setNewEvent({ ...newEvent, end: e.target.value })
                   }
                 />
               </div>
@@ -484,7 +471,7 @@ const Schedule = () => {
 
           </div>
           <DialogFooter className="flex justify-between">
-            {dialogMode === "edit" && (
+            {selectedEvent && (
               <Button
                 variant="destructive"
                 onClick={() =>
@@ -498,8 +485,8 @@ const Schedule = () => {
               <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button onClick={handleDialogSubmit}>
-                {dialogMode === "add" ? "Add Event" : "Update Event"}
+              <Button onClick={handleEventSubmit}>
+                {selectedEvent ? "Update Event" : "Add Event"}
               </Button>
             </div>
           </DialogFooter>
@@ -516,29 +503,37 @@ const Schedule = () => {
               {selectedDay ? new Date(selectedDay).toDateString() : ""}
             </p>
             <Select
-              onValueChange={(value) => {
+              onValueChange={(value ) => {
                 // put logic here to handle branch selection
                 // handleUpdateEvent
-                setSelectedBranch(value);
+                 const selectedBranchData = branches.find((branch) => branch.id === value);
+                setSelectedBranch({
+                  id: selectedBranchData.id,
+                  name: selectedBranchData.name,
+                });
+                // setSelectedBranch(value);
                 const eventsToUpdateBranch = events.filter((event) => {
                   return new Date(event.start).toLocaleDateString() === selectedDay.toLocaleDateString();
                 })
+
+                console.log(`Branch ${value} selected for ${selectedDay}`);
+
                 setEvents((prev) =>
                   prev.map((event) =>
                     eventsToUpdateBranch.some((e) => e.id === event.id)
                       ? {
                           ...event,
-                          branch: value,
+                          branch: selectedBranchData,
                         }
                       : event
                   )
                 );
                 toast({
                   title: "Success",
-                  description: `Branch ${branches.find(b => b.id === value)?.name} selected for ${new Date(selectedDay).toDateString()}`,
+                  description: `Branch ${selectedBranchData.name} selected for ${new Date(selectedDay).toDateString()}`,
                 });
-                console.log(`Branch ${value} selected for ${selectedDay}`);
                 setIsBranchModalOpen(false);
+                setSelectedBranch(null); // Reset selected branch after selection
               }}
             >
               <SelectTrigger>

@@ -9,7 +9,7 @@ const TrackDropdown = ({ tracks, selectedTrack, onTrackChange }) => {
       <SelectContent>
         {tracks.map(track => (
           <SelectItem key={track.id} value={track.id}>
-            {track.name}
+            {track.name} - {track.intake} - {track.program_type_display} - {track.start_date} - {track.default_branch}
           </SelectItem>
         ))}
       </SelectContent>
