@@ -8,7 +8,6 @@ export const axiosBackendInstance = axios.create({
   },
 });
 
-// Add a request interceptor to include the token
 axiosBackendInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access');
@@ -29,7 +28,6 @@ export const setupAxiosInterceptors = (onNavigateToLogin: () => void) => {
     async (error) => {
       const originalRequest = error.config;
 
-      // If the error is due to an expired token and we haven't tried refreshing yet
       if (error.response?.status === 401 && !originalRequest._retry) {
         originalRequest._retry = true;
 
