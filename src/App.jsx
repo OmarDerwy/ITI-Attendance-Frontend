@@ -26,6 +26,8 @@ import Activate from "./pages/Auth/Activate";
 import BranchManagement from "./pages/Management/BranchManagement";
 import BranchForm from "./pages/Management/BranchForm";
 import TrackForm from './pages/Management/TrackForm';
+import AttendanceStatus from "./pages/Attendance/AttendanceStatus";
+import LeaveRequestCenter from '@/pages/Attendance/LeaveRequestCenter';
 
 
 const queryClient = new QueryClient();
@@ -60,6 +62,9 @@ const App = () => (
             <Route path="/tracks" element={<TrackManagement />} />
             <Route path="/tracks/add" element={<TrackForm />} />
             <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
+            <Route path="/attendance-status/:date" element={<AttendanceStatus/>}/> 
+            <Route path="/attendance-status" element={<AttendanceStatus/>}/>
+            <Route path="/leave-request-center" element={<LeaveRequestCenter/>}/>
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

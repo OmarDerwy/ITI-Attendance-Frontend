@@ -36,7 +36,7 @@ const Login = () => {
       const userResponse = await axiosBackendInstance.get('accounts/auth/users/me/');
       user.setUserRole(userResponse.data.groups[0]);
       user.setUserName(userResponse.data.email);
-      
+      user.setUserId(userResponse.data.id);
       navigate('/');
     } catch (error) {
       console.error("Login failed:", error);

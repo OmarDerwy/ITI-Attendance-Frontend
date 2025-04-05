@@ -8,6 +8,7 @@ export const UserProvider = ({ children }) => {
   const [userRole, setUserRole] = useState("");
   const [userName, setUserName] = useState("");
   const [userItems, setUserItems] = useState([]);
+  const [userId, setUserId] = useState(null);
   const [userProfilePic, setUserProfilePic] = useState("/placeholder.svg");
   const [userAnnouncements, setUserAnnouncements] = useState([]);
   const [readAnnouncements, setReadAnnouncements] = useState([]);
@@ -52,7 +53,8 @@ export const UserProvider = ({ children }) => {
           const response = await axiosBackendInstance.get('accounts/auth/users/me/');
           const role = response.data.groups[0];
           const email = response.data.email;
-          
+          const userId = response.data.id;
+          setUserId(userId);
           setUserRole(role);
           setUserName(email);
         } catch (error) {
@@ -74,12 +76,15 @@ export const UserProvider = ({ children }) => {
       localStorage.removeItem('refresh');
       setUserRole(null);
       setUserName(null);
+      setUserId(null);
     };
   
 
   return (
     <UserContext.Provider 
       value={{ 
+        userId,
+        setUserId,
         userRole, 
         setUserRole, 
         userName, 
