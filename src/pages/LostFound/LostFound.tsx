@@ -52,12 +52,11 @@ const LostFound = () => {
       setError(null);
 
       try {
-        // Fetch lost items
         const lostItemsResponse = await axios.get(
           "http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/",
           {
             headers: {
-              Authorization: `Bearer ${localStorage.getItem("access")}`, // Include authorization token if required
+              Authorization: `Bearer ${localStorage.getItem("access")}`, 
             },
           }
         );
