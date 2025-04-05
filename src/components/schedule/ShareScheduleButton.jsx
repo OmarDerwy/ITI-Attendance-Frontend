@@ -1,29 +1,32 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Share } from "lucide-react";
 
 const ShareScheduleButton = ({ events }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [shareDates, setShareDates] = useState({ from: "", to: "" });
 
   const handleShareSchedule = async () => {
-    if (!shareDates.from || !shareDates.to) {
-      toast.error("Please select both from and to dates");
-      return;
-    }
+    const newEvents = events.filter((event) => event.id.startsWith("react"));
+    const updatedEvents = events.filter((event) => !event.id.startsWith("react"));
 
     try {
-      const response = await fetch("/api/share-schedule", {
+      // reset newEvents IDs to null
+      newEvents.forEach((event) => {
+        event.id = null;
+      });
+      const response = await fetch("/attendance/schedule/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ events, from: shareDates.from, to: shareDates.to }),
+        body: JSON.stringify({
+          newEvents,
+          updatedEvents,
+        }),
       });
 
       if (response.ok) {
-        toast.success(`Schedule shared with students from ${shareDates.from} to ${shareDates.to}`);
+        toast.success(`Schedule shared successfully.`);
         setIsDialogOpen(false);
       } else {
         toast.error("Failed to share schedule. Please try again.");
@@ -33,6 +36,38 @@ const ShareScheduleButton = ({ events }) => {
     }
   };
 
+  const renderTable = (events, title) => (
+    <div>
+      <h3 className="font-bold mb-2">{title}</h3>
+      <div className="overflow-x-auto max-h-60 border rounded">
+        <table className="table-auto w-full text-left text-sm">
+          <thead className="bg-gray-100 sticky top-0">
+            <tr>
+              <th className="px-4 py-2">Title</th>
+              <th className="px-4 py-2">Instructor</th>
+              <th className="px-4 py-2">Online</th>
+              <th className="px-4 py-2">Start</th>
+              <th className="px-4 py-2">End</th>
+              <th className="px-4 py-2">Branch</th>
+            </tr>
+          </thead>
+          <tbody>
+            {events.map((event) => (
+              <tr key={event.id || event.title} className="border-t">
+                <td className="px-4 py-2">{event.title}</td>
+                <td className="px-4 py-2">{event.instructor || "N/A"}</td>
+                <td className="px-4 py-2">{event.isOnline ? "Yes" : "No"}</td>
+                <td className="px-4 py-2">{event.start || "N/A"}</td>
+                <td className="px-4 py-2">{event.end || "N/A"}</td>
+                <td className="px-4 py-2">{event.branch?.name || "N/A"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Button 
@@ -40,47 +75,25 @@ const ShareScheduleButton = ({ events }) => {
         className="border-red-500 text-red-500 hover:bg-red-500 hover:text-white"
         onClick={() => setIsDialogOpen(true)}
       >
-        <Share className="h-4 w-4 mr-2" /> Share with students
+        <Share className="h-4 w-4 mr-2" /> Save Changes
       </Button>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-[900px] w-full max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Share Schedule with Students</DialogTitle>
+            <DialogTitle>Review your changes before you submit</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="from-date" className="text-right">
-                From Date
-              </Label>
-              <input
-                id="from-date"
-                type="date"
-                className="col-span-3 p-2 border rounded"
-                value={shareDates.from}
-                onChange={(e) => setShareDates({ ...shareDates, from: e.target.value })}
-                required
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="to-date" className="text-right">
-                To Date
-              </Label>
-              <input
-                id="to-date"
-                type="date"
-                className="col-span-3 p-2 border rounded"
-                value={shareDates.to}
-                onChange={(e) => setShareDates({ ...shareDates, to: e.target.value })}
-                required
-              />
-            </div>
+            {events.filter((event) => event.id.startsWith("react")).length > 0 &&
+              renderTable(events.filter((event) => event.id.startsWith("react")), "New Events")}
+            {events.filter((event) => !event.id.startsWith("react")).length > 0 &&
+              renderTable(events.filter((event) => !event.id.startsWith("react")), "Updated Events")}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={handleShareSchedule}>
-              Share
+              Submit
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -37,7 +37,8 @@ const Schedule = () => {
   const [defaultBranch, setDefaultBranch] = useState({ name : "", id: "" }); 
   const filteredEvents = events.filter((event) => event.trackId === selectedTrack);
   const [newEvent, setNewEvent] = useState({
-    id: uuidv4(), 
+    id: "react" + uuidv4(), 
+
     title: "",
     isOnline: false,
     branch: defaultBranch, 
@@ -88,7 +89,8 @@ const Schedule = () => {
       }
       console.log("Creating event with properties:", newEvent); //DEV DEBUG
       const newEventData = {
-        id: uuidv4(), // Use uuid to generate a unique ID
+        id: "react" + uuidv4(), 
+
         title: newEvent.title,
         instructor: newEvent.instructor,
         start: newEvent.start,
@@ -125,7 +127,7 @@ const Schedule = () => {
 
   const handleDeleteEvent = (eventId) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
-      setEvents((prev) => prev.filter((event) => event.id !== eventId));
+      setEvents((prev) =>         prev.filter((event) =>           event.id !== eventId)      );
       setIsDialogOpen(false);
     }
   };
@@ -196,7 +198,8 @@ const Schedule = () => {
       return new Date(event.start).toLocaleDateString() === selectInfo.start.toLocaleDateString();
     });
     setNewEvent({
-      id: uuidv4(), // Ensure a new unique ID is generated for each new event
+      id: "react" + uuidv4(), 
+      id: null, // Ensure no ID for new events
       title: "",
       instructor: "",
       isOnline: false,
@@ -336,7 +339,9 @@ const Schedule = () => {
                 {userRole === "supervisor" && (
                   <div className="md:order-3">
                     <ShareScheduleButton
-                      events={filteredEvents}
+                      events={[
+                        ...events
+                      ]}
                       track={selectedTrack}
                     />
                   </div>
