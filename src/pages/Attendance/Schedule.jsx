@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { axiosBackendInstance } from '@/api/config';
+import { v4 as uuidv4 } from "uuid"; 
 const Schedule = () => {
   const { userRole } = useUser();
   const [isLoading, setIsLoading] = useState(true); // Loading state
@@ -36,6 +37,7 @@ const Schedule = () => {
   const [defaultBranch, setDefaultBranch] = useState({ name : "", id: "" }); 
   const filteredEvents = events.filter((event) => event.trackId === selectedTrack);
   const [newEvent, setNewEvent] = useState({
+    id: uuidv4(), 
     title: "",
     isOnline: false,
     branch: defaultBranch, 
@@ -86,7 +88,7 @@ const Schedule = () => {
       }
       console.log("Creating event with properties:", newEvent); //DEV DEBUG
       const newEventData = {
-        id: String(Date.now()),
+        id: uuidv4(), // Use uuid to generate a unique ID
         title: newEvent.title,
         instructor: newEvent.instructor,
         start: newEvent.start,
@@ -194,6 +196,7 @@ const Schedule = () => {
       return new Date(event.start).toLocaleDateString() === selectInfo.start.toLocaleDateString();
     });
     setNewEvent({
+      id: uuidv4(), // Ensure a new unique ID is generated for each new event
       title: "",
       instructor: "",
       isOnline: false,
@@ -274,6 +277,25 @@ const Schedule = () => {
       </div>
     );
   };
+
+  const handleEventDrop = (dropInfo) => {
+    setEvents((prev) =>
+      prev.map((event) =>
+        event.id === dropInfo.event.id
+          ? {
+              ...event,
+              start: dropInfo.event.startStr,
+              end: dropInfo.event.endStr,
+            }
+          : event
+      )
+    );
+    toast({
+      title: "Success",
+      description: "Event moved successfully.",
+    });
+  };
+
   return (
     <Layout>
       {isLoading ? (
@@ -354,6 +376,7 @@ const Schedule = () => {
                   setCurrentView(view.view.type);
                 }}
                 dayHeaderContent={renderDayHeaderContent}
+                eventDrop={handleEventDrop} // Add this prop to handle event dragging
               />
             </Card>
           )}
@@ -506,12 +529,11 @@ const Schedule = () => {
               onValueChange={(value ) => {
                 // put logic here to handle branch selection
                 // handleUpdateEvent
-                 const selectedBranchData = branches.find((branch) => branch.id === value);
+                const selectedBranchData = branches.find((branch) => branch.id === value);
                 setSelectedBranch({
                   id: selectedBranchData.id,
                   name: selectedBranchData.name,
                 });
-                // setSelectedBranch(value);
                 const eventsToUpdateBranch = events.filter((event) => {
                   return new Date(event.start).toLocaleDateString() === selectedDay.toLocaleDateString();
                 })
@@ -533,7 +555,6 @@ const Schedule = () => {
                   description: `Branch ${selectedBranchData.name} selected for ${new Date(selectedDay).toDateString()}`,
                 });
                 setIsBranchModalOpen(false);
-                setSelectedBranch(null); // Reset selected branch after selection
               }}
             >
               <SelectTrigger>
