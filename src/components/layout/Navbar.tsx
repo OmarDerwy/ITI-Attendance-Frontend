@@ -1,18 +1,19 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bell,
   Calendar,
-  Search,
   User,
   ChevronDown,
   X,
   Menu as MenuIcon,
-  Flag,
+  Search,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 import { Badge } from "@/components/ui/badge";
+import useWebSocket from "react-use-websocket";
+import { getUserNotifications, markNotificationAsRead, markAllNotificationsAsRead } from "@/api/notifications";
+import { setupAxiosInterceptors } from "@/api/config";
 
 type NavbarProps = {
   toggleSidebar: () => void;
@@ -22,17 +23,87 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const { userRole, userName, setUserRole } = useUser();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<
+    { id: number; message: string; created_at: string; is_read: boolean }[]
+  >([]);
+  const [hasMoreNotifications, setHasMoreNotifications] = useState(false);
 
-  const notifications = [
-    // { id: 1, text: "Check-in reminder for today's class", time: "10 min ago" },
-    // { id: 2, text: "New schedule for next week is available", time: "2 hours ago" },
-    // { id: 3, text: "Your lost item has been matched!", time: "1 day ago" },
-  ];
+  const token = localStorage.getItem("access");
+  const navigate = useNavigate();
 
-  // For demonstration purposes, allows changing roles in the UI
+  useEffect(() => {
+    setupAxiosInterceptors(() => navigate('/login'));
+  }, [navigate]);
+
+  const SOCKET_URL = `ws://127.0.0.1:8000/ws/notifications/?token=${token}`;
+  const { lastMessage } = useWebSocket(SOCKET_URL, {
+    onOpen: () => console.log("WebSocket Connected"),
+    onClose: () => console.log("WebSocket Disconnected"),
+    onError: (error) => console.error("WebSocket Error:", error),
+    shouldReconnect: () => true,
+  });
+
+  // Fetch notifications from the API
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        const data = await getUserNotifications();
+        setNotifications(data);
+        setHasMoreNotifications(data.length > 0); // Example logic for "See More"
+      } catch (error) {
+        console.error("Failed to fetch notifications:", error);
+      }
+    };
+
+    fetchNotifications();
+  }, []);
+
+  // Handle WebSocket messages
+  useEffect(() => {
+    if (lastMessage !== null) {
+      try {
+        const data = JSON.parse(lastMessage.data);
+        const newNotification = {
+          id: Date.now(),
+          message: data.message || "New notification",
+          created_at: new Date().toLocaleTimeString([], {
+            hour: "2-digit",
+            minute: "2-digit",
+          }),
+          is_read: false, // New notifications are unread by default
+        };
+
+        setNotifications((prev) => [newNotification, ...prev]);
+      } catch (err) {
+        console.error("Invalid message received:", lastMessage.data);
+      }
+    }
+  }, [lastMessage]);
+
+  // Calculate the number of unread notifications
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
   const handleRoleChange = (role: "student" | "supervisor" | "admin") => {
     setUserRole(role);
     setProfileOpen(false);
+  };
+
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === id ? { ...notification, is_read: true } : notification
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
+  };
+
+  const fetchMoreNotifications = async () => {
+    // Example logic for fetching more notifications
+    console.log("Fetching more notifications...");
   };
 
   return (
@@ -57,7 +128,11 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             className="relative rounded-full p-1.5 hover:bg-muted transition-colors"
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary"></span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-white">
+                {unreadCount}
+              </span>
+            )}
           </button>
 
           {notificationsOpen && (
@@ -72,25 +147,36 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                 </button>
               </div>
               <div className="max-h-[50vh] overflow-y-auto">
-                {notifications.map((notification) => (
+                {notifications.map((notification, index) => (
                   <div
                     key={notification.id}
-                    className="border-b p-3 hover:bg-muted/50 cursor-pointer"
+                    className={`border-b p-3 cursor-pointer ${
+                      notification.is_read
+                        ? "bg-white hover:bg-muted/50" // read notifications
+                        : "bg-gray-100 hover:bg-gray-200 font-bold" // unread notifications
+                    }`}
+                    onClick={() => handleMarkAsRead(notification.id)}
                   >
-                    <p className="text-sm">{notification.text}</p>
+                    <p className="text-sm">{notification.message}</p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      {notification.time}
+                      {notification.created_at}
                     </p>
                   </div>
                 ))}
-              </div>
-              <div className="p-2 text-center">
-                {/* <a href="#" className="text-xs text-primary hover:underline">
-                  View all notifications
-                </a> */}
+
+                {/* "See More" Button */}
+                {notifications.length >= 10 && (
+                  <button
+                    onClick={fetchMoreNotifications}
+                    className="w-full p-2 text-sm text-primary hover:underline"
+                  >
+                    See More
+                  </button>
+                )}
               </div>
             </div>
           )}
+          
 
           <Link
             to="/schedule"
@@ -117,16 +203,12 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
               <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-md border bg-card shadow-lg animate-in fade-in slide-down">
                 <div className="border-b p-3">
                   <p className="font-medium">{userName}</p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {userRole}
-                  </p>
+                  <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
                 </div>
                 <div className="p-1">
                   {/* Development-only role switcher */}
                   {/* <div className="border-b p-2">
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Dev: Switch Role
-                    </p>
+                    <p className="text-xs text-muted-foreground mb-2">Dev: Switch Role</p>
                     <div className="flex flex-col gap-1">
                       <button
                         onClick={() => handleRoleChange("student")}
