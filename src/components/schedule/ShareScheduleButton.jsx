@@ -3,36 +3,38 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Share } from "lucide-react";
+import { axiosBackendInstance } from '@/api/config';
 
 const ShareScheduleButton = ({ events }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const handleShareSchedule = async () => {
-    const newEvents = events.filter((event) => event.id.startsWith("react"));
-    const updatedEvents = events.filter((event) => !event.id.startsWith("react"));
+   
+    const newEvents = events.filter((event) => event.id?.startsWith("react"));
+    const updatedEvents = events.filter((event) => !event.id?.startsWith("react"));
 
     try {
       // reset newEvents IDs to null
       newEvents.forEach((event) => {
         event.id = null;
       });
-      const response = await fetch("/attendance/schedule/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          newEvents,
-          updatedEvents,
-        }),
-      });
 
+      const combinedEvents = [...newEvents, ...updatedEvents];
+      console.log(JSON.stringify({
+        combinedEvents,
+      }));
+      const response = await axiosBackendInstance.post("/attendance/sessions/bulk-create-or-update/", {
+        combinedEvents,
+      });
+     
       if (response.ok) {
         toast.success(`Schedule shared successfully.`);
         setIsDialogOpen(false);
       } else {
-        toast.error("Failed to share schedule. Please try again.");
+        toast.error("Failed to submit schedule. Please try again.");
       }
     } catch (error) {
-      toast.error("An error occurred while sharing the schedule.");
+      toast.error("An error occurred while submitting the schedule.");
     }
   };
 
@@ -84,9 +86,9 @@ const ShareScheduleButton = ({ events }) => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {events.filter((event) => event.id.startsWith("react")).length > 0 &&
-              renderTable(events.filter((event) => event.id.startsWith("react")), "New Events")}
+              renderTable(events.filter((event) => event?.id?.startsWith("react")), "New Events")}
             {events.filter((event) => !event.id.startsWith("react")).length > 0 &&
-              renderTable(events.filter((event) => !event.id.startsWith("react")), "Updated Events")}
+              renderTable(events.filter((event) => !event?.id?.startsWith("react")), "Updated Events")}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>

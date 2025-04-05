@@ -38,7 +38,6 @@ const Schedule = () => {
   const filteredEvents = events.filter((event) => event.trackId === selectedTrack);
   const [newEvent, setNewEvent] = useState({
     id: "react" + uuidv4(), 
-
     title: "",
     isOnline: false,
     branch: defaultBranch, 
@@ -79,7 +78,6 @@ const Schedule = () => {
   }, []); 
 
   const handleEventSubmit = () => {
-    debugger;
 
     if (!selectedEvent) {
       // Add mode
@@ -192,7 +190,6 @@ const Schedule = () => {
     if (new Date(selectInfo.start) < new Date()) {
       return; // Prevent selecting past dates
     }
-    debugger;
     // Check for events on the same day and use their branch if available
     const eventsOnSameDay = events.filter((event) => {
       return new Date(event.start).toLocaleDateString() === selectInfo.start.toLocaleDateString();
@@ -206,6 +203,7 @@ const Schedule = () => {
       branch: eventsOnSameDay.length > 0 ? eventsOnSameDay[0].branch : defaultBranch, 
       start: selectInfo.startStr,
       end: selectInfo.endStr,
+      schedule_date: selectInfo.startStr.slice(0, 10),
     });
 
     setSelectedEvent(null); // Ensure selectedEvent is null for add mode
