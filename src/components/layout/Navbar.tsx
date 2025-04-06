@@ -44,16 +44,17 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   });
 
   // Fetch notifications from the API
+  const fetchNotifications = async () => {
+    try {
+      const data = await getUserNotifications();
+      setNotifications(data);
+      setHasMoreNotifications(data.length > 0); // Example logic for "See More"
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
   useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        const data = await getUserNotifications();
-        setNotifications(data);
-        setHasMoreNotifications(data.length > 0); // Example logic for "See More"
-      } catch (error) {
-        console.error("Failed to fetch notifications:", error);
-      }
-    };
+    
 
     fetchNotifications();
   }, []);
@@ -63,17 +64,20 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     if (lastMessage !== null) {
       try {
         const data = JSON.parse(lastMessage.data);
+        console.log("WebSocket message received:", data.body);
+        
         const newNotification = {
           id: Date.now(),
-          message: data.message || "New notification",
-          created_at: new Date().toLocaleTimeString([], {
-            hour: "2-digit",
-            minute: "2-digit",
+          message: data.body || "New notification",
+          created_at: new Date().toLocaleString("en-US", {
+            timeZone: "Africa/Cairo", // UTC+2 timezone
+            hour12: false, // Use 24-hour format
           }),
           is_read: false, // New notifications are unread by default
         };
 
         setNotifications((prev) => [newNotification, ...prev]);
+        fetchNotifications();
       } catch (err) {
         console.error("Invalid message received:", lastMessage.data);
       }
@@ -147,33 +151,44 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                 </button>
               </div>
               <div className="max-h-[50vh] overflow-y-auto">
-                {notifications.map((notification, index) => (
-                  <div
-                    key={notification.id}
-                    className={`border-b p-3 cursor-pointer ${
-                      notification.is_read
-                        ? "bg-white hover:bg-muted/50" // read notifications
-                        : "bg-gray-100 hover:bg-gray-200 font-bold" // unread notifications
-                    }`}
-                    onClick={() => handleMarkAsRead(notification.id)}
-                  >
-                    <p className="text-sm">{notification.message}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {notification.created_at}
-                    </p>
-                  </div>
-                ))}
-
-                {/* "See More" Button */}
-                {notifications.length >= 10 && (
-                  <button
-                    onClick={fetchMoreNotifications}
-                    className="w-full p-2 text-sm text-primary hover:underline"
-                  >
-                    See More
-                  </button>
-                )}
+                {notifications
+                  .slice()
+                  .reverse() // Reverse the array to show the latest notifications first
+                  .map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`border-b p-3 cursor-pointer ${
+                        notification.is_read
+                          ? "bg-white hover:bg-muted/50" // read notifications
+                          : "bg-gray-100 hover:bg-gray-200 font-bold" // unread notifications
+                      }`}
+                      onClick={() => handleMarkAsRead(notification.id)}
+                    >
+                      <p className="text-sm">{notification.message}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(notification.created_at).toLocaleString("en-GB", {
+                          timeZone: "Africa/Cairo", // Cairo, Egypt timezone
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hour12: true, // Use 12-hour format with AM/PM
+                        })}
+                      </p>
+                    </div>
+                  ))}
               </div>
+
+              {/* "See More" Button */}
+              {notifications.length >= 10 && (
+                <button
+                  onClick={fetchMoreNotifications}
+                  className="w-full p-2 text-sm text-primary hover:underline"
+                >
+                  See More
+                </button>
+              )}
             </div>
           )}
           

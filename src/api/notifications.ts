@@ -14,7 +14,7 @@ export const getUserNotifications = async () => {
 export const markNotificationAsRead = async (notificationId: number) => {
   try {
     const response = await axiosBackendInstance.post(
-      `lost-and-found/notifications/${notificationId}/mark-as-read/`
+      `lost-and-found/notifications/${notificationId}/mark_as_read/`
     );
     console.log('Mark as read response:', response.data);
     return response.data;
@@ -27,7 +27,7 @@ export const markNotificationAsRead = async (notificationId: number) => {
 export const markAllNotificationsAsRead = async () => {
   try {
     const response = await axiosBackendInstance.post(
-      'lost-and-found/notifications/mark-all-as-read/'
+      'lost-and-found/notifications/mark_all_as_read/'
     );
     console.log('Mark all as read response:', response.data);
     return response.data;
