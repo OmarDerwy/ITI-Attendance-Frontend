@@ -58,6 +58,7 @@ const SessionsBulkCreateUpdate = ({ events, onSaveSuccess }) => {
         setIsDialogOpen(false);
         
         // Call the onSaveSuccess callback to notify parent component
+        // This will reset the isModified flag on all events
         if (onSaveSuccess) {
           onSaveSuccess();
         }
