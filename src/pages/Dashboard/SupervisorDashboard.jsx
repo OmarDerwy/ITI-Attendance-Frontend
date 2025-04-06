@@ -65,7 +65,7 @@ const SupervisorDashboard = () => {
                 <Check className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-700">87.5%</div>
+            <div className="text-2xl font-bold text-emerald-700">87.5%</div> {/* get the attendance percentage */}
             <CardDescription>Today's Attendance</CardDescription>
           </CardContent>
         </Card>

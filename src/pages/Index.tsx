@@ -38,13 +38,10 @@ const Index = () => {
 
   return (
     <Layout>
-      {/* {userRole === "admin" && <AdminDashboard />}
-      {userRole === "supervisor" && <SupervisorDashboard />} 
-      {userRole === "student" && <StudentDashboard />}  */}
-
       {userRole === "admin" && <AdminDashboard />}
-      {userRole === "supervisor" && <SupervisorDashboard />}
-      {userRole === "student" && <StudentDashboard />}
+      {userRole === "supervisor" && <SupervisorDashboard />} 
+      {userRole === "student" && <StudentDashboard />} 
+
     </Layout>
   );
 };
