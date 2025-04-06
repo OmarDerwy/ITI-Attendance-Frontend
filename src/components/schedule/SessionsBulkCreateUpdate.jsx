@@ -13,7 +13,7 @@ import { axiosBackendInstance } from "@/api/config";
 
 const SessionsBulkCreateUpdate = ({ events }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
+  debugger;
   const handleSaveChanges = async () => {
     const newEvents = events.filter((event) =>
       String(event.id)?.startsWith("react")
@@ -51,7 +51,7 @@ const SessionsBulkCreateUpdate = ({ events }) => {
         
         let successMessage = "Schedule saved successfully.";
         if (createdCount > 0 || updatedCount > 0) {
-          successMessage = `Schedule saved: ${createdCount} session(s) created, ${updatedCount} session(s) updated.`;
+          successMessage = `${createdCount} session(s) created, ${updatedCount} session(s) updated.`;
         }
         
         toast.success(successMessage);

@@ -122,7 +122,6 @@ const Schedule = () => {
           "attendance/branches/"
         );
         setFetchedBranches(branchesResponse.data.results);
-        console.log("Fetched branches:", branchesResponse.data.results); // DEV DEBUG
 
         // Fetch tracks after branches
         const tracksResponse = await axiosBackendInstance.get("attendance/tracks/");
@@ -190,10 +189,6 @@ const Schedule = () => {
             : event
         )
       );
-      toast({
-        title: "Success",
-        description: "Event updated successfully.",
-      });
     }
     setIsDialogOpen(false);
     setSelectedEvent(null); // Reset selectedEvent after submission
@@ -215,7 +210,7 @@ const Schedule = () => {
   const handleEventResize = (resizeInfo) => {
     setEvents((prev) =>
       prev.map((event) =>
-        event.id === resizeInfo.event.id
+        String(event.id) === String(resizeInfo.event.id)
           ? {
               ...event,
               start: resizeInfo.event.startStr,
@@ -247,9 +242,8 @@ const Schedule = () => {
   const toggleEventType = (e, eventId) => {
     e.stopPropagation();
     setEvents((prev) => {
-      const eventIdStr = String(eventId);
       const updatedEvents = prev.map((event) => {
-        if (String(event.id) === eventIdStr) {
+        if (String(event.id) === String(eventId)) {
           const currentIsOnline = event.isOnline;
           const isOnline = !currentIsOnline;
           return {
@@ -272,7 +266,20 @@ const Schedule = () => {
       return updatedEvents;
     });
   };
-
+  const handleEventDrop = (dropInfo) => {
+    setEvents((prev) =>
+      prev.map((event) =>
+        String(event.id) === String(dropInfo.event.id)
+          ? {
+              ...event,
+              start: dropInfo.event.startStr,
+              end: dropInfo.event.endStr,
+              isModified: true, 
+            }
+          : event
+      )
+    );
+  };
   const handleOpenAddDialog = (selectInfo) => {
     if (currentView === "dayGridMonth") {
       return;
@@ -378,21 +385,6 @@ const Schedule = () => {
     );
   };
 
-  const handleEventDrop = (dropInfo) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === dropInfo.event.id
-          ? {
-              ...event,
-              start: dropInfo.event.startStr,
-              end: dropInfo.event.endStr,
-              isModified: true, // Mark as modified
-            }
-          : event
-      )
-    );
-  };
-
   return (
     <Layout>
       {isLoading ? (
@@ -469,7 +461,7 @@ const Schedule = () => {
                 nowIndicator={true}
                 now={new Date()}
                 slotMinTime="09:00:00"
-                slotMaxTime="24:00:00"
+                slotMaxTime="19:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:30:00"
                 allDaySlot={false}
