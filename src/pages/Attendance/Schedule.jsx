@@ -127,6 +127,11 @@ const Schedule = () => {
   // Mark changes as saved
   const handleChangesSaved = useCallback(() => {
     setHasUnsavedChanges(false);
+    // Reset isModified flag on all events
+    setEvents(prevEvents => prevEvents.map(event => ({
+      ...event,
+      isModified: false
+    })));
   }, []);
 
   const updateTrackAndBranch = (trackId, tracks) => {
@@ -245,8 +250,8 @@ const Schedule = () => {
         start: newEvent.start,
         end: newEvent.end,
         isOnline: newEvent.isOnline,
-        trackId: selectedTrack === "all" ? "1" : selectedTrack,
-        branch: newEvent.isOnline ? null : newEvent.branch,
+        trackId: selectedTrack , 
+        branch: newEvent.branch,
         backgroundColor: newEvent.isOnline
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
@@ -368,6 +373,9 @@ const Schedule = () => {
     if (new Date(selectInfo.start) < new Date()) {
       return; // Prevent selecting past dates
     }
+    // Reset selectedEvent to ensure we're in "add" mode, not "edit" mode
+    setSelectedEvent(null);
+    
     // Check for events on the same day and use their branch if available
     const eventsOnSameDay = events.filter((event) => {
       return (
@@ -377,7 +385,6 @@ const Schedule = () => {
     });
     setNewEvent({
       id: "react" + uuidv4(),
-      id: null, // Ensure no ID for new events
       title: "",
       instructor: "",
       isOnline: false,
@@ -466,6 +473,40 @@ const Schedule = () => {
     );
   };
 
+  const handleBranchSelection = (branchId) => {
+    const selectedBranchData = branches.find(
+      (branch) => branch.id === branchId
+    );
+    if (!selectedBranchData) {
+      toast({
+        title: "Error",
+        description: "Could not find the selected branch.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedBranch({
+      id: selectedBranchData.id,
+      name: selectedBranchData.name,
+    });
+    // Get selected day as a date string for comparison
+    const selectedDayString = selectedDay.toLocaleDateString();
+    setEvents((prev) =>
+      prev.map((event) => {
+        const eventDate = new Date(event.start).toLocaleDateString();
+        if (eventDate === selectedDayString && !event.isOnline) {
+          return {
+            ...event,
+            branch: selectedBranchData,
+            isModified: true 
+          };
+        }
+        return event; 
+      })
+    );
+    setIsBranchModalOpen(false);
+  };
+
   return (
     <Layout>
       {isLoading ? (
@@ -543,7 +584,7 @@ const Schedule = () => {
                 nowIndicator={true}
                 now={new Date()}
                 slotMinTime="09:00:00"
-                slotMaxTime="19:00:00"
+                slotMaxTime="22:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:30:00"
                 allDaySlot={false}
@@ -568,7 +609,16 @@ const Schedule = () => {
           )}
         </>
       )}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog 
+        open={isDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            // Reset selectedEvent when dialog closes
+            setSelectedEvent(null);
+          }
+          setIsDialogOpen(open);
+        }}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
@@ -627,15 +677,6 @@ const Schedule = () => {
                         }))
                   }
                 />
-                <span>
-                  {selectedEvent
-                    ? selectedEvent.isOnline
-                      ? "Online"
-                      : "Offline"
-                    : newEvent.isOnline
-                    ? "Online"
-                    : "Offline"}
-                </span>
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -706,46 +747,7 @@ const Schedule = () => {
               Select a branch for{" "}
               {selectedDay ? new Date(selectedDay).toDateString() : ""}
             </p>
-            <Select
-              onValueChange={(value) => {
-                // put logic here to handle branch selection
-                // handleUpdateEvent
-                const selectedBranchData = branches.find(
-                  (branch) => branch.id === value
-                );
-                setSelectedBranch({
-                  id: selectedBranchData.id,
-                  name: selectedBranchData.name,
-                });
-                const eventsToUpdateBranch = events.filter((event) => {
-                  return (
-                    new Date(event.start).toLocaleDateString() ===
-                    selectedDay.toLocaleDateString()
-                  );
-                });
-
-                console.log(`Branch ${value} selected for ${selectedDay}`);
-
-                setEvents((prev) =>
-                  prev.map(
-                    (event) =>
-                      eventsToUpdateBranch.some((e) => e.id === event.id)
-                        ? {
-                            ...event,
-                            branch: selectedBranchData,
-                          }
-                        : { ...event, isModified: true } // Mark as modified
-                  )
-                );
-                toast({
-                  title: "Success",
-                  description: `Branch ${
-                    selectedBranchData.name
-                  } selected for ${new Date(selectedDay).toDateString()}`,
-                });
-                setIsBranchModalOpen(false);
-              }}
-            >
+            <Select onValueChange={handleBranchSelection}>
               <SelectTrigger>
                 <SelectValue placeholder="Select branch" />
               </SelectTrigger>
@@ -828,7 +830,7 @@ const Schedule = () => {
 
         .fc-event {
           cursor: pointer;
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           font-weight: 500;
         }
         .fc-event-title {
