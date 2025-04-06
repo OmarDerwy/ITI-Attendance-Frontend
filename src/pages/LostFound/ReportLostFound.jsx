@@ -116,7 +116,7 @@ const ReportLostFound = () => {
       const response = await axios.post(endpoint, payload, {
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ0MjEyMjg0LCJpYXQiOjE3NDM2MDc0ODQsImp0aSI6IjYzMjBmMjA4ODAwYzRhM2FiMGZjZjQzODMyZWZiNDMxIiwidXNlcl9pZCI6MzR9.56iBnwHptULMt3zYm1uGmCNXZpMZpm_gUeaLkrY0Ass`,
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
         },
       });
 
