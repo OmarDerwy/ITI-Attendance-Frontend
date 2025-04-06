@@ -391,10 +391,6 @@ const Schedule = () => {
           : event
       )
     );
-    toast({
-      title: "Success",
-      description: "Event moved successfully.",
-    });
   };
 
   return (
