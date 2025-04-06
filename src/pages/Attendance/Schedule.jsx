@@ -1,25 +1,42 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import Layout from "@/components/layout/Layout";
-import {Calendar,MapPin,Trash2,ToggleLeft,ToggleRight,Edit} from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Trash2,
+  ToggleLeft,
+  ToggleRight,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
 import { useUser } from "@/context/UserContext";
-import branches from "@/data/branches.json";
 import TrackDropdown from "@/components/schedule/TrackDropdown";
-import ShareScheduleButton from "@/components/schedule/ShareScheduleButton";
-import { Select , SelectTrigger ,SelectValue , SelectItem ,SelectContent } from "@/components/ui/select";
-import { Dialog,DialogContent ,DialogTitle ,DialogHeader , DialogFooter} from "@/components/ui/dialog";
+import SessionsBulkCreateUpdate from "@/components/schedule/SessionsBulkCreateUpdate";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { axiosBackendInstance } from '@/api/config';
-import { v4 as uuidv4 } from "uuid"; 
+import { axiosBackendInstance } from "@/api/config";
+import { v4 as uuidv4 } from "uuid";
 const Schedule = () => {
   const { userRole } = useUser();
   const [isLoading, setIsLoading] = useState(true); // Loading state
@@ -32,17 +49,21 @@ const Schedule = () => {
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
-  const [selectedTrack, setSelectedTrack] = useState(""); 
-  const [tracks, setTracks] = useState([]); 
-  const [defaultBranch, setDefaultBranch] = useState({ name : "", id: "" }); 
-  const filteredEvents = events.filter((event) => event.trackId === selectedTrack);
+  const [selectedTrack, setSelectedTrack] = useState("");
+  const [tracks, setTracks] = useState([]);
+  const [defaultBranch, setDefaultBranch] = useState({ name: "", id: "" });
+  const filteredEvents = events.filter(
+    (event) => event.trackId === selectedTrack
+  );
   const [newEvent, setNewEvent] = useState({
-    id: "react" + uuidv4(), 
+    id: "react" + uuidv4(),
     title: "",
     isOnline: false,
-    branch: defaultBranch, 
-    instructor: "", 
+    branch: defaultBranch,
+    instructor: "",
   });
+
+  const [branches, setFetchedBranches] = useState([]); // State for fetched branches
 
   const updateTrackAndBranch = (trackId, tracks) => {
     const selectedTrackData = tracks.find((track) => track.id === trackId);
@@ -55,40 +76,92 @@ const Schedule = () => {
     }
   };
 
+  const fetchEvents = async (trackId) => {
+    try {
+      const response = await axiosBackendInstance.get(
+        `attendance/sessions/calendar-data/?track_id=${trackId}`
+      );
+      const fetchedEvents = response.data.map((event) => ({
+        id: event.id,
+        title: event.title,
+        instructor: event.instructor,
+        start: event.start,
+        end: event.end,
+        isOnline: Boolean(event.is_online), // Ensure conversion to boolean
+        trackId: event.track_id,
+        schedule_date: event.schedule_date,
+        schedule_id: event.schedule_id,
+        branch: event.branch,
+        backgroundColor: Boolean(event.is_online)
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
+        borderColor: Boolean(event.is_online)
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
+        textColor: Boolean(event.is_online)
+          ? "hsl(var(--accent-foreground))"
+          : "hsl(var(--primary-foreground))",
+      }));
+      setEvents(fetchedEvents);
+    } catch (error) {
+      console.error("Error fetching events:", error); // DEV DEBUG
+    }
+  };
+
   const handleTrackChange = (trackId) => {
+    const period = currentView === "dayGridMonth" ? "month" : "week";
     updateTrackAndBranch(trackId, tracks);
+    fetchEvents(trackId, period);
   };
 
   useEffect(() => {
-    const fetchTracks = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axiosBackendInstance.get("attendance/tracks/");
-        const fetchedTracks = response.data.results;
+        // Fetch branches first
+        const branchesResponse = await axiosBackendInstance.get(
+          "attendance/branches/"
+        );
+        setFetchedBranches(branchesResponse.data.results);
+        console.log("Fetched branches:", branchesResponse.data.results); // DEV DEBUG
+
+        // Fetch tracks after branches
+        const tracksResponse = await axiosBackendInstance.get("attendance/tracks/");
+        const fetchedTracks = tracksResponse.data.results;
         setTracks(fetchedTracks);
+
         if (fetchedTracks.length > 0) {
-          updateTrackAndBranch(fetchedTracks[0].id, fetchedTracks); 
+          const initialTrackId = fetchedTracks[0].id;
+          updateTrackAndBranch(initialTrackId, fetchedTracks);
+          await fetchEvents(initialTrackId); // Fetch events for the initial track
         }
       } catch (error) {
-        console.error("Error fetching tracks:", error); //DEV DEBUG
+        console.error("Error fetching data:", error); // DEV DEBUG
       } finally {
-        setIsLoading(false); 
+        setIsLoading(false);
       }
     };
-    fetchTracks();
-  }, []); 
+
+    fetchData();
+    
+    // Cleanup function to handle any potential event listener issues
+    return () => {
+      if (calendarRef.current) {
+        const calendarApi = calendarRef.current.getApi();
+        calendarApi.destroy();
+      }
+    };
+  }, []);
 
   const handleEventSubmit = () => {
-
     if (!selectedEvent) {
       // Add mode
       if (!newEvent.title) {
         alert("Title is required.");
         return;
       }
-      console.log("Creating event with properties:", newEvent); //DEV DEBUG
+      console.log("Creating event with properties:", newEvent); // DEV DEBUG
       const newEventData = {
-        id: "react" + uuidv4(), 
-
+        id: "react" + uuidv4(),
         title: newEvent.title,
         instructor: newEvent.instructor,
         start: newEvent.start,
@@ -105,13 +178,16 @@ const Schedule = () => {
         textColor: newEvent.isOnline
           ? "hsl(var(--accent-foreground))"
           : "hsl(var(--primary-foreground))",
+        isModified: true, // Mark as modified
       };
       setEvents((prev) => [...prev, newEventData]); // Update events state
     } else {
       // Edit mode
       setEvents((prev) =>
         prev.map((event) =>
-          event.id === selectedEvent.id ? selectedEvent : event
+          event.id === selectedEvent.id
+            ? { ...selectedEvent, isModified: true } // Mark as modified
+            : event
         )
       );
       toast({
@@ -125,7 +201,13 @@ const Schedule = () => {
 
   const handleDeleteEvent = (eventId) => {
     if (window.confirm("Are you sure you want to delete this event?")) {
-      setEvents((prev) =>         prev.filter((event) =>           event.id !== eventId)      );
+      setEvents((prev) =>
+        prev.map((event) =>
+          event.id === eventId
+            ? { ...event, isModified: true, isDeleted: true }
+            : event
+        )
+      );
       setIsDialogOpen(false);
     }
   };
@@ -138,6 +220,7 @@ const Schedule = () => {
               ...event,
               start: resizeInfo.event.startStr,
               end: resizeInfo.event.endStr,
+              isModified: true, // Mark as modified
             }
           : event
       )
@@ -161,26 +244,33 @@ const Schedule = () => {
         : {}),
     }));
   };
-  const toggleEventType = (eventId) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === eventId
-          ? {
-              ...event,
-              isOnline: !event.isOnline,
-              backgroundColor: !event.isOnline
-                ? "hsl(var(--accent))"
-                : "hsl(var(--primary))",
-              borderColor: !event.isOnline
-                ? "hsl(var(--accent))"
-                : "hsl(var(--primary))",
-              textColor: !event.isOnline
-                ? "hsl(var(--accent-foreground))"
-                : "hsl(var(--primary-foreground))",
-            }
-          : event
-      )
-    );
+  const toggleEventType = (e, eventId) => {
+    e.stopPropagation();
+    setEvents((prev) => {
+      const eventIdStr = String(eventId);
+      const updatedEvents = prev.map((event) => {
+        if (String(event.id) === eventIdStr) {
+          const currentIsOnline = event.isOnline;
+          const isOnline = !currentIsOnline;
+          return {
+            ...event,
+            isOnline,
+            backgroundColor: isOnline
+              ? "hsl(var(--accent))"
+              : "hsl(var(--primary))",
+            borderColor: isOnline
+              ? "hsl(var(--accent))"
+              : "hsl(var(--primary))",
+            textColor: isOnline
+              ? "hsl(var(--accent-foreground))"
+              : "hsl(var(--primary-foreground))",
+            isModified: true, 
+          };
+        }
+        return event;
+      });
+      return updatedEvents;
+    });
   };
 
   const handleOpenAddDialog = (selectInfo) => {
@@ -192,25 +282,29 @@ const Schedule = () => {
     }
     // Check for events on the same day and use their branch if available
     const eventsOnSameDay = events.filter((event) => {
-      return new Date(event.start).toLocaleDateString() === selectInfo.start.toLocaleDateString();
+      return (
+        new Date(event.start).toLocaleDateString() ===
+        selectInfo.start.toLocaleDateString()
+      );
     });
     setNewEvent({
-      id: "react" + uuidv4(), 
+      id: "react" + uuidv4(),
       id: null, // Ensure no ID for new events
       title: "",
       instructor: "",
       isOnline: false,
-      branch: eventsOnSameDay.length > 0 ? eventsOnSameDay[0].branch : defaultBranch, 
+      branch:
+        eventsOnSameDay.length > 0 ? eventsOnSameDay[0].branch : defaultBranch,
       start: selectInfo.startStr,
       end: selectInfo.endStr,
       schedule_date: selectInfo.startStr.slice(0, 10),
     });
 
-    setSelectedEvent(null); // Ensure selectedEvent is null for add mode
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (event) => {
+    debugger;
     setSelectedEvent(event);
     setIsDialogOpen(true);
   };
@@ -220,12 +314,15 @@ const Schedule = () => {
     setIsBranchModalOpen(true);
   };
   const renderEventContent = (eventInfo) => {
-    const event = events.find((e) => e.id === eventInfo.event.id);
-    const isOnline = event ? event.isOnline : false;
+    // Directly use eventInfo's extendedProps to get accurate isOnline state
+    const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
     const bgColor = isOnline ? "bg-accent" : "bg-primary";
-    const textColor = isOnline ? "text-accent-foreground" : "text-primary-foreground";
-    const subtextColor = isOnline ? "text-gray-700" : "text-white-500"; // Updated subtext color
-    const branchColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated branch color
+    const textColor = isOnline
+      ? "text-accent-foreground"
+      : "text-primary-foreground";
+    const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
+    const branchColor = isOnline ? "text-gray-700" : "text-gray-300";
+    
     return (
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
@@ -239,7 +336,8 @@ const Schedule = () => {
         <div className="flex space-x-1 absolute right-1 top-1 items-center">
           <button
             onClick={(e) => {
-              toggleEventType(eventInfo.event.id);
+              e.preventDefault(); // Ensure event doesn't bubble
+              toggleEventType(e, eventInfo.event.id); 
             }}
             className={`${textColor} hover:opacity-80`}
             title={isOnline ? "Switch to Offline" : "Switch to Online"}
@@ -248,6 +346,7 @@ const Schedule = () => {
           </button>
           <button
             onClick={(e) => {
+              e.stopPropagation(); // Prevent dialog from opening
               handleDeleteEvent(eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80`}
@@ -256,10 +355,10 @@ const Schedule = () => {
             <Trash2 size={16} />
           </button>
         </div>
-        <div className="absolute bottom-1 left-1 flex items-center text-xs ${branchColor}">
+        <div
+          className={`absolute bottom-1 right-1 flex items-center text-xs italic font-bold ${branchColor} `} >
           <MapPin size={12} className="mr-1" />
-          {/* here */}
-          <span> {eventInfo.event.extendedProps.branch.name }</span>
+          <span> {eventInfo.event.extendedProps.branch?.name}</span>
         </div>
       </div>
     );
@@ -287,6 +386,7 @@ const Schedule = () => {
               ...event,
               start: dropInfo.event.startStr,
               end: dropInfo.event.endStr,
+              isModified: true, // Mark as modified
             }
           : event
       )
@@ -316,9 +416,7 @@ const Schedule = () => {
           />
 
           {tracks.length === 0 ? (
-            <p className="text-gray-500 text-center">
-              No tracks assigned.
-            </p>
+            <p className="text-gray-500 text-center">No tracks assigned.</p>
           ) : (
             <Card className="p-6 bg-white border shadow-lg">
               <div className="mb-4 flex flex-col md:flex-row items-center gap-4 md:justify-between">
@@ -336,10 +434,8 @@ const Schedule = () => {
                 </div>
                 {userRole === "supervisor" && (
                   <div className="md:order-3">
-                    <ShareScheduleButton
-                      events={[
-                        ...events
-                      ]}
+                    <SessionsBulkCreateUpdate
+                      events={[...events.filter((event) => event.isModified)]}
                       track={selectedTrack}
                     />
                   </div>
@@ -350,12 +446,20 @@ const Schedule = () => {
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="timeGridWeek"
                 selectable={userRole === "supervisor"}
-                editable={userRole === "supervisor" && currentView !== "dayGridMonth"}
+                editable={
+                  userRole === "supervisor" && currentView !== "dayGridMonth"
+                }
                 select={handleOpenAddDialog}
                 events={filteredEvents}
-                eventClick={(clickInfo) =>
-                  openEditDialog(events.find((e) => e.id === clickInfo.event.id))
-                }
+                // click on existing events to edit
+                eventClick={(clickInfo) => {
+                  const event = events.find(
+                    (e) => String(e.id) === String(clickInfo.event.id)
+                  ); // Ensure type match
+                  if (event) {
+                    openEditDialog(event);
+                  }
+                }}
                 eventResize={handleEventResize}
                 eventContent={renderEventContent}
                 headerToolbar={{
@@ -372,19 +476,20 @@ const Schedule = () => {
                 slotMaxTime="24:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:30:00"
-                
                 allDaySlot={false}
                 eventOverlap={false}
                 eventDurationEditable={true}
                 viewDidMount={(view) => {
-                  setCurrentView(view.view.type);
+                  const newViewType = view.view.type;
+                  setCurrentView(newViewType);
+                  fetchEvents(selectedTrack); // Fetch events for the updated view period
                 }}
                 dayHeaderContent={renderDayHeaderContent}
                 eventDrop={handleEventDrop} // Add this prop to handle event dragging
-                selectAllow={function(selectInfo) {
+                selectAllow={function (selectInfo) {
                   const start = selectInfo.start;
                   const end = selectInfo.end;
-                
+
                   // Allow only if start and end are on the same calendar day
                   return start.toDateString() === end.toDateString();
                 }}
@@ -407,15 +512,13 @@ const Schedule = () => {
               </Label>
               <Input
                 id="event-title"
-                value={
-                  selectedEvent ? selectedEvent.title : newEvent.title
-                }
+                value={selectedEvent ? selectedEvent.title : newEvent.title}
                 onChange={(e) =>
                   selectedEvent
                     ? updateSelectedEvent("title", e.target.value)
                     : setNewEvent({ ...newEvent, title: e.target.value })
                 }
-                className="col-span-3 truncate" 
+                className="col-span-3 truncate"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -443,9 +546,7 @@ const Schedule = () => {
                 <Switch
                   id="event-online"
                   checked={
-                    selectedEvent
-                      ? selectedEvent.isOnline
-                      : newEvent.isOnline
+                    selectedEvent ? selectedEvent.isOnline : newEvent.isOnline
                   }
                   onCheckedChange={(checked) =>
                     selectedEvent
@@ -502,7 +603,6 @@ const Schedule = () => {
                 />
               </div>
             </div>
-
           </div>
           <DialogFooter className="flex justify-between">
             {selectedEvent && (
@@ -537,33 +637,41 @@ const Schedule = () => {
               {selectedDay ? new Date(selectedDay).toDateString() : ""}
             </p>
             <Select
-              onValueChange={(value ) => {
+              onValueChange={(value) => {
                 // put logic here to handle branch selection
                 // handleUpdateEvent
-                const selectedBranchData = branches.find((branch) => branch.id === value);
+                const selectedBranchData = branches.find(
+                  (branch) => branch.id === value
+                );
                 setSelectedBranch({
                   id: selectedBranchData.id,
                   name: selectedBranchData.name,
                 });
                 const eventsToUpdateBranch = events.filter((event) => {
-                  return new Date(event.start).toLocaleDateString() === selectedDay.toLocaleDateString();
-                })
+                  return (
+                    new Date(event.start).toLocaleDateString() ===
+                    selectedDay.toLocaleDateString()
+                  );
+                });
 
                 console.log(`Branch ${value} selected for ${selectedDay}`);
 
                 setEvents((prev) =>
-                  prev.map((event) =>
-                    eventsToUpdateBranch.some((e) => e.id === event.id)
-                      ? {
-                          ...event,
-                          branch: selectedBranchData,
-                        }
-                      : event
+                  prev.map(
+                    (event) =>
+                      eventsToUpdateBranch.some((e) => e.id === event.id)
+                        ? {
+                            ...event,
+                            branch: selectedBranchData,
+                          }
+                        : { ...event, isModified: true } // Mark as modified
                   )
                 );
                 toast({
                   title: "Success",
-                  description: `Branch ${selectedBranchData.name} selected for ${new Date(selectedDay).toDateString()}`,
+                  description: `Branch ${
+                    selectedBranchData.name
+                  } selected for ${new Date(selectedDay).toDateString()}`,
                 });
                 setIsBranchModalOpen(false);
               }}
@@ -615,7 +723,6 @@ const Schedule = () => {
         .fc-daygrid-event {
           height: auto !important; /* Adjust event height */
         }
-
       `}</style>
     </Layout>
   );
