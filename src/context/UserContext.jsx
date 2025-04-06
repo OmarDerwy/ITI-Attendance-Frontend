@@ -1,6 +1,6 @@
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { axiosBackendInstance } from "../api/config";
+import { set } from "date-fns";
 
 const UserContext = createContext(undefined);
 
@@ -11,17 +11,21 @@ export const UserProvider = ({ children }) => {
   const [userProfilePic, setUserProfilePic] = useState("/placeholder.svg");
   const [userAnnouncements, setUserAnnouncements] = useState([]);
   const [readAnnouncements, setReadAnnouncements] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);  
+  const [isLoading, setIsLoading] = useState(true);
   const addUserItem = (item) => {
     setUserItems([...userItems, item]);
   };
 
   const updateUserItem = (id, updatedItem) => {
-    setUserItems(userItems.map(item => item.id === id ? { ...item, ...updatedItem } : item));
+    setUserItems(
+      userItems.map((item) =>
+        item.id === id ? { ...item, ...updatedItem } : item
+      )
+    );
   };
 
   const deleteUserItem = (id) => {
-    setUserItems(userItems.filter(item => item.id !== id));
+    setUserItems(userItems.filter((item) => item.id !== id));
   };
 
   const addAnnouncement = (announcement) => {
@@ -39,50 +43,52 @@ export const UserProvider = ({ children }) => {
   };
 
   useEffect(() => {
-      const initializeAuth = async () => {
-        const token = localStorage.getItem('access');
-        
-        if (!token) {
-          setIsLoading(false);
-          return;
-        }
-        
-        try {
-          // Fetch user data with the stored token
-          const response = await axiosBackendInstance.get('accounts/auth/users/me/');
-          const role = response.data.groups[0];
-          const email = response.data.email;
-          
-          setUserRole(role);
-          setUserName(email);
-        } catch (error) {
-          console.error("Failed to initialize authentication:", error);
-          // Clear invalid token
-          localStorage.removeItem('access');
-          localStorage.removeItem('refresh');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      
-      initializeAuth();
-    }, []);
-  
-    // Logout function to clear auth state
-    const logout = () => {
-      localStorage.removeItem('access');
-      localStorage.removeItem('refresh');
-      setUserRole(null);
-      setUserName(null);
+    const initializeAuth = async () => {
+      const token = localStorage.getItem("access");
+
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        // Fetch user data with the stored token
+        const response = await axiosBackendInstance.get(
+          "accounts/auth/users/me/"
+        );
+        const role = response.data.groups[0];
+        const email = response.data.email;
+        const userId = response.data.id;
+        localStorage.setItem("userId", userId);
+        setUserRole(role);
+        setUserName(email);
+      } catch (error) {
+        console.error("Failed to initialize authentication:", error);
+        // Clear invalid token
+        localStorage.removeItem("access");
+        localStorage.removeItem("refresh");
+      } finally {
+        setIsLoading(false);
+      }
     };
-  
+
+    initializeAuth();
+  }, []);
+
+  // Logout function to clear auth state
+  const logout = () => {
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    setUserRole(null);
+    setUserName(null);
+  };
 
   return (
-    <UserContext.Provider 
-      value={{ 
-        userRole, 
-        setUserRole, 
-        userName, 
+    <UserContext.Provider
+      value={{
+        userRole,
+        setUserRole,
+        userName,
         setUserName,
         userItems,
         addUserItem,

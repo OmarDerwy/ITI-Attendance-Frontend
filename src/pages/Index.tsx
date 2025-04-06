@@ -11,6 +11,7 @@ import { Loader2 } from 'lucide-react';
 const Index = () => {
   const navigate = useNavigate();
   const { userRole, isLoading } = useUser();
+  
 
   useEffect(() => {
     if (!isLoading && !userRole) {
