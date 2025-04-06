@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -10,6 +10,7 @@ import {
   Trash2,
   ToggleLeft,
   ToggleRight,
+  AlertTriangle,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
@@ -29,6 +30,7 @@ import {
   DialogTitle,
   DialogHeader,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -37,14 +39,17 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { axiosBackendInstance } from "@/api/config";
 import { v4 as uuidv4 } from "uuid";
+import { useNavigate, useBeforeUnload } from "react-router-dom";
+
 const Schedule = () => {
+  const navigate = useNavigate();
   const { userRole } = useUser();
-  const [isLoading, setIsLoading] = useState(true); // Loading state
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // Unified dialog state
+  const [isLoading, setIsLoading] = useState(true); 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const calendarRef = useRef(null);
-  const [currentView, setCurrentView] = useState("timeGridWeek"); // Track current view
+  const [currentView, setCurrentView] = useState("timeGridWeek");
   const { toast } = useToast();
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
@@ -52,6 +57,13 @@ const Schedule = () => {
   const [selectedTrack, setSelectedTrack] = useState("");
   const [tracks, setTracks] = useState([]);
   const [defaultBranch, setDefaultBranch] = useState({ name: "", id: "" });
+  // Add state for tracking unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [navigationPath, setNavigationPath] = useState("");
+  // Add state for pending track change
+  const [pendingTrackId, setPendingTrackId] = useState(null);
+  
   const filteredEvents = events.filter(
     (event) => event.trackId === selectedTrack
   );
@@ -63,7 +75,59 @@ const Schedule = () => {
     instructor: "",
   });
 
-  const [branches, setFetchedBranches] = useState([]); // State for fetched branches
+  const [branches, setFetchedBranches] = useState([]);
+
+  // Track if there are modified events
+  const modifiedEvents = events.filter(event => event.isModified);
+  
+  // Effect to set hasUnsavedChanges based on modified events
+  useEffect(() => {
+    setHasUnsavedChanges(modifiedEvents.length > 0);
+  }, [modifiedEvents.length]);
+
+  // Prompt when user tries to leave with unsaved changes
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (hasUnsavedChanges) {
+          event.preventDefault();
+          return (event.returnValue = "You have unsaved changes. Are you sure you want to leave?");
+        }
+      },
+      [hasUnsavedChanges]
+    )
+  );
+
+  // Handle navigation attempts
+  const handleNavigation = useCallback((path) => {
+    if (hasUnsavedChanges) {
+      setNavigationPath(path);
+      setIsLeaveConfirmOpen(true);
+    } else {
+      navigate(path);
+    }
+  }, [hasUnsavedChanges, navigate]);
+
+  // Override the history's push method
+  useEffect(() => {
+    const originalPush = history.pushState;
+    history.pushState = function() {
+      if (hasUnsavedChanges) {
+        setIsLeaveConfirmOpen(true);
+        return;
+      }
+      return originalPush.apply(this, arguments);
+    };
+    
+    return () => {
+      history.pushState = originalPush;
+    };
+  }, [hasUnsavedChanges]);
+
+  // Mark changes as saved
+  const handleChangesSaved = useCallback(() => {
+    setHasUnsavedChanges(false);
+  }, []);
 
   const updateTrackAndBranch = (trackId, tracks) => {
     const selectedTrackData = tracks.find((track) => track.id === trackId);
@@ -87,18 +151,18 @@ const Schedule = () => {
         instructor: event.instructor,
         start: event.start,
         end: event.end,
-        isOnline: Boolean(event.is_online), // Ensure conversion to boolean
+        isOnline: (event.is_online), // Ensure conversion to boolean
         trackId: event.track_id,
         schedule_date: event.schedule_date,
         schedule_id: event.schedule_id,
         branch: event.branch,
-        backgroundColor: Boolean(event.is_online)
+        backgroundColor: (event.is_online)
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
-        borderColor: Boolean(event.is_online)
+        borderColor: (event.is_online)
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
-        textColor: Boolean(event.is_online)
+        textColor: (event.is_online)
           ? "hsl(var(--accent-foreground))"
           : "hsl(var(--primary-foreground))",
       }));
@@ -108,10 +172,25 @@ const Schedule = () => {
     }
   };
 
+  // Modify handleTrackChange to check for unsaved changes
   const handleTrackChange = (trackId) => {
-    const period = currentView === "dayGridMonth" ? "month" : "week";
+    if (hasUnsavedChanges) {
+      // Store the track ID that the user wants to switch to
+      setPendingTrackId(trackId);
+      // Show confirmation dialog
+      setIsLeaveConfirmOpen(true);
+    } else {
+      // No unsaved changes, proceed with track change
+      applyTrackChange(trackId);
+    }
+  };
+  
+  // New function to actually apply track change
+  const applyTrackChange = (trackId) => {
     updateTrackAndBranch(trackId, tracks);
-    fetchEvents(trackId, period);
+    fetchEvents(trackId);
+    // Reset pending track ID
+    setPendingTrackId(null);
   };
 
   useEffect(() => {
@@ -180,6 +259,7 @@ const Schedule = () => {
         isModified: true, // Mark as modified
       };
       setEvents((prev) => [...prev, newEventData]); // Update events state
+      setHasUnsavedChanges(true);
     } else {
       // Edit mode
       setEvents((prev) =>
@@ -189,6 +269,7 @@ const Schedule = () => {
             : event
         )
       );
+      setHasUnsavedChanges(true);
     }
     setIsDialogOpen(false);
     setSelectedEvent(null); // Reset selectedEvent after submission
@@ -198,8 +279,8 @@ const Schedule = () => {
     if (window.confirm("Are you sure you want to delete this event?")) {
       setEvents((prev) =>
         prev.map((event) =>
-          event.id === eventId
-            ? { ...event, isModified: true, isDeleted: true }
+          String(event.id) === String(event.id)
+            ? { ...event}
             : event
         )
       );
@@ -425,6 +506,7 @@ const Schedule = () => {
                     <SessionsBulkCreateUpdate
                       events={[...events.filter((event) => event.isModified)]}
                       track={selectedTrack}
+                      onSaveSuccess={handleChangesSaved}
                     />
                   </div>
                 )}
@@ -683,6 +765,53 @@ const Schedule = () => {
             >
               Cancel
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isLeaveConfirmOpen} onOpenChange={setIsLeaveConfirmOpen}>
+        <DialogContent>
+          <DialogHeader className="flex flex-col items-center space-y-2">
+            <AlertTriangle className="h-12 w-12 text-amber-500" />
+            <DialogTitle>Unsaved Changes</DialogTitle>
+            <DialogDescription>
+              {pendingTrackId 
+                ? "You have unsaved changes. Changing tracks will lose these changes."
+                : "You have unsaved changes to the schedule. What would you like to do?"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => {
+              setIsLeaveConfirmOpen(false);
+              setPendingTrackId(null); // Reset pending track ID
+            }}>
+              Cancel
+            </Button>
+            <div className="space-x-2">
+              {!pendingTrackId && (
+                <Button onClick={() => {
+                  setIsLeaveConfirmOpen(false);
+                }}>
+                  Stay on Page
+                </Button>
+              )}
+              <Button 
+                variant="destructive" 
+                onClick={() => {
+                  setHasUnsavedChanges(false);
+                  setIsLeaveConfirmOpen(false);
+                  
+                  if (pendingTrackId) {
+                    // Apply track change if that was the trigger
+                    applyTrackChange(pendingTrackId);
+                  } else if (navigationPath) {
+                    // Navigate away if that was the trigger
+                    navigate(navigationPath);
+                  }
+                }}
+              >
+                {pendingTrackId ? "Change Track" : "Leave Without Saving"}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

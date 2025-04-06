@@ -11,9 +11,9 @@ import { toast } from "sonner";
 import { Share } from "lucide-react";
 import { axiosBackendInstance } from "@/api/config";
 
-const SessionsBulkCreateUpdate = ({ events }) => {
+const SessionsBulkCreateUpdate = ({ events, onSaveSuccess }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  debugger;
+  
   const handleSaveChanges = async () => {
     const newEvents = events.filter((event) =>
       String(event.id)?.startsWith("react")
@@ -56,6 +56,11 @@ const SessionsBulkCreateUpdate = ({ events }) => {
         
         toast.success(successMessage);
         setIsDialogOpen(false);
+        
+        // Call the onSaveSuccess callback to notify parent component
+        if (onSaveSuccess) {
+          onSaveSuccess();
+        }
       } else {
         toast.error("Failed to submit schedule. Please try again.");
       }
