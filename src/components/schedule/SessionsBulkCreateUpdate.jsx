@@ -34,14 +34,27 @@ const SessionsBulkCreateUpdate = ({ events }) => {
           combinedEvents,
         })
       );
+      console.log("combinedEvents", combinedEvents);
       const response = await axiosBackendInstance.post(
         "/attendance/sessions/bulk-create-or-update/",
         {
           combinedEvents,
         }
       );
-      if (response.ok) {
-        toast.success(`Schedule saved successfully.`);
+      console.log("response", response);
+      
+      // Properly handle the success response from axios
+      if (response.status >= 200 && response.status < 300) {
+        const { created_sessions, updated_sessions } = response.data;
+        const createdCount = created_sessions?.length || 0;
+        const updatedCount = updated_sessions?.length || 0;
+        
+        let successMessage = "Schedule saved successfully.";
+        if (createdCount > 0 || updatedCount > 0) {
+          successMessage = `Schedule saved: ${createdCount} session(s) created, ${updatedCount} session(s) updated.`;
+        }
+        
+        toast.success(successMessage);
         setIsDialogOpen(false);
       } else {
         toast.error("Failed to submit schedule. Please try again.");
