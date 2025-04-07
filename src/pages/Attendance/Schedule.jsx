@@ -8,9 +8,9 @@ import {
   Calendar,
   MapPin,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   AlertTriangle,
+  X,
+  MapPinned,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
@@ -63,6 +63,8 @@ const Schedule = () => {
   const [navigationPath, setNavigationPath] = useState("");
   // Add state for pending track change
   const [pendingTrackId, setPendingTrackId] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
   
   const filteredEvents = events.filter(
     (event) => event.trackId === selectedTrack
@@ -156,7 +158,7 @@ const Schedule = () => {
         instructor: event.instructor,
         start: event.start,
         end: event.end,
-        isOnline: (event.is_online), // Ensure conversion to boolean
+        isOnline: (event.is_online), 
         trackId: event.track_id,
         schedule_date: event.schedule_date,
         schedule_id: event.schedule_id,
@@ -280,16 +282,27 @@ const Schedule = () => {
     setSelectedEvent(null); // Reset selectedEvent after submission
   };
 
-  const handleDeleteEvent = (eventId) => {
-    if (window.confirm("Are you sure you want to delete this event?")) {
-      setEvents((prev) =>
-        prev.map((event) =>
-          String(event.id) === String(event.id)
-            ? { ...event}
-            : event
-        )
-      );
-      setIsDialogOpen(false);
+  const handleDeleteEvent = async () => {
+    if (eventToDelete) {
+      try {
+        // Call API to delete the session
+        await axiosBackendInstance.delete(`attendance/sessions/${eventToDelete}/`);
+        setEvents((prev) => prev.filter((event) => String(event.id) !== String(eventToDelete)));
+        toast({
+          title: "Success",
+          description: "Event deleted successfully.",
+          variant: "success",
+        });
+      } catch (error) {
+        console.error("Error deleting event:", error); // DEV DEBUG
+        toast({
+          title: "Error",
+          description: "Failed to delete the event. Please try again.",
+          variant: "destructive",
+        });
+      }
+      setEventToDelete(null);
+      setIsDeleteConfirmOpen(false);
     }
   };
 
@@ -422,38 +435,55 @@ const Schedule = () => {
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
       >
+        {currentView !== "dayGridMonth" && (
+          <div
+            className={`flex space-x-1 absolute right-1 top-1 items-center text-xs italic font-bold ${branchColor}`}
+          >
+            {isOnline ? (
+              <>
+                <MapPin size={12} className="mr-1" />
+                <span>Home</span>
+              </>
+            ) : (
+              <>
+                <MapPin size={12} className="mr-1" />
+                <span>{eventInfo.event.extendedProps.branch?.name}</span>
+              </>
+            )}
+          </div>
+        )}
         <div className="p-1 flex-col">
           <div className="whitespace-normal">{eventInfo.event.title}</div>
           <div className={`text-xs ${subtextColor}`}>
             {eventInfo.event.extendedProps.instructor || ""}
           </div>
         </div>
-        <div className="flex space-x-1 absolute right-1 top-1 items-center">
+          <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
           <button
             onClick={(e) => {
               e.preventDefault(); // Ensure event doesn't bubble
               toggleEventType(e, eventInfo.event.id); 
             }}
-            className={`${textColor} hover:opacity-80`}
+            className={`${textColor} hover:opacity-80 flex items-center justify-center`}
             title={isOnline ? "Switch to Offline" : "Switch to Online"}
           >
-            {isOnline ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+            <div 
+              className={`w-3 h-3 rounded-full transition-colors ${
+                isOnline ? "bg-green-500" : "bg-gray-400"
+              }`}
+            ></div>
           </button>
           <button
             onClick={(e) => {
               e.stopPropagation(); // Prevent dialog from opening
-              handleDeleteEvent(eventInfo.event.id);
+              setEventToDelete(eventInfo.event.id);
+              setIsDeleteConfirmOpen(true);
             }}
             className={`${textColor} hover:opacity-80`}
             title="Delete"
           >
-            <Trash2 size={16} />
+            <X size={13} />
           </button>
-        </div>
-        <div
-          className={`absolute bottom-1 right-1 flex items-center text-xs italic font-bold ${branchColor} `} >
-          <MapPin size={12} className="mr-1" />
-          <span> {eventInfo.event.extendedProps.branch?.name}</span>
         </div>
       </div>
     );
@@ -464,10 +494,10 @@ const Schedule = () => {
         <span>{headerInfo.text}</span>
         <button
           onClick={() => handleDayHeaderClick(headerInfo.date)}
-          className="text-red-500 hover:text-gray-700 m-3"
+          className="text-gray-500 hover:text-gray-800 m-3 "
           title="Select a Custom branch"
         >
-          <MapPin size={16} />
+          <MapPinned size={16}  />
         </button>
       </div>
     );
@@ -814,6 +844,28 @@ const Schedule = () => {
                 {pendingTrackId ? "Change Track" : "Leave Without Saving"}
               </Button>
             </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader className="flex flex-col items-center space-y-2">
+            <AlertTriangle className="h-12 w-12 text-amber-500" />
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteEvent}
+            >
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
