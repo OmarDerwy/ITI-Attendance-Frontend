@@ -1,48 +1,140 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import Layout from "@/components/layout/Layout";
-import {Calendar,MapPin,Trash2,ToggleLeft,ToggleRight,Edit} from "lucide-react";
+import {
+  Calendar,
+  MapPin,
+  Trash2,
+  AlertTriangle,
+  X,
+  MapPinned,
+} from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
 import { useUser } from "@/context/UserContext";
-import branches from "@/data/branches.json";
 import TrackDropdown from "@/components/schedule/TrackDropdown";
-import ShareScheduleButton from "@/components/schedule/ShareScheduleButton";
-import { Select , SelectTrigger ,SelectValue , SelectItem ,SelectContent } from "@/components/ui/select";
-import { Dialog,DialogContent ,DialogTitle ,DialogHeader , DialogFooter} from "@/components/ui/dialog";
+import SessionsBulkCreateUpdate from "@/components/schedule/SessionsBulkCreateUpdate";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectItem,
+  SelectContent,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogHeader,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { axiosBackendInstance } from '@/api/config';
-import { v4 as uuidv4 } from "uuid"; 
+import { axiosBackendInstance } from "@/api/config";
+import { v4 as uuidv4 } from "uuid";
+import { useNavigate, useBeforeUnload } from "react-router-dom";
+
 const Schedule = () => {
+  const navigate = useNavigate();
   const { userRole } = useUser();
-  const [isLoading, setIsLoading] = useState(true); // Loading state
-  const [isDialogOpen, setIsDialogOpen] = useState(false); // Unified dialog state
+  const [isLoading, setIsLoading] = useState(true); 
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const calendarRef = useRef(null);
-  const [currentView, setCurrentView] = useState("timeGridWeek"); // Track current view
+  const [currentView, setCurrentView] = useState("timeGridWeek");
   const { toast } = useToast();
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
-  const [selectedTrack, setSelectedTrack] = useState(""); 
-  const [tracks, setTracks] = useState([]); 
-  const [defaultBranch, setDefaultBranch] = useState({ name : "", id: "" }); 
-  const filteredEvents = events.filter((event) => event.trackId === selectedTrack);
+  const [selectedTrack, setSelectedTrack] = useState("");
+  const [tracks, setTracks] = useState([]);
+  const [defaultBranch, setDefaultBranch] = useState({ name: "", id: "" });
+  // Add state for tracking unsaved changes
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
+  const [navigationPath, setNavigationPath] = useState("");
+  // Add state for pending track change
+  const [pendingTrackId, setPendingTrackId] = useState(null);
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [eventToDelete, setEventToDelete] = useState(null);
+  
+  const filteredEvents = events.filter(
+    (event) => event.trackId === selectedTrack
+  );
   const [newEvent, setNewEvent] = useState({
-    id: "react" + uuidv4(), 
+    id: "react" + uuidv4(),
     title: "",
     isOnline: false,
-    branch: defaultBranch, 
-    instructor: "", 
+    branch: defaultBranch,
+    instructor: "",
   });
+
+  const [branches, setFetchedBranches] = useState([]);
+
+  // Track if there are modified events
+  const modifiedEvents = events.filter(event => event.isModified);
+  
+  // Effect to set hasUnsavedChanges based on modified events
+  useEffect(() => {
+    setHasUnsavedChanges(modifiedEvents.length > 0);
+  }, [modifiedEvents.length]);
+
+  // Prompt when user tries to leave with unsaved changes
+  useBeforeUnload(
+    useCallback(
+      (event) => {
+        if (hasUnsavedChanges) {
+          event.preventDefault();
+          return (event.returnValue = "You have unsaved changes. Are you sure you want to leave?");
+        }
+      },
+      [hasUnsavedChanges]
+    )
+  );
+
+  // Handle navigation attempts
+  const handleNavigation = useCallback((path) => {
+    if (hasUnsavedChanges) {
+      setNavigationPath(path);
+      setIsLeaveConfirmOpen(true);
+    } else {
+      navigate(path);
+    }
+  }, [hasUnsavedChanges, navigate]);
+
+  // Override the history's push method
+  useEffect(() => {
+    const originalPush = history.pushState;
+    history.pushState = function() {
+      if (hasUnsavedChanges) {
+        setIsLeaveConfirmOpen(true);
+        return;
+      }
+      return originalPush.apply(this, arguments);
+    };
+    
+    return () => {
+      history.pushState = originalPush;
+    };
+  }, [hasUnsavedChanges]);
+
+  // Mark changes as saved
+  const handleChangesSaved = useCallback(() => {
+    setHasUnsavedChanges(false);
+    // Reset isModified flag on all events
+    setEvents(prevEvents => prevEvents.map(event => ({
+      ...event,
+      isModified: false
+    })));
+  }, []);
 
   const updateTrackAndBranch = (trackId, tracks) => {
     const selectedTrackData = tracks.find((track) => track.id === trackId);
@@ -55,47 +147,113 @@ const Schedule = () => {
     }
   };
 
+  const fetchEvents = async (trackId) => {
+    try {
+      const response = await axiosBackendInstance.get(
+        `attendance/sessions/calendar-data/?track_id=${trackId}`
+      );
+      const fetchedEvents = response.data.map((event) => ({
+        id: event.id,
+        title: event.title,
+        instructor: event.instructor,
+        start: event.start,
+        end: event.end,
+        isOnline: (event.is_online), 
+        trackId: event.track_id,
+        schedule_date: event.schedule_date,
+        schedule_id: event.schedule_id,
+        branch: event.branch,
+        backgroundColor: (event.is_online)
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
+        borderColor: (event.is_online)
+          ? "hsl(var(--accent))"
+          : "hsl(var(--primary))",
+        textColor: (event.is_online)
+          ? "hsl(var(--accent-foreground))"
+          : "hsl(var(--primary-foreground))",
+      }));
+      setEvents(fetchedEvents);
+    } catch (error) {
+      console.error("Error fetching events:", error); // DEV DEBUG
+    }
+  };
+
+  // Modify handleTrackChange to check for unsaved changes
   const handleTrackChange = (trackId) => {
+    if (hasUnsavedChanges) {
+      // Store the track ID that the user wants to switch to
+      setPendingTrackId(trackId);
+      // Show confirmation dialog
+      setIsLeaveConfirmOpen(true);
+    } else {
+      // No unsaved changes, proceed with track change
+      applyTrackChange(trackId);
+    }
+  };
+  
+  // New function to actually apply track change
+  const applyTrackChange = (trackId) => {
     updateTrackAndBranch(trackId, tracks);
+    fetchEvents(trackId);
+    // Reset pending track ID
+    setPendingTrackId(null);
   };
 
   useEffect(() => {
-    const fetchTracks = async () => {
+    const fetchData = async () => {
       try {
-        const response = await axiosBackendInstance.get("attendance/tracks/");
-        const fetchedTracks = response.data.results;
+        // Fetch branches first
+        const branchesResponse = await axiosBackendInstance.get(
+          "attendance/branches/"
+        );
+        setFetchedBranches(branchesResponse.data.results);
+
+        // Fetch tracks after branches
+        const tracksResponse = await axiosBackendInstance.get("attendance/tracks/");
+        const fetchedTracks = tracksResponse.data.results;
         setTracks(fetchedTracks);
+
         if (fetchedTracks.length > 0) {
-          updateTrackAndBranch(fetchedTracks[0].id, fetchedTracks); 
+          const initialTrackId = fetchedTracks[0].id;
+          updateTrackAndBranch(initialTrackId, fetchedTracks);
+          await fetchEvents(initialTrackId); // Fetch events for the initial track
         }
       } catch (error) {
-        console.error("Error fetching tracks:", error); //DEV DEBUG
+        console.error("Error fetching data:", error); // DEV DEBUG
       } finally {
-        setIsLoading(false); 
+        setIsLoading(false);
       }
     };
-    fetchTracks();
-  }, []); 
+
+    fetchData();
+    
+    // Cleanup function to handle any potential event listener issues
+    return () => {
+      if (calendarRef.current) {
+        const calendarApi = calendarRef.current.getApi();
+        calendarApi.destroy();
+      }
+    };
+  }, []);
 
   const handleEventSubmit = () => {
-
     if (!selectedEvent) {
       // Add mode
       if (!newEvent.title) {
         alert("Title is required.");
         return;
       }
-      console.log("Creating event with properties:", newEvent); //DEV DEBUG
+      console.log("Creating event with properties:", newEvent); // DEV DEBUG
       const newEventData = {
-        id: "react" + uuidv4(), 
-
+        id: "react" + uuidv4(),
         title: newEvent.title,
         instructor: newEvent.instructor,
         start: newEvent.start,
         end: newEvent.end,
         isOnline: newEvent.isOnline,
-        trackId: selectedTrack === "all" ? "1" : selectedTrack,
-        branch: newEvent.isOnline ? null : newEvent.branch,
+        trackId: selectedTrack , 
+        branch: newEvent.branch,
         backgroundColor: newEvent.isOnline
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
@@ -105,39 +263,58 @@ const Schedule = () => {
         textColor: newEvent.isOnline
           ? "hsl(var(--accent-foreground))"
           : "hsl(var(--primary-foreground))",
+        isModified: true, // Mark as modified
       };
       setEvents((prev) => [...prev, newEventData]); // Update events state
+      setHasUnsavedChanges(true);
     } else {
       // Edit mode
       setEvents((prev) =>
         prev.map((event) =>
-          event.id === selectedEvent.id ? selectedEvent : event
+          event.id === selectedEvent.id
+            ? { ...selectedEvent, isModified: true } // Mark as modified
+            : event
         )
       );
-      toast({
-        title: "Success",
-        description: "Event updated successfully.",
-      });
+      setHasUnsavedChanges(true);
     }
     setIsDialogOpen(false);
     setSelectedEvent(null); // Reset selectedEvent after submission
   };
 
-  const handleDeleteEvent = (eventId) => {
-    if (window.confirm("Are you sure you want to delete this event?")) {
-      setEvents((prev) =>         prev.filter((event) =>           event.id !== eventId)      );
-      setIsDialogOpen(false);
+  const handleDeleteEvent = async () => {
+    if (eventToDelete) {
+      try {
+        // Call API to delete the session
+        await axiosBackendInstance.delete(`attendance/sessions/${eventToDelete}/`);
+        setEvents((prev) => prev.filter((event) => String(event.id) !== String(eventToDelete)));
+        toast({
+          title: "Success",
+          description: "Event deleted successfully.",
+          variant: "success",
+        });
+      } catch (error) {
+        console.error("Error deleting event:", error); // DEV DEBUG
+        toast({
+          title: "Error",
+          description: "Failed to delete the event. Please try again.",
+          variant: "destructive",
+        });
+      }
+      setEventToDelete(null);
+      setIsDeleteConfirmOpen(false);
     }
   };
 
   const handleEventResize = (resizeInfo) => {
     setEvents((prev) =>
       prev.map((event) =>
-        event.id === resizeInfo.event.id
+        String(event.id) === String(resizeInfo.event.id)
           ? {
               ...event,
               start: resizeInfo.event.startStr,
               end: resizeInfo.event.endStr,
+              isModified: true, // Mark as modified
             }
           : event
       )
@@ -161,28 +338,47 @@ const Schedule = () => {
         : {}),
     }));
   };
-  const toggleEventType = (eventId) => {
+  const toggleEventType = (e, eventId) => {
+    e.stopPropagation();
+    setEvents((prev) => {
+      const updatedEvents = prev.map((event) => {
+        if (String(event.id) === String(eventId)) {
+          const currentIsOnline = event.isOnline;
+          const isOnline = !currentIsOnline;
+          return {
+            ...event,
+            isOnline,
+            backgroundColor: isOnline
+              ? "hsl(var(--accent))"
+              : "hsl(var(--primary))",
+            borderColor: isOnline
+              ? "hsl(var(--accent))"
+              : "hsl(var(--primary))",
+            textColor: isOnline
+              ? "hsl(var(--accent-foreground))"
+              : "hsl(var(--primary-foreground))",
+            isModified: true, 
+          };
+        }
+        return event;
+      });
+      return updatedEvents;
+    });
+  };
+  const handleEventDrop = (dropInfo) => {
     setEvents((prev) =>
       prev.map((event) =>
-        event.id === eventId
+        String(event.id) === String(dropInfo.event.id)
           ? {
               ...event,
-              isOnline: !event.isOnline,
-              backgroundColor: !event.isOnline
-                ? "hsl(var(--accent))"
-                : "hsl(var(--primary))",
-              borderColor: !event.isOnline
-                ? "hsl(var(--accent))"
-                : "hsl(var(--primary))",
-              textColor: !event.isOnline
-                ? "hsl(var(--accent-foreground))"
-                : "hsl(var(--primary-foreground))",
+              start: dropInfo.event.startStr,
+              end: dropInfo.event.endStr,
+              isModified: true, 
             }
           : event
       )
     );
   };
-
   const handleOpenAddDialog = (selectInfo) => {
     if (currentView === "dayGridMonth") {
       return;
@@ -190,27 +386,33 @@ const Schedule = () => {
     if (new Date(selectInfo.start) < new Date()) {
       return; // Prevent selecting past dates
     }
+    // Reset selectedEvent to ensure we're in "add" mode, not "edit" mode
+    setSelectedEvent(null);
+    
     // Check for events on the same day and use their branch if available
     const eventsOnSameDay = events.filter((event) => {
-      return new Date(event.start).toLocaleDateString() === selectInfo.start.toLocaleDateString();
+      return (
+        new Date(event.start).toLocaleDateString() ===
+        selectInfo.start.toLocaleDateString()
+      );
     });
     setNewEvent({
-      id: "react" + uuidv4(), 
-      id: null, // Ensure no ID for new events
+      id: "react" + uuidv4(),
       title: "",
       instructor: "",
       isOnline: false,
-      branch: eventsOnSameDay.length > 0 ? eventsOnSameDay[0].branch : defaultBranch, 
+      branch:
+        eventsOnSameDay.length > 0 ? eventsOnSameDay[0].branch : defaultBranch,
       start: selectInfo.startStr,
       end: selectInfo.endStr,
       schedule_date: selectInfo.startStr.slice(0, 10),
     });
 
-    setSelectedEvent(null); // Ensure selectedEvent is null for add mode
     setIsDialogOpen(true);
   };
 
   const openEditDialog = (event) => {
+    debugger;
     setSelectedEvent(event);
     setIsDialogOpen(true);
   };
@@ -220,46 +422,68 @@ const Schedule = () => {
     setIsBranchModalOpen(true);
   };
   const renderEventContent = (eventInfo) => {
-    const event = events.find((e) => e.id === eventInfo.event.id);
-    const isOnline = event ? event.isOnline : false;
+    // Directly use eventInfo's extendedProps to get accurate isOnline state
+    const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
     const bgColor = isOnline ? "bg-accent" : "bg-primary";
-    const textColor = isOnline ? "text-accent-foreground" : "text-primary-foreground";
-    const subtextColor = isOnline ? "text-gray-700" : "text-white-500"; // Updated subtext color
-    const branchColor = isOnline ? "text-gray-700" : "text-gray-500"; // Updated branch color
+    const textColor = isOnline
+      ? "text-accent-foreground"
+      : "text-primary-foreground";
+    const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
+    const branchColor = isOnline ? "text-gray-700" : "text-gray-300";
+    
     return (
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
       >
+        {currentView !== "dayGridMonth" && (
+          <div
+            className={`flex space-x-1 absolute right-1 top-1 items-center text-xs italic font-bold ${branchColor}`}
+          >
+            {isOnline ? (
+              <>
+                <MapPin size={12} className="mr-1" />
+                <span>Home</span>
+              </>
+            ) : (
+              <>
+                <MapPin size={12} className="mr-1" />
+                <span>{eventInfo.event.extendedProps.branch?.name}</span>
+              </>
+            )}
+          </div>
+        )}
         <div className="p-1 flex-col">
           <div className="whitespace-normal">{eventInfo.event.title}</div>
           <div className={`text-xs ${subtextColor}`}>
             {eventInfo.event.extendedProps.instructor || ""}
           </div>
         </div>
-        <div className="flex space-x-1 absolute right-1 top-1 items-center">
+          <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
           <button
             onClick={(e) => {
-              toggleEventType(eventInfo.event.id);
+              e.preventDefault(); // Ensure event doesn't bubble
+              toggleEventType(e, eventInfo.event.id); 
             }}
-            className={`${textColor} hover:opacity-80`}
+            className={`${textColor} hover:opacity-80 flex items-center justify-center`}
             title={isOnline ? "Switch to Offline" : "Switch to Online"}
           >
-            {isOnline ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+            <div 
+              className={`w-3 h-3 rounded-full transition-colors ${
+                isOnline ? "bg-green-500" : "bg-gray-400"
+              }`}
+            ></div>
           </button>
           <button
             onClick={(e) => {
-              handleDeleteEvent(eventInfo.event.id);
+              e.stopPropagation(); // Prevent dialog from opening
+              setEventToDelete(eventInfo.event.id);
+              setIsDeleteConfirmOpen(true);
             }}
             className={`${textColor} hover:opacity-80`}
             title="Delete"
           >
-            <Trash2 size={16} />
+            <X size={13} />
           </button>
-        </div>
-        <div className="absolute bottom-1 left-1 flex items-center text-xs ${branchColor}">
-          <MapPin size={12} className="mr-1" />
-          {/* here */}
-          <span> {eventInfo.event.extendedProps.branch.name }</span>
         </div>
       </div>
     );
@@ -270,31 +494,47 @@ const Schedule = () => {
         <span>{headerInfo.text}</span>
         <button
           onClick={() => handleDayHeaderClick(headerInfo.date)}
-          className="text-red-500 hover:text-gray-700 m-3"
+          className="text-gray-500 hover:text-gray-800 m-3 "
           title="Select a Custom branch"
         >
-          <MapPin size={16} />
+          <MapPinned size={16}  />
         </button>
       </div>
     );
   };
 
-  const handleEventDrop = (dropInfo) => {
-    setEvents((prev) =>
-      prev.map((event) =>
-        event.id === dropInfo.event.id
-          ? {
-              ...event,
-              start: dropInfo.event.startStr,
-              end: dropInfo.event.endStr,
-            }
-          : event
-      )
+  const handleBranchSelection = (branchId) => {
+    const selectedBranchData = branches.find(
+      (branch) => branch.id === branchId
     );
-    toast({
-      title: "Success",
-      description: "Event moved successfully.",
+    if (!selectedBranchData) {
+      toast({
+        title: "Error",
+        description: "Could not find the selected branch.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSelectedBranch({
+      id: selectedBranchData.id,
+      name: selectedBranchData.name,
     });
+    // Get selected day as a date string for comparison
+    const selectedDayString = selectedDay.toLocaleDateString();
+    setEvents((prev) =>
+      prev.map((event) => {
+        const eventDate = new Date(event.start).toLocaleDateString();
+        if (eventDate === selectedDayString && !event.isOnline) {
+          return {
+            ...event,
+            branch: selectedBranchData,
+            isModified: true 
+          };
+        }
+        return event; 
+      })
+    );
+    setIsBranchModalOpen(false);
   };
 
   return (
@@ -316,9 +556,7 @@ const Schedule = () => {
           />
 
           {tracks.length === 0 ? (
-            <p className="text-gray-500 text-center">
-              No tracks assigned.
-            </p>
+            <p className="text-gray-500 text-center">No tracks assigned.</p>
           ) : (
             <Card className="p-6 bg-white border shadow-lg">
               <div className="mb-4 flex flex-col md:flex-row items-center gap-4 md:justify-between">
@@ -336,11 +574,10 @@ const Schedule = () => {
                 </div>
                 {userRole === "supervisor" && (
                   <div className="md:order-3">
-                    <ShareScheduleButton
-                      events={[
-                        ...events
-                      ]}
+                    <SessionsBulkCreateUpdate
+                      events={[...events.filter((event) => event.isModified)]}
                       track={selectedTrack}
+                      onSaveSuccess={handleChangesSaved}
                     />
                   </div>
                 )}
@@ -350,12 +587,20 @@ const Schedule = () => {
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="timeGridWeek"
                 selectable={userRole === "supervisor"}
-                editable={userRole === "supervisor" && currentView !== "dayGridMonth"}
+                editable={
+                  userRole === "supervisor" && currentView !== "dayGridMonth"
+                }
                 select={handleOpenAddDialog}
                 events={filteredEvents}
-                eventClick={(clickInfo) =>
-                  openEditDialog(events.find((e) => e.id === clickInfo.event.id))
-                }
+                // click on existing events to edit
+                eventClick={(clickInfo) => {
+                  const event = events.find(
+                    (e) => String(e.id) === String(clickInfo.event.id)
+                  ); // Ensure type match
+                  if (event) {
+                    openEditDialog(event);
+                  }
+                }}
                 eventResize={handleEventResize}
                 eventContent={renderEventContent}
                 headerToolbar={{
@@ -369,22 +614,23 @@ const Schedule = () => {
                 nowIndicator={true}
                 now={new Date()}
                 slotMinTime="09:00:00"
-                slotMaxTime="24:00:00"
+                slotMaxTime="22:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:30:00"
-                
                 allDaySlot={false}
                 eventOverlap={false}
                 eventDurationEditable={true}
                 viewDidMount={(view) => {
-                  setCurrentView(view.view.type);
+                  const newViewType = view.view.type;
+                  setCurrentView(newViewType);
+                  fetchEvents(selectedTrack); // Fetch events for the updated view period
                 }}
                 dayHeaderContent={renderDayHeaderContent}
                 eventDrop={handleEventDrop} // Add this prop to handle event dragging
-                selectAllow={function(selectInfo) {
+                selectAllow={function (selectInfo) {
                   const start = selectInfo.start;
                   const end = selectInfo.end;
-                
+
                   // Allow only if start and end are on the same calendar day
                   return start.toDateString() === end.toDateString();
                 }}
@@ -393,7 +639,16 @@ const Schedule = () => {
           )}
         </>
       )}
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog 
+        open={isDialogOpen} 
+        onOpenChange={(open) => {
+          if (!open) {
+            // Reset selectedEvent when dialog closes
+            setSelectedEvent(null);
+          }
+          setIsDialogOpen(open);
+        }}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
@@ -407,15 +662,13 @@ const Schedule = () => {
               </Label>
               <Input
                 id="event-title"
-                value={
-                  selectedEvent ? selectedEvent.title : newEvent.title
-                }
+                value={selectedEvent ? selectedEvent.title : newEvent.title}
                 onChange={(e) =>
                   selectedEvent
                     ? updateSelectedEvent("title", e.target.value)
                     : setNewEvent({ ...newEvent, title: e.target.value })
                 }
-                className="col-span-3 truncate" 
+                className="col-span-3 truncate"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -443,9 +696,7 @@ const Schedule = () => {
                 <Switch
                   id="event-online"
                   checked={
-                    selectedEvent
-                      ? selectedEvent.isOnline
-                      : newEvent.isOnline
+                    selectedEvent ? selectedEvent.isOnline : newEvent.isOnline
                   }
                   onCheckedChange={(checked) =>
                     selectedEvent
@@ -456,15 +707,6 @@ const Schedule = () => {
                         }))
                   }
                 />
-                <span>
-                  {selectedEvent
-                    ? selectedEvent.isOnline
-                      ? "Online"
-                      : "Offline"
-                    : newEvent.isOnline
-                    ? "Online"
-                    : "Offline"}
-                </span>
               </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
@@ -502,7 +744,6 @@ const Schedule = () => {
                 />
               </div>
             </div>
-
           </div>
           <DialogFooter className="flex justify-between">
             {selectedEvent && (
@@ -536,38 +777,7 @@ const Schedule = () => {
               Select a branch for{" "}
               {selectedDay ? new Date(selectedDay).toDateString() : ""}
             </p>
-            <Select
-              onValueChange={(value ) => {
-                // put logic here to handle branch selection
-                // handleUpdateEvent
-                const selectedBranchData = branches.find((branch) => branch.id === value);
-                setSelectedBranch({
-                  id: selectedBranchData.id,
-                  name: selectedBranchData.name,
-                });
-                const eventsToUpdateBranch = events.filter((event) => {
-                  return new Date(event.start).toLocaleDateString() === selectedDay.toLocaleDateString();
-                })
-
-                console.log(`Branch ${value} selected for ${selectedDay}`);
-
-                setEvents((prev) =>
-                  prev.map((event) =>
-                    eventsToUpdateBranch.some((e) => e.id === event.id)
-                      ? {
-                          ...event,
-                          branch: selectedBranchData,
-                        }
-                      : event
-                  )
-                );
-                toast({
-                  title: "Success",
-                  description: `Branch ${selectedBranchData.name} selected for ${new Date(selectedDay).toDateString()}`,
-                });
-                setIsBranchModalOpen(false);
-              }}
-            >
+            <Select onValueChange={handleBranchSelection}>
               <SelectTrigger>
                 <SelectValue placeholder="Select branch" />
               </SelectTrigger>
@@ -590,6 +800,75 @@ const Schedule = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Dialog open={isLeaveConfirmOpen} onOpenChange={setIsLeaveConfirmOpen}>
+        <DialogContent>
+          <DialogHeader className="flex flex-col items-center space-y-2">
+            <AlertTriangle className="h-12 w-12 text-amber-500" />
+            <DialogTitle>Unsaved Changes</DialogTitle>
+            <DialogDescription>
+              {pendingTrackId 
+                ? "You have unsaved changes. Changing tracks will lose these changes."
+                : "You have unsaved changes to the schedule. What would you like to do?"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => {
+              setIsLeaveConfirmOpen(false);
+              setPendingTrackId(null); // Reset pending track ID
+            }}>
+              Cancel
+            </Button>
+            <div className="space-x-2">
+              {!pendingTrackId && (
+                <Button onClick={() => {
+                  setIsLeaveConfirmOpen(false);
+                }}>
+                  Stay on Page
+                </Button>
+              )}
+              <Button 
+                variant="destructive" 
+                onClick={() => {
+                  setHasUnsavedChanges(false);
+                  setIsLeaveConfirmOpen(false);
+                  
+                  if (pendingTrackId) {
+                    // Apply track change if that was the trigger
+                    applyTrackChange(pendingTrackId);
+                  } else if (navigationPath) {
+                    // Navigate away if that was the trigger
+                    navigate(navigationPath);
+                  }
+                }}
+              >
+                {pendingTrackId ? "Change Track" : "Leave Without Saving"}
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader className="flex flex-col items-center space-y-2">
+            <AlertTriangle className="h-12 w-12 text-amber-500" />
+            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this event? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="flex justify-between">
+            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteEvent}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <style jsx global>{`
         .fc-button {
           background-color: #ef4444 !important;
@@ -603,7 +882,7 @@ const Schedule = () => {
 
         .fc-event {
           cursor: pointer;
-          font-size: 1.2rem;
+          font-size: 1.1rem;
           font-weight: 500;
         }
         .fc-event-title {
@@ -615,7 +894,6 @@ const Schedule = () => {
         .fc-daygrid-event {
           height: auto !important; /* Adjust event height */
         }
-
       `}</style>
     </Layout>
   );
