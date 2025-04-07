@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Layout from '@/components/layout/Layout';
 import { axiosBackendInstance } from '@/api/config';
 import { useQuery } from '@tanstack/react-query';
@@ -13,10 +13,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Button } from '@/components/ui/button';
+import axios from 'axios';
 
 function AttendanceStatus() {
   const [selectedTrack, setSelectedTrack] = useState('All');
   const [selectedTrackId, setSelectedTrackId] = useState(null);
+  const [nextPageUrl, setNextPageUrl] = useState(null);
+  const [scheduleEntries, setScheduleEntries] = useState([]);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   //-----------------------APIs-----------------------//
   //api for fetching attendance status for each given day
@@ -40,6 +45,22 @@ function AttendanceStatus() {
     console.log('Selected Track:', selectedTrack, 'Selected Track ID:', selectedTrackId, 'Response:', response.data);
     return response.data;
   };
+
+  // Function to load more schedules
+  const loadMoreSchedules = async () => {
+    if (!nextPageUrl) return;
+    
+    setIsLoadingMore(true);
+    try {
+      const response = await axiosBackendInstance.get(nextPageUrl);
+      setScheduleEntries(prev => [...prev, ...response.data.results]);
+      setNextPageUrl(response.data.next);
+    } catch (error) {
+      console.error("Error loading more schedules:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
   //-------------------------------------------------//
 
   //------------------Queries-------------------------//
@@ -55,13 +76,20 @@ function AttendanceStatus() {
     refetchOnWindowFocus: false,
   });
 
-  const { data: schedulesData, isLoading } = useQuery({
+  const { data: schedulesData, isLoading, isSuccess } = useQuery({
     // Include selectedTrack and selectedTrackId in the query key to refetch when track changes
     queryKey: ['schedules', selectedTrack, selectedTrackId],
     queryFn: fetchSchedules,
     refetchOnWindowFocus: false,
   });
   //-------------------------------------------------//
+
+  useEffect(() => {
+    if (isSuccess) {
+      setScheduleEntries(schedulesData.results);
+      setNextPageUrl(schedulesData.next);
+    }
+  }, [isSuccess])
 
   const handleRefresh = () => {
     refetch();
@@ -88,8 +116,8 @@ function AttendanceStatus() {
 
   //-------------------Schedules Data-------------------//
   // Check if schedulesData is empty or undefined
-  const isSchedulesDataEmpty = !schedulesData || schedulesData.length === 0;
-
+  const isSchedulesDataEmpty = !scheduleEntries || scheduleEntries.length === 0;
+  console.log('Schedule Empty Indicator:', isSchedulesDataEmpty);
 
   return (
     <Layout>
@@ -126,12 +154,37 @@ function AttendanceStatus() {
             </div>
           </div>
           
-          {/* Directly use schedulesData from the API - no local filtering needed */}
-          { !isLoading ? <AttendanceStatusTable data={schedulesData} /> : <div className='flex items-center justify-center h-64'>
-            <div className="animate-pulse flex h-20 w-20 items-center justify-center rounded-lg bg-primary/10 text-primary">
-              <Clock2 size={48}/>
+          {/* Use scheduleEntries instead of schedulesData.results */}
+          { !isLoading ? (
+            <>
+              <AttendanceStatusTable data={scheduleEntries} />
+              
+              {/* View More button */}
+              {nextPageUrl && (
+                <div className="mt-4 flex justify-center">
+                  <Button 
+                    variant="outline" 
+                    onClick={loadMoreSchedules}
+                    disabled={isLoadingMore}
+                    className="w-full max-w-xs"
+                  >
+                    {isLoadingMore ? (
+                      <span className="flex items-center gap-2">
+                        <LoaderCircle size={16} className="animate-spin" />
+                        Loading more...
+                      </span>
+                    ) : "View More"}
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            <div className='flex items-center justify-center h-64'>
+              <div className="animate-pulse flex h-20 w-20 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                <Clock2 size={48}/>
+              </div>
             </div>
-          </div>}
+          )}
         </div>
       </Card>
     </Layout>
