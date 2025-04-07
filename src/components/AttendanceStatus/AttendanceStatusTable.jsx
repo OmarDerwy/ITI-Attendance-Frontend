@@ -1,10 +1,12 @@
 import React from 'react'
-import { Calendar } from 'lucide-react';
+import { Calendar, Clock2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import dayjs from 'dayjs';
+import { useQuery } from '@tanstack/react-query';
+import { axiosBackendInstance } from '@/api/config';
 
 // //mock data for attendance status with students
 // const schedules = [
@@ -59,8 +61,25 @@ const getStatusColor = (status) => {
 
 function AttendanceStatusTable(schedules) {
   const [onViewDetails, setOnViewDetails] = useState(null)
+  const [scheduleId, setScheduleId] = useState("")
   const isSchedulesEmpty = false
   console.log('schedules', schedules, 'isSchedulesEmpty', isSchedulesEmpty)
+  //--------------------APIs---------------------//
+    // api for fetching student attendance status for each given day
+  const fetchAttendanceStatus = async () => {
+    const response  = await axiosBackendInstance.get(`/attendance/schedules/${scheduleId}`, );
+    console.log('Attendance Status Response:', response.data);
+    return response.data;
+  };
+  //----------------------------------------------//
+  //------------------Queries-------------------//
+    const { data: attendanceData, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['attendanceStatus', scheduleId],
+    enabled: !!scheduleId, // Only run the query if scheduleId is not null
+    queryFn: fetchAttendanceStatus,
+    refetchOnWindowFocus: false,
+  });
+  //----------------------------------------------//
 
   const formatTime = (time) => {
     // Try to parse using common time formats then format to "hh:mm A"
@@ -74,6 +93,7 @@ function AttendanceStatusTable(schedules) {
           <tr className='border-b bg-muted/50'>
             <th className="py-3 px-4 text-left font-medium">Date</th>
             <th className="py-3 px-4 text-left font-medium">Time</th>
+            <th className="py-3 px-4 text-left font-medium">Track</th>
             <th className="py-3 px-4 text-left font-medium">Sessions</th>
             <th className="py-3 px-4 font-medium text-right">Actions</th>
           </tr>
@@ -92,56 +112,75 @@ function AttendanceStatusTable(schedules) {
                   <td className="py-3 px-4">
                     {formatTime(schedule.start_time)} / {formatTime(schedule.end_time)}
                   </td>
-                  <td className="py-3 px-4">{schedule.sessions}</td>
+                  <td className="py-3 px-4">{schedule.track.name}</td>
+                  <td className="py-3 px-4">{schedule.sessions.join(" - ")}</td>
                   <td className="py-3 px-4 text-right">
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setOnViewDetails(onViewDetails === schedule.created_at ? null : schedule.created_at)}
+                      onClick={() => {
+                        setOnViewDetails(onViewDetails === schedule.id ? null : schedule.id)
+                        if (onViewDetails !== schedule.id) {
+                          setScheduleId(schedule.id)
+                          fetchAttendanceStatus()
+                        } else {
+                          setScheduleId("")
+                        }
+                      }}
                     >
-                      {onViewDetails === schedule.created_at ? 'Close' : 'Details'}
+                      {onViewDetails === schedule.id ? 'Close' : 'Details'}
                     </Button>
                   </td>
                 </tr>
 
                 {/* Expandable student attendance details */}
-                {onViewDetails === schedule.created_at && (
+                {onViewDetails === schedule.id && (
                   <tr>
-                    <td colSpan={4} className="p-2">
+                    <td colSpan={5} className="p-2">
                       <Card className="bg-muted/20 p-4">
                         <h4 className="font-medium mb-2">Student Attendance</h4>
-                        <table className="w-full text-sm border-collapse">
-                          <thead>
-                            <tr className="border-b">
-                              <th className="py-2 px-3 text-left font-medium">Student</th>
-                              <th className="py-2 px-3 text-left font-medium">Status</th>
-                              <th className="py-2 px-3 text-left font-medium">Adjusted Time</th>
-                              <th className="py-2 px-3 text-left font-medium">Check In/Out</th>
-                              <th className="py-2 px-3 text-left font-medium">Action</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {schedule.students.map((student) => (
-                              <tr key={student.id} className={`border-b ${student.status === 'pending' ? 'bg-yellow-50' : ''}`}>
-                                <td className="py-2 px-3">{student.name}</td>
-                                <td className="py-2 px-3">
-                                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(student.status)}`}>
-                                    {student.status}
-                                  </span>
-                                </td>
-                                <td className="py-2 px-3">{student.adjustedTime}</td>
-                                <td className="py-2 px-3">{student.checkinout}</td>
-                                <td className="py-2 px-3">
-                                  {student.status === 'pending' && (
-                                    <Link to="/leave-request-center" className="text-blue-600 hover:underline">
-                                      Permission requested
-                                    </Link>
-                                  )}
-                                </td>
+                        {isLoading ? (
+                          <div className="flex items-center justify-center h-64">
+                            <div className="animate-pulse flex h-20 w-20 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                              <Clock2 size={48}/>
+                            </div>
+                          </div>
+                        ) : attendanceData && attendanceData.attendance_records ? (
+                          <table className="w-full text-sm border-collapse">
+                            <thead>
+                              <tr className="border-b">
+                                <th className="py-2 px-3 text-left font-medium">Student</th>
+                                <th className="py-2 px-3 text-left font-medium">Status</th>
+                                <th className="py-2 px-3 text-left font-medium">Adjusted Time</th>
+                                <th className="py-2 px-3 text-left font-medium">Check In/Out</th>
+                                <th className="py-2 px-3 text-left font-medium">Action</th>
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {attendanceData.attendance_records.map((student) => (
+                                <tr key={student.id} className={`border-b ${student.status === 'pending' ? 'bg-yellow-50' : ''}`}>
+                                  <td className="py-2 px-3">{student.student.first_name} {student.student.last_name}</td>
+                                  <td className="py-2 px-3">
+                                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(student.status)}`}>
+                                      {student.status}
+                                    </span>
+                                  </td>
+                                  <td className="py-2 px-3">{student.adjusted_time ? student.adjusted_time : "N/A"}</td>
+                                  <td className="py-2 px-3">{student.check_in_time ? student.check_in_time : "N/A"} / {student.check_out_time ? student.check_out_time : "N/A"}</td>
+                                  <td className="py-2 px-3">
+                                    {student.status === 'pending' && (
+                                      <Link to="/leave-request-center" className="text-blue-600 hover:underline">
+                                        Permission requested
+                                      </Link>
+                                    )}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        ) : (
+                          <div className="text-center py-4">No attendance records available.</div>
+                        )}
                       </Card>
                     </td>
                   </tr>
@@ -150,7 +189,7 @@ function AttendanceStatusTable(schedules) {
             ))
           ) : (
             <tr className='border-b'>
-              <td colSpan={3} className='text-center py-3'>No data available</td>
+              <td colSpan={5} className='text-center py-3'>No data available</td>
             </tr>
           )}
         </tbody>

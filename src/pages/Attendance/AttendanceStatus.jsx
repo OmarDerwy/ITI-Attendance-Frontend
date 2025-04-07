@@ -24,12 +24,6 @@ function AttendanceStatus() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   //-----------------------APIs-----------------------//
-  //api for fetching attendance status for each given day
-  // const fetchAttendanceStatus = async () => {
-  //   // const response  = await axiosBackendInstance.get('/attendance/status');
-  //   return response.data;
-  // };
-
   //api for fetching tracks for the current supervisor
   const fetchTracks = async () => {
     const response = await axiosBackendInstance.get('attendance/tracks');
@@ -64,12 +58,6 @@ function AttendanceStatus() {
   //-------------------------------------------------//
 
   //------------------Queries-------------------------//
-  // const { data: attendanceData, isLoading, isError, error, refetch } = useQuery({
-  //   queryKey: ['attendanceStatus'],
-  //   queryFn: fetchAttendanceStatus,
-  //   refetchOnWindowFocus: false,
-  // });
-
   const { data: tracksData } = useQuery({
     queryKey: ['tracks'],
     queryFn: fetchTracks,
