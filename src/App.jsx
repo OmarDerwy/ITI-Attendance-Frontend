@@ -28,8 +28,6 @@ import TrackForm from './pages/Management/TrackForm';
 import AttendanceStatus from "./pages/Attendance/AttendanceStatus";
 import LeaveRequestCenter from '@/pages/Attendance/LeaveRequestCenter';
 
-import TrackForm from "./pages/Management/TrackForm";
-
 const queryClient = new QueryClient();
 
 const App = () => (

@@ -147,13 +147,6 @@ const Sidebar = () => {
     //   to: "/attendance-insights",
     //   roles: ["supervisor"],
     // },
-    {
-      icon: UserCheck,
-      label: "Student Verification",
-      to: "/student-verification",
-      roles: ["supervisor"],
-    },
-
     // Admin only
     // {
     //   icon: Megaphone,
