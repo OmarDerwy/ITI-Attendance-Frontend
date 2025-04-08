@@ -5,10 +5,10 @@ import { axiosBackendInstance } from "../api/config";
 const UserContext = createContext(undefined);
 
 export const UserProvider = ({ children }) => {
+  const [userId, setUserId] = useState("");
   const [userRole, setUserRole] = useState("");
   const [userName, setUserName] = useState("");
   const [userItems, setUserItems] = useState([]);
-  const [userId, setUserId] = useState(null);
   const [userProfilePic, setUserProfilePic] = useState("/placeholder.svg");
   const [userAnnouncements, setUserAnnouncements] = useState([]);
   const [readAnnouncements, setReadAnnouncements] = useState([]);
@@ -54,6 +54,7 @@ export const UserProvider = ({ children }) => {
           const role = response.data.groups[0];
           const email = response.data.email;
           const userId = response.data.id;
+          localStorage.setItem("userId", userId);
           setUserId(userId);
           setUserRole(role);
           setUserName(email);
@@ -76,7 +77,6 @@ export const UserProvider = ({ children }) => {
       localStorage.removeItem('refresh');
       setUserRole(null);
       setUserName(null);
-      setUserId(null);
     };
   
 

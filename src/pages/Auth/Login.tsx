@@ -39,9 +39,12 @@ const Login = () => {
       const userResponse = await axiosBackendInstance.get(
         "accounts/auth/users/me/"
       );
+      const userData = userResponse.data;
       user.setUserRole(userResponse.data.groups[0]);
       user.setUserName(userResponse.data.email);
       user.setUserId(userResponse.data.id);
+      localStorage.setItem("userId", userData.id.toString());
+      console.log("User ID stored in localStorage:", userData.id);
       navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
