@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import Layout from '@/components/Layout/Layout';
+import Layout from "@/components/layout/Layout.jsx";
 import PageTitle from '@/components/ui/page-title';
 import { HandHeart, Calendar, LoaderCircle } from 'lucide-react';
 import { Card } from '@/components/ui/card';

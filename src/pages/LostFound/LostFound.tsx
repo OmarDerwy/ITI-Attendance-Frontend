@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import Layout from "@/components/layout/layout.jsx";
+import Layout from "@/components/layout/Layout.jsx";
 import PageTitle from "@/components/ui/page-title";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar } from "@/components/ui/avatar";
 import { useUser } from "@/context/UserContext";
 import { format } from "date-fns";
+// import Layout from '../../components/layout/Layout';
 
 interface LostItemType {
   item_id: number;
