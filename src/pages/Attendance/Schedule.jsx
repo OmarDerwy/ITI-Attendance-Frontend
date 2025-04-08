@@ -134,7 +134,9 @@ const Schedule = () => {
       ...event,
       isModified: false
     })));
-  }, []);
+    // Refresh calendar data after saving
+    fetchEvents(selectedTrack);
+  }, [selectedTrack]);
 
   const updateTrackAndBranch = (trackId, tracks) => {
     const selectedTrackData = tracks.find((track) => track.id === trackId);
@@ -293,6 +295,8 @@ const Schedule = () => {
           description: "Event deleted successfully.",
           variant: "success",
         });
+        // Refresh calendar data after deleting
+        fetchEvents(selectedTrack);
       } catch (error) {
         console.error("Error deleting event:", error); // DEV DEBUG
         toast({
