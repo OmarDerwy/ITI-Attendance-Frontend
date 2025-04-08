@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, Calendar, Clock, Check, Users, AlertTriangle, BellRing } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
@@ -18,7 +18,11 @@ import {
   Pie, 
   Cell 
 } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends} from '@/api/attendance';
+import { usePermissions } from '@/context/PermissionsContext';
 import RecentAbsences from '../../components/dashboard/RecentAbsences';
+
 const attendanceData = [
   { name: "Mon", attendance: 85, absence: 15 },
   { name: "Tue", attendance: 88, absence: 12 },
@@ -46,18 +50,83 @@ const trackAttendance = [
   { name: "Mobile", value: 88 },
   { name: "Data Science", value: 78 },
 ];
+
 const recentAbsences = [
   { id: 1, student: "Alice Johnson", date: "Jun 15, 2023", reason: "Sick leave", status: "excused" },
   { id: 2, student: "Bob Smith", date: "Jun 14, 2023", reason: "Family event", status: "pending" },
   { id: 3, student: "Charlie Brown", date: "Jun 12, 2023", reason: "N/A", status: "unexcused" },
   { id: 4, student: "Diana Ross", date: "Jun 9, 2023", reason: "Medical appointment", status: "excused" },
 ];
+
 const SupervisorDashboard = () => {
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b'];
+  // const [todayAttendance, setTodayAttendance] = useState(null);
+  // const [weeklyAttendance, setWeeklyAttendance] = useState(null);
+  const [filteredData, setFilteredData] = useState([]);
+  const { totalPendingPermissions, isLoading: permissionsLoading, error } = usePermissions();
+
+  const { data: todayAttendance, isLoading, isError, errorr } = useQuery({
+    queryKey: ['todayAttendancePercentage'],
+    queryFn: getTodaysAttendancePercentage,
+    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
+    onError: (errorr) => {
+      console.error("Error fetching today's attendance:", errorr);
+    },
+  });
+
+  const { data: weeklyAttendance, isLoading: weeklyLoading, isError: weeklyError, error: weeklyErrorData } = useQuery({
+  queryKey: ['weeklyAttendancePercentage'],
+  queryFn: getWeeklyAttendancePercentage,
+  staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+  cacheTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
+  onError: (error) => {
+    console.error("Error fetching weekly attendance:", error);
+  },
+});
+
+const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error: trendsErrorData } = useQuery({
+  queryKey: 'attendanceTrends',
+  queryFn: getAttendanceTrends,
+  onError: (error) => {
+    console.error("Error fetching attendance trends:", error);
+  },
+});
+
+  useEffect(() => {
+    if (trendsData) {
+      const currentDate = new Date();
+      const fourWeeksAgo = new Date();
+      fourWeeksAgo.setDate(currentDate.getDate() - 28);
+
+      const filtered = trendsData.weekly_trends.filter((weekData) => {
+        const weekDate = new Date(weekData.week);
+        return weekDate >= fourWeeksAgo && weekDate <= currentDate;
+      });
+
+      setFilteredData(filtered);
+    }
+  }, [trendsData]);
+
+  // useEffect(() => {
+  //   const fetchAttendance = async () => {
+  //     if (supervisorAttendanceData) {
+  //       const today = calculateTodayAttendance(supervisorAttendanceData);
+  //       setTodayAttendance(isNaN(today) ? null : today);
+
+  //       const weekly = await calculateWeeklyAttendance();
+  //       console.log('Weekly Attendance:', weekly); // Debugging
+  //       setWeeklyAttendance(isNaN(weekly) ? null : weekly);
+  //     }
+  //   };
+
+  //   fetchAttendance();
+  // }, [supervisorAttendanceData]);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Today's Attendance */}
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 text-center border border-emerald-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -65,10 +134,14 @@ const SupervisorDashboard = () => {
                 <Check className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-700">87.5%</div> {/* get the attendance percentage */}
+            <div className="text-2xl font-bold text-emerald-700">
+              {isLoading || todayAttendance === null ? 'Loading...' : `${todayAttendance.attendance_percentage}%`}
+            </div>
             <CardDescription>Today's Attendance</CardDescription>
           </CardContent>
         </Card>
+
+        {/* Weekly Attendance */}
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -76,10 +149,14 @@ const SupervisorDashboard = () => {
                 <BarChart3 className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-700">92%</div>
+            <div className="text-2xl font-bold text-blue-700">
+              {weeklyLoading || weeklyAttendance === undefined ? 'Loading...' : `${weeklyAttendance.attendance_percentage}%`}
+            </div>
             <CardDescription>Weekly Average</CardDescription>
           </CardContent>
         </Card>
+
+        {/* permissions Requests */}
         <Card className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 text-center border border-amber-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -87,8 +164,8 @@ const SupervisorDashboard = () => {
                 <AlertTriangle className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-amber-700">5</div>
-            <CardDescription>Verification Requests</CardDescription>
+            <div className="text-2xl font-bold text-amber-700">{permissionsLoading||totalPendingPermissions === null? 'Loading...':`${totalPendingPermissions}`}</div>
+            <CardDescription>permission Requests</CardDescription>
           </CardContent>
         </Card>
       </div>
@@ -131,7 +208,7 @@ const SupervisorDashboard = () => {
             <CardTitle className="text-lg mb-4">Attendance Trends</CardTitle>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendsData}>
+                <LineChart data={filteredData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="week" />
                   <YAxis domain={[60, 100]} />

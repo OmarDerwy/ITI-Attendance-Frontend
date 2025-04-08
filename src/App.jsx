@@ -27,11 +27,14 @@ import BranchForm from "./pages/Management/BranchForm";
 import TrackForm from './pages/Management/TrackForm';
 import AttendanceStatus from "./pages/Attendance/AttendanceStatus";
 import LeaveRequestCenter from '@/pages/Attendance/LeaveRequestCenter';
+import { PermissionsProvider } from "@/context/PermissionsContext"; 
+
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+     <PermissionsProvider>
     <UserProvider>
       <TooltipProvider>
         <Toaster />
@@ -75,6 +78,7 @@ const App = () => (
         </BrowserRouter>
       </TooltipProvider>
     </UserProvider>
+    </PermissionsProvider>
   </QueryClientProvider>
 );
 
