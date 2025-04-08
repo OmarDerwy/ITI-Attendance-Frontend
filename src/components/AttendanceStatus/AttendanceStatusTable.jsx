@@ -168,7 +168,7 @@ function AttendanceStatusTable(schedules) {
                                   <td className="py-2 px-3">{student.adjusted_time ? student.adjusted_time : "N/A"}</td>
                                   <td className="py-2 px-3">{student.check_in_time ? student.check_in_time : "N/A"} / {student.check_out_time ? student.check_out_time : "N/A"}</td>
                                   <td className="py-2 px-3">
-                                    {student.status === 'pending' && (
+                                    {student.pending_leave_request === true && (
                                       <Link to="/leave-request-center" className="text-blue-600 hover:underline">
                                         Permission requested
                                       </Link>
