@@ -82,8 +82,8 @@ function AttendanceStatusTable(schedules) {
   //----------------------------------------------//
 
   const formatTime = (time) => {
-    // Try to parse using common time formats then format to "hh:mm A"
-    return dayjs(time, ['h:mm A',]).format('hh:mm A');
+    if (!time) return "N/A";
+    return dayjs(time).format("hh:mma");
   }
 
   return (
@@ -95,6 +95,7 @@ function AttendanceStatusTable(schedules) {
             <th className="py-3 px-4 text-left font-medium">Time</th>
             <th className="py-3 px-4 text-left font-medium">Track</th>
             <th className="py-3 px-4 text-left font-medium">Sessions</th>
+            <th className="py-3 px-4 text-left font-medium">Attended</th>
             <th className="py-3 px-4 font-medium text-right">Actions</th>
           </tr>
         </thead>
@@ -114,6 +115,7 @@ function AttendanceStatusTable(schedules) {
                   </td>
                   <td className="py-3 px-4">{schedule.track.name}</td>
                   <td className="py-3 px-4">{schedule.sessions.join(" - ")}</td>
+                  <td className="py-3 px-4">{schedule.attended_out_of_total.attended} / {schedule.attended_out_of_total.total}</td>
                   <td className="py-3 px-4 text-right">
                     <Button
                       variant="ghost"
@@ -136,7 +138,7 @@ function AttendanceStatusTable(schedules) {
                 {/* Expandable student attendance details */}
                 {onViewDetails === schedule.id && (
                   <tr>
-                    <td colSpan={5} className="p-2">
+                    <td colSpan={6} className="p-2">
                       <Card className="bg-muted/20 p-4">
                         <h4 className="font-medium mb-2">Student Attendance</h4>
                         {isLoading ? (
@@ -165,8 +167,12 @@ function AttendanceStatusTable(schedules) {
                                       {student.status}
                                     </span>
                                   </td>
-                                  <td className="py-2 px-3">{student.adjusted_time ? student.adjusted_time : "N/A"}</td>
-                                  <td className="py-2 px-3">{student.check_in_time ? student.check_in_time : "N/A"} / {student.check_out_time ? student.check_out_time : "N/A"}</td>
+                                  <td className="py-2 px-3">
+                                    {student.adjusted_time ? formatTime(student.adjusted_time) : "N/A"}
+                                  </td>
+                                  <td className="py-2 px-3">
+                                    {student.check_in_time ? formatTime(student.check_in_time) : "N/A"} / {student.check_out_time ? formatTime(student.check_out_time) : "N/A"}
+                                  </td>
                                   <td className="py-2 px-3">
                                     {student.pending_leave_request === true && (
                                       <Link to="/leave-request-center" className="text-blue-600 hover:underline">
@@ -189,7 +195,7 @@ function AttendanceStatusTable(schedules) {
             ))
           ) : (
             <tr className='border-b'>
-              <td colSpan={5} className='text-center py-3'>No data available</td>
+              <td colSpan={6} className='text-center py-3'>No data available</td>
             </tr>
           )}
         </tbody>

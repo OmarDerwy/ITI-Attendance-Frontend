@@ -15,6 +15,7 @@ import {
 import { axiosBackendInstance } from '@/api/config';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { useToast } from '@/hooks/use-toast';
 
 function LeaveRequestCenter() {
     const [adjustedTimes, setAdjustedTimes] = useState({});
@@ -22,6 +23,7 @@ function LeaveRequestCenter() {
     const [leaveRequests, setLeaveRequests] = useState([]);
     const [nextPageUrl, setNextPageUrl] = useState(null);
     const [isLoadingMore, setIsLoadingMore] = useState(false);
+    const {toast} = useToast();
 
     // API endpoint for fetching permission requests
     const fetchPermissionRequests = async () => {
@@ -150,28 +152,58 @@ function LeaveRequestCenter() {
         
         try {
             // API call to update the request status with adjusted time
-            await axiosBackendInstance.post(`attendance/permission-requests/${requestId}/approve`, {
-                adjustedTime: adjustedDateTime,
+            const response = await axiosBackendInstance.post(`attendance/permission-requests/${requestId}/approve/`, {
+                adjusted_time: adjustedDateTime,
             });
-            
+
+            // show a toast to notify acceptance successful
+            toast({
+                title: 'Request Accepted Auccessfully',
+                description: `Leave request for ${getStudentName(request)} has been accepted.`,
+                variant: 'default',
+                duration: 5000,
+                action: <Button variant="link" onClick={() => setSelectedRequest(null)}>Close</Button>,
+            });
+
+            console.log('FOCUS HERE: ',response.data);
             // Refetch the data to update the UI
             refetch();
             setSelectedRequest(null);
         } catch (error) {
             console.error('Error accepting request:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to accept the request. Please try again later.',
+                variant: 'destructive',
+                duration: 5000,
+                action: <Button variant="link" onClick={() => setSelectedRequest(null)}>Close</Button>,
+            });
         }
     };
 
     const handleReject = async (requestId) => {
         try {
             // Add your API call here to update the request status
-            await axiosBackendInstance.post(`attendance/permission-requests/${requestId}/reject`);
-            
+            await axiosBackendInstance.post(`attendance/permission-requests/${requestId}/reject/`);
+            toast({
+                title: 'Request Rejected Successfully',
+                description: `Leave request for ${getStudentName(request)} has been rejected.`,
+                variant: 'default',
+                duration: 5000,
+                action: <Button variant="link" onClick={() => setSelectedRequest(null)}>Close</Button>,
+            });
             // Refetch the data to update the UI
             refetch();
             setSelectedRequest(null);
         } catch (error) {
             console.error('Error rejecting request:', error);
+            toast({
+                title: 'Error',
+                description: 'Failed to reject the request. Please try again later.',
+                variant: 'destructive',
+                duration: 5000,
+                action: <Button variant="link" onClick={() => setSelectedRequest(null)}>Close</Button>,
+            });
         }
     };
 
@@ -243,11 +275,7 @@ function LeaveRequestCenter() {
                                                     <tr>
                                                         <td colSpan={5} className="p-0 border-0">
                                                             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 shadow-sm m-2">
-                                                                <div className="grid grid-cols-2 gap-4 mb-4">
-                                                                    <div>
-                                                                        <h3 className="font-semibold">Phone Number:</h3>
-                                                                        <p className="text-sm text-gray-600">{request.student.phone_number}</p>
-                                                                    </div>
+                                                                <div className="gap-4 mb-4">
                                                                     <div className="text-right">
                                                                         <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
                                                                             {getRequestTypeDisplay(request.request_type)}
@@ -256,6 +284,14 @@ function LeaveRequestCenter() {
                                                                 </div>
                                                                 
                                                                 <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                                                                    <div>
+                                                                        <h3 className="font-semibold">Phone Number:</h3>
+                                                                        <p className="text-sm text-gray-600">{request.student.phone_number}</p>
+                                                                    </div>
+                                                                    <div>
+                                                                        <h3 className="font-semibold">Track:</h3>
+                                                                        <p className="text-sm text-gray-600">{request.schedule.track.name}</p>
+                                                                    </div>
                                                                     <div>
                                                                         <p className="font-medium">Date:</p>
                                                                         <p>{formatDate(request.adjusted_time)}</p>
