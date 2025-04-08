@@ -14,36 +14,65 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { StudentFormValues } from "@/types/student";
+import { useQuery } from "@tanstack/react-query";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 interface AddStudentFormProps {
   onSuccess: () => void;
   onCancel: () => void;
 }
 
+interface Track {
+  id: number;
+  track_id: number;
+  name: string;
+  start_date: string;
+  program_type_display: string;
+}
+
+const fetchTracks = async (): Promise<Track[]> => {
+  const response = await axiosBackendInstance.get('/attendance/tracks/');
+  return response.data.results;
+};
+
 const addStudentFormSchema = z.object({
   email: z.string().email({ message: "Please enter a valid email address." }),
   first_name: z.string().min(1, { message: "First name is required." }),
   last_name: z.string().min(1, { message: "Last name is required." }),
   phone_number: z.string().optional(),
+  track_id: z.string().min(1, { message: "Track selection is required." }),
 });
 
 const AddStudentForm = ({ onSuccess, onCancel }: AddStudentFormProps) => {
   const { toast } = useToast();
   
-  const form = useForm<StudentFormValues>({
+  const { data: tracks, isLoading: isLoadingTracks } = useQuery({
+    queryKey: ['tracks'],
+    queryFn: fetchTracks,
+  });
+  
+  const form = useForm<StudentFormValues & { track_id: string }>({
     resolver: zodResolver(addStudentFormSchema),
     defaultValues: {
       email: "",
       first_name: "",
       last_name: "",
       phone_number: "",
+      track_id: "",
     },
   });
 
-  const handleAddStudent = async (values: StudentFormValues) => {
+  const handleAddStudent = async (values: StudentFormValues & { track_id: string }) => {
     try {
       await axiosBackendInstance.post('/accounts/students/', {
         ...values,
+        track_id: parseInt(values.track_id),
         groups: ["student"],
       });
 
@@ -118,6 +147,37 @@ const AddStudentForm = ({ onSuccess, onCancel }: AddStudentFormProps) => {
               <FormControl>
                 <Input placeholder="+1234567890" {...field} />
               </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        
+        <FormField
+          control={form.control}
+          name="track_id"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Track</FormLabel>
+              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormControl>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a track" />
+                  </SelectTrigger>
+                </FormControl>
+                <SelectContent>
+                  {isLoadingTracks ? (
+                    <SelectItem value="loading" disabled>
+                      Loading tracks...
+                    </SelectItem>
+                  ) : (
+                    tracks?.map((track) => (
+                      <SelectItem key={track.id} value={track.id.toString()}>
+                        {`${track.name} - ${track.start_date} - ${track.program_type_display}`}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
               <FormMessage />
             </FormItem>
           )}
