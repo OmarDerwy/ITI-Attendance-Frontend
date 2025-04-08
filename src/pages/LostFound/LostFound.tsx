@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import axios from "axios";
 import {
   Search,
@@ -10,8 +10,12 @@ import {
   X,
   Link,
   Percent,
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
 import Layout from "@/components/layout/layout.jsx";
 import PageTitle from "@/components/ui/page-title";
 import { Input } from "@/components/ui/input";
@@ -50,119 +54,138 @@ interface MatchedItemType {
 }
 
 const LostFound = () => {
-  const userId = Number(localStorage.getItem("userId"));
-  const { userRole, token } = useUser();
+  const token = localStorage.getItem("access");
   const [searchQuery, setSearchQuery] = useState("");
   const navigate = useNavigate();
-  const [lostItems, setLostItems] = useState<LostItemType[]>([]);
-  const [foundItems, setFoundItems] = useState<LostItemType[]>([]);
-  const [allItems, setAllItems] = useState<LostItemType[]>([]);
-  // Replace myItems with matchedItems
-  const [matchedItems, setMatchedItems] = useState<MatchedItemType[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [activeTab, setActiveTab] = useState("lost");
 
-  // Add default image URL constant near the top of the component
+  // Add default image URL constant
   const DEFAULT_IMAGE_URL =
     "https://media.discordapp.net/attachments/1347736304397582456/1358295324820770836/ChatGPT_Image_Apr_6_2025_06_18_28_AM.png?ex=67f35299&is=67f20119&hm=1b43ebbc3ccf0a978e90e97c8b3eb275ec2614aeffeb6364a3fc3763692788d4&=&format=webp&quality=lossless&width=960&height=960";
 
-  // Fetch data from API
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      setError(null);
+  // Pagination states
+  const [lostItemsPage, setLostItemsPage] = useState(1);
+  const [foundItemsPage, setFoundItemsPage] = useState(1);
+  const [matchedItemsPage, setMatchedItemsPage] = useState(1);
 
-      try {
-        // Fetch lost items
-        const lostItemsResponse = await axios.get(
-          "http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("access")}`,
-            },
-          }
-        );
-
-        // Fetch found items
-        const foundItemsResponse = await axios.get(
-          "http://127.0.0.1:8000/api/v1/lost-and-found/found-items/",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("access")}`,
-            },
-          }
-        );
-
-        // Add fetch for matched items
-        const matchedItemsResponse = await axios.get(
-          "http://127.0.0.1:8000/api/v1/lost-and-found/matched-items/",
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("access")}`,
-            },
-          }
-        );
-
-        const lostItemsData = lostItemsResponse.data;
-        const foundItemsData = foundItemsResponse.data;
-        const matchedItemsData = matchedItemsResponse.data;
-        console.log("Lost Items:", lostItemsData.results);
-        console.log("Found Items:", foundItemsData.results);
-        console.log("Matched Items:", matchedItemsData.results);
-
-        // Format and standardize data
-        const formattedLostItems = lostItemsData.results.map((item: any) => ({
-          ...item,
-        }));
-
-        const formattedFoundItems = foundItemsData.results.map((item: any) => ({
-          ...item,
-        }));
-
-        // Filter matched items for current user where status is SUCCEEDED
-        console.log(matchedItemsData?.results[0]?.lost_item_user);
-        console.log(userId);
-        const formattedMatchedItems = matchedItemsData.results.filter(
-          (matchedItem: any) =>
-            matchedItem.lost_item_user === userId ||
-            (matchedItem.status === "SUCCEEDED" &&
-              matchedItem.found_item_user === userId)
-        );
-        console.log("Filtered Matched Items:", formattedMatchedItems);
-
-        setLostItems(formattedLostItems);
-        setFoundItems(formattedFoundItems);
-        setMatchedItems(formattedMatchedItems);
-
-        // Combine all items for the "all" tab
-        const combinedItems = [...formattedLostItems, ...formattedFoundItems];
-        setAllItems(combinedItems);
-      } catch (err) {
-        console.error("Error fetching data:", err);
-        setError("Failed to load items. Please try again later.");
-      } finally {
-        setLoading(false);
+  // API fetching functions
+  const fetchLostItems = async (page = 1) => {
+    console.log("Fetching lost items for page:");
+    const response = await axios.get(
+      `http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/?page=${page}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        },
       }
-    };
+    );
+    return response.data;
+  };
 
-    fetchData();
-  }, [token, userId]);
+  const fetchFoundItems = async (page = 1) => {
+    const response = await axios.get(
+      `http://127.0.0.1:8000/api/v1/lost-and-found/found-items/?page=${page}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        },
+      }
+    );
+    return response.data;
+  };
+
+  const fetchMatchedItems = async (page = 1) => {
+    const response = await axios.get(
+      `http://127.0.0.1:8000/api/v1/lost-and-found/matched-items/?page=${page}`,
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("access")}`,
+        },
+      }
+    );
+    return response.data;
+  };
+
+  // Use React Query for data fetching with caching
+  const {
+    data: lostItemsData,
+    isLoading: isLoadingLost,
+    error: errorLost,
+  } = useQuery({
+    queryKey: ["lostItems", lostItemsPage],
+    queryFn: () => fetchLostItems(lostItemsPage),
+    enabled: !!token && (activeTab === "lost" || lostItemsPage === 1),
+    staleTime: 15 * 60 * 1000, // 15 minutes
+  });
+
+  const {
+    data: foundItemsData,
+    isLoading: isLoadingFound,
+    error: errorFound,
+  } = useQuery({
+    queryKey: ["foundItems", foundItemsPage],
+    queryFn: () => fetchFoundItems(foundItemsPage),
+    enabled: !!token && (activeTab === "found" || foundItemsPage === 1),
+    staleTime: 15 * 60 * 1000, // 5 minutes
+  });
+
+  const {
+    data: matchedItemsData,
+    isLoading: isLoadingMatched,
+    error: errorMatched,
+  } = useQuery({
+    queryKey: ["matchedItems", matchedItemsPage],
+    queryFn: () => fetchMatchedItems(matchedItemsPage),
+    enabled: !!token && (activeTab === "matched" || matchedItemsPage === 1),
+    staleTime: 15 * 60 * 1000, // 5 minutes
+  });
+
+  // Combined loading and error states
+  const isLoading =
+    (activeTab === "lost" && isLoadingLost) ||
+    (activeTab === "found" && isLoadingFound) ||
+    (activeTab === "matched" && isLoadingMatched);
+
+  const error =
+    (activeTab === "lost" && errorLost) ||
+    (activeTab === "found" && errorFound) ||
+    (activeTab === "matched" && errorMatched)
+      ? "Failed to load items. Please try again later."
+      : null;
+
+  // Extract data and pagination info
+  const lostItems = lostItemsData?.results || [];
+  const foundItems = foundItemsData?.results || [];
+  const matchedItems = matchedItemsData?.results || [];
+
+  const lostItemsNextUrl = lostItemsData?.next || null;
+  const lostItemsPrevUrl = lostItemsData?.previous || null;
+  const foundItemsNextUrl = foundItemsData?.next || null;
+  const foundItemsPrevUrl = foundItemsData?.previous || null;
+  const matchedItemsNextUrl = matchedItemsData?.next || null;
+  const matchedItemsPrevUrl = matchedItemsData?.previous || null;
+
+  // Calculate total pages
+  const lostItemsTotalPages = lostItemsData
+    ? Math.ceil(lostItemsData.count / (lostItemsData.results.length || 1))
+    : 1;
+
+  const foundItemsTotalPages = foundItemsData
+    ? Math.ceil(foundItemsData.count / (foundItemsData.results.length || 1))
+    : 1;
+
+  const matchedItemsTotalPages = matchedItemsData
+    ? Math.ceil(matchedItemsData.count / (matchedItemsData.results.length || 1))
+    : 1;
 
   // Filter items based on search query
   const getFilteredItems = () => {
     // Handle matched items tab differently
     if (activeTab === "matched") {
-      console.log("Matched Items:", matchedItems);
       return matchedItems;
     }
 
-    const itemsToFilter =
-      activeTab === "lost"
-        ? lostItems
-        : activeTab === "found"
-        ? foundItems
-        : allItems;
+    const itemsToFilter = activeTab === "lost" ? lostItems : foundItems;
 
     // Filter items based on search query
     const filtered = itemsToFilter.filter(
@@ -209,7 +232,6 @@ const LostFound = () => {
   };
 
   const getStatusIcon = (status: LostItemType["status"]) => {
-    console.log(status);
     switch (status) {
       case "LOST":
         return <X className="h-3 w-3" />;
@@ -228,6 +250,75 @@ const LostFound = () => {
   const formatDate = (dateString?: string) => {
     if (!dateString) return "Unknown date";
     return format(new Date(dateString), "MMM d, yyyy");
+  };
+
+  // Helper function to get current pagination values based on active tab
+  const getPaginationInfo = () => {
+    switch (activeTab) {
+      case "lost":
+        return {
+          currentPage: lostItemsPage,
+          totalPages: lostItemsTotalPages,
+          hasNext: !!lostItemsNextUrl,
+          hasPrev: !!lostItemsPrevUrl,
+        };
+      case "found":
+        return {
+          currentPage: foundItemsPage,
+          totalPages: foundItemsTotalPages,
+          hasNext: !!foundItemsNextUrl,
+          hasPrev: !!foundItemsPrevUrl,
+        };
+      case "matched":
+        return {
+          currentPage: matchedItemsPage,
+          totalPages: matchedItemsTotalPages,
+          hasNext: !!matchedItemsNextUrl,
+          hasPrev: !!matchedItemsPrevUrl,
+        };
+      default:
+        return {
+          currentPage: 1,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false,
+        };
+    }
+  };
+
+  // Handle navigation to next page
+  const handleNextPage = () => {
+    if (activeTab === "lost" && lostItemsNextUrl) {
+      setLostItemsPage((prev) => prev + 1);
+    } else if (activeTab === "found" && foundItemsNextUrl) {
+      setFoundItemsPage((prev) => prev + 1);
+    } else if (activeTab === "matched" && matchedItemsNextUrl) {
+      setMatchedItemsPage((prev) => prev + 1);
+    }
+  };
+
+  // Handle navigation to previous page
+  const handlePrevPage = () => {
+    if (activeTab === "lost" && lostItemsPrevUrl) {
+      setLostItemsPage((prev) => prev - 1);
+    } else if (activeTab === "found" && foundItemsPrevUrl) {
+      setFoundItemsPage((prev) => prev - 1);
+    } else if (activeTab === "matched" && matchedItemsPrevUrl) {
+      setMatchedItemsPage((prev) => prev - 1);
+    }
+  };
+
+  // Add a handler for tab changes to reset pagination when switching tabs
+  const handleTabChange = (value) => {
+    setActiveTab(value);
+    // Reset page counters if needed
+    if (value === "lost" && lostItemsPage !== 1) {
+      setLostItemsPage(1);
+    } else if (value === "found" && foundItemsPage !== 1) {
+      setFoundItemsPage(1);
+    } else if (value === "matched" && matchedItemsPage !== 1) {
+      setMatchedItemsPage(1);
+    }
   };
 
   return (
@@ -257,21 +348,20 @@ const LostFound = () => {
       </div>
 
       <Tabs
-        defaultValue="all"
+        defaultValue="lost"
         className="space-y-4"
-        onValueChange={(value) => setActiveTab(value)}
+        onValueChange={handleTabChange} // Use the new handler
       >
         <TabsList>
-          <TabsTrigger value="all">All Items</TabsTrigger>
           <TabsTrigger value="lost">Lost</TabsTrigger>
           <TabsTrigger value="found">Found</TabsTrigger>
-          {/* Replace my-items with matched */}
           <TabsTrigger value="matched">Matched</TabsTrigger>
         </TabsList>
 
-        {loading ? (
-          <div className="text-center py-12">
-            <p>Loading items...</p>
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading items...</p>
           </div>
         ) : error ? (
           <div className="text-center py-12 text-destructive">
@@ -279,17 +369,17 @@ const LostFound = () => {
           </div>
         ) : (
           <>
-            <TabsContent value="all" className="space-y-4">
+            {/* Lost items tab */}
+            <TabsContent value="lost">
               {filteredItems.length > 0 ? (
                 <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
                   {filteredItems.map((item, index) => (
                     <Card
-                      // Use index as fallback if item_id is undefined
-                      key={`all-${item.item_id || `index-${index}`}`}
+                      key={`lost-${item.item_id || `index-${index}`}`}
                       className="overflow-hidden"
                     >
+                      {/* Same card content as above */}
                       <div className="relative">
-                        {/* Modified image section to always show an image */}
                         <div className="aspect-square w-full overflow-hidden">
                           <img
                             src={item.image || DEFAULT_IMAGE_URL}
@@ -320,24 +410,15 @@ const LostFound = () => {
                         </div>
                         <Separator className="my-2" />
                         <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-1">
-                            <Avatar className="h-5 w-5">
-                              <div className="bg-primary/10 text-primary h-full w-full flex items-center justify-center text-xs font-medium">
-                                {item.user?.charAt(0) || "U"}
-                              </div>
-                            </Avatar>
-                            <span className="text-xs text-muted-foreground">
-                              {formatDate(item.lost_at || item.found_at)}
-                            </span>
-                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(item.lost_at)}
+                          </span>
                           <Button
                             size="sm"
                             variant="outline"
                             className="h-7 text-xs px-2"
                             onClick={() =>
-                              navigate(
-                                `/item-details/${item.status}/${item.item_id}`
-                              )
+                              navigate(`/item-details/lost/${item.item_id}`)
                             }
                           >
                             Details
@@ -350,138 +431,94 @@ const LostFound = () => {
               ) : (
                 <div className="text-center py-12">
                   <Box className="mx-auto h-12 w-12 text-muted-foreground" />
-                  <h3 className="mt-4 text-lg font-medium">No items found</h3>
+                  <h3 className="mt-4 text-lg font-medium">No lost items</h3>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Try adjusting your search or filters
+                    No lost items are currently available
                   </p>
+                  <Button
+                    className="mt-4"
+                    onClick={() => navigate("/report-lost-found")}
+                  >
+                    Report a Lost Item
+                  </Button>
                 </div>
               )}
             </TabsContent>
 
-            {/* Lost items tab */}
-            <TabsContent value="lost">
-              {/* Similar display logic as "all" but with lostItems */}
-              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {filteredItems.map((item, index) => (
-                  <Card
-                    key={`lost-${item.item_id || `index-${index}`}`}
-                    className="overflow-hidden"
-                  >
-                    {/* Same card content as above */}
-                    <div className="relative">
-                      <div className="aspect-square w-full overflow-hidden">
-                        <img
-                          src={item.image || DEFAULT_IMAGE_URL}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="absolute right-2 top-2">
-                        <Badge
-                          className={`${getStatusColor(
-                            item.status
-                          )} flex items-center gap-1 capitalize`}
-                        >
-                          {getStatusIcon(item.status)}
-                          {item.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm truncate">
-                        {item.name}
-                      </h3>
-                      <div className="mt-2 flex items-start gap-1 text-xs">
-                        <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <span className="truncate text-muted-foreground">
-                          {item.place}
-                        </span>
-                      </div>
-                      <Separator className="my-2" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(item.lost_at)}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs px-2"
-                          onClick={() =>
-                            navigate(
-                              `/item-details/${item.status}/${item.item_id}`
-                            )
-                          }
-                        >
-                          Details
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </TabsContent>
-
             {/* Found items tab */}
             <TabsContent value="found">
-              {/* Similar display logic as "all" but with foundItems */}
-              <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
-                {filteredItems.map((item, index) => (
-                  <Card
-                    key={`found-${item.item_id || `index-${index}`}`}
-                    className="overflow-hidden"
+              {filteredItems.length > 0 ? (
+                <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+                  {filteredItems.map((item, index) => (
+                    <Card
+                      key={`found-${item.item_id || `index-${index}`}`}
+                      className="overflow-hidden"
+                    >
+                      {/* Similar card content as above */}
+                      <div className="relative">
+                        <div className="aspect-square w-full overflow-hidden">
+                          <img
+                            src={item.image || DEFAULT_IMAGE_URL}
+                            alt={item.name}
+                            className="h-full w-full object-cover"
+                          />
+                        </div>
+                        <div className="absolute right-2 top-2">
+                          <Badge
+                            className={`${getStatusColor(
+                              item.status
+                            )} flex items-center gap-1 capitalize`}
+                          >
+                            {getStatusIcon(item.status)}
+                            {item.status}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h3 className="font-medium text-sm truncate">
+                          {item.name}
+                        </h3>
+                        <div className="mt-2 flex items-start gap-1 text-xs">
+                          <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
+                          <span className="truncate text-muted-foreground">
+                            {item.place}
+                          </span>
+                        </div>
+                        <Separator className="my-2" />
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-muted-foreground">
+                            {formatDate(item.found_at)}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 text-xs px-2"
+                            onClick={() =>
+                              navigate(`/item-details/found/${item.item_id}`)
+                            }
+                          >
+                            Details
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12">
+                  <Box className="mx-auto h-12 w-12 text-muted-foreground" />
+                  <h3 className="mt-4 text-lg font-medium">No found items</h3>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    No found items are currently available
+                  </p>
+                  <Button
+                    className="mt-4"
+                    onClick={() => navigate("/report-lost-found")}
                   >
-                    {/* Similar card content as above */}
-                    <div className="relative">
-                      <div className="aspect-square w-full overflow-hidden">
-                        <img
-                          src={item.image || DEFAULT_IMAGE_URL}
-                          alt={item.name}
-                          className="h-full w-full object-cover"
-                        />
-                      </div>
-                      <div className="absolute right-2 top-2">
-                        <Badge
-                          className={`${getStatusColor(
-                            item.status
-                          )} flex items-center gap-1 capitalize`}
-                        >
-                          {getStatusIcon(item.status)}
-                          {item.status}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <h3 className="font-medium text-sm truncate">
-                        {item.name}
-                      </h3>
-                      <div className="mt-2 flex items-start gap-1 text-xs">
-                        <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0 mt-0.5" />
-                        <span className="truncate text-muted-foreground">
-                          {item.place}
-                        </span>
-                      </div>
-                      <Separator className="my-2" />
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-muted-foreground">
-                          {formatDate(item.found_at)}
-                        </span>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="h-7 text-xs px-2"
-                          onClick={() =>
-                            navigate(
-                              `/item-details/${item.status}/${item.item_id}`
-                            )
-                          }
-                        >
-                          Details
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                ))}
-              </div>
+                    Report a Found Item
+                  </Button>
+                </div>
+              )}
             </TabsContent>
 
             {/* Replace My Items Tab with Matched Items Tab */}
@@ -613,6 +650,35 @@ const LostFound = () => {
               )}
             </TabsContent>
           </>
+        )}
+        {/* Add pagination controls after tab content */}
+        {!isLoading && !error && filteredItems.length > 0 && (
+          <div className="flex items-center justify-center mt-6 space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handlePrevPage}
+              disabled={!getPaginationInfo().hasPrev}
+              aria-label="Previous Page"
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <div className="text-sm text-muted-foreground">
+              Page {getPaginationInfo().currentPage} of{" "}
+              {getPaginationInfo().totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleNextPage}
+              disabled={!getPaginationInfo().hasNext}
+              aria-label="Next Page"
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
         )}
       </Tabs>
     </Layout>

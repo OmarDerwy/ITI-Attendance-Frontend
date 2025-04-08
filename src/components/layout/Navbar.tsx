@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
@@ -17,16 +16,26 @@ import { Badge } from "@/components/ui/badge";
 
 type NavbarProps = {
   toggleSidebar: () => void;
-}
+};
 
 const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const { userRole, userName, setUserRole } = useUser();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
 
+  const handleLogout = () => {
+    localStorage.removeItem("userId");
+    localStorage.removeItem("access");
+    localStorage.removeItem("refresh");
+    setProfileOpen(false);
+  };
   const notifications = [
     { id: 1, text: "Check-in reminder for today's class", time: "10 min ago" },
-    { id: 2, text: "New schedule for next week is available", time: "2 hours ago" },
+    {
+      id: 2,
+      text: "New schedule for next week is available",
+      time: "2 hours ago",
+    },
     { id: 3, text: "Your lost item has been matched!", time: "1 day ago" },
   ];
 
@@ -46,9 +55,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
       </button>
 
       <div className="w-full flex items-center justify-between">
-        <div className="flex items-center gap-2 lg:gap-4">
-   
-        </div>
+        <div className="flex items-center gap-2 lg:gap-4"></div>
 
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="hidden md:flex py-1.5 capitalize">
@@ -95,7 +102,10 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             </div>
           )}
 
-          <Link to="/schedule" className="rounded-full p-1.5 hover:bg-muted transition-colors">
+          <Link
+            to="/schedule"
+            className="rounded-full p-1.5 hover:bg-muted transition-colors"
+          >
             <Calendar className="h-5 w-5" />
           </Link>
 
@@ -117,36 +127,46 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
               <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-md border bg-card shadow-lg animate-in fade-in slide-down">
                 <div className="border-b p-3">
                   <p className="font-medium">{userName}</p>
-                  <p className="text-xs text-muted-foreground capitalize">{userRole}</p>
+                  <p className="text-xs text-muted-foreground capitalize">
+                    {userRole}
+                  </p>
                 </div>
                 <div className="p-1">
                   {/* Development-only role switcher */}
                   <div className="border-b p-2">
-                    <p className="text-xs text-muted-foreground mb-2">Dev: Switch Role</p>
+                    <p className="text-xs text-muted-foreground mb-2">
+                      Dev: Switch Role
+                    </p>
                     <div className="flex flex-col gap-1">
-                      <button 
+                      <button
                         onClick={() => handleRoleChange("student")}
                         className={cn(
                           "text-xs text-left px-2 py-1 rounded",
-                          userRole === "student" ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                          userRole === "student"
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted"
                         )}
                       >
                         Student
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleRoleChange("supervisor")}
                         className={cn(
                           "text-xs text-left px-2 py-1 rounded",
-                          userRole === "supervisor" ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                          userRole === "supervisor"
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted"
                         )}
                       >
                         Supervisor
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleRoleChange("admin")}
                         className={cn(
                           "text-xs text-left px-2 py-1 rounded",
-                          userRole === "admin" ? "bg-primary/10 text-primary" : "hover:bg-muted"
+                          userRole === "admin"
+                            ? "bg-primary/10 text-primary"
+                            : "hover:bg-muted"
                         )}
                       >
                         Admin
@@ -183,7 +203,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                   <Link
                     to="/login"
                     className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted"
-                    onClick={() => setProfileOpen(false)}
+                    onClick={() => handleLogout()}
                   >
                     Logout
                   </Link>

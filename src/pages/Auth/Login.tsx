@@ -22,6 +22,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
+      // Step 1: Get authentication tokens
       const authResponse = await axiosBackendInstance.post(
         "accounts/auth/jwt/create/",
         {
@@ -34,14 +35,30 @@ const Login = () => {
       const { access, refresh } = authResponse.data;
       localStorage.setItem("access", access);
       localStorage.setItem("refresh", refresh);
+      console.log("Authentication tokens stored:", access ? "Yes" : "No");
 
-      // Get user info
+      // Step 2: Use the token to get user info
       const userResponse = await axiosBackendInstance.get(
-        "accounts/auth/users/me/"
+        "accounts/auth/users/me/",
+        {
+          headers: {
+            Authorization: `Bearer ${access}`, // Use the token we just got
+          },
+        }
       );
-      user.setUserRole(userResponse.data.groups[0]);
-      user.setUserName(userResponse.data.email);
 
+      // Step 3: Store user info in context and localStorage
+      const userData = userResponse.data;
+
+      user.setUserRole(userData.groups[0]);
+      user.setUserName(userData.email);
+
+      // Critical step: Store userId in localStorage immediately
+      localStorage.setItem("userId", userData.id.toString());
+      console.log("User data retrieved:", userData.id);
+      console.log("User ID stored in localStorage:", userData.id);
+
+      // Step 4: Navigate to home page
       navigate("/");
     } catch (error) {
       console.error("Login failed:", error);
