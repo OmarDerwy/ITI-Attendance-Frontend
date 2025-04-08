@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
-import { UserCheck } from "lucide-react";
+import { UserCheck, LoaderCircle } from "lucide-react";
 import Layout from "@/components/layout/Layout";
 import PageTitle from "@/components/ui/page-title";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { axiosBackendInstance } from "@/api/config";
@@ -22,6 +23,9 @@ const StudentVerification = () => {
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [studentEntries, setStudentEntries] = useState([]);
+  const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // Real student data from the server using tanstack query
   const fetchStudents = async () => {
@@ -34,6 +38,14 @@ const StudentVerification = () => {
     queryFn: fetchStudents,
     refetchOnWindowFocus: false,
   });
+
+  // Initialize pagination data when studentsData is loaded
+  useEffect(() => {
+    if (studentsData) {
+      setStudentEntries(studentsData.results);
+      setNextPageUrl(studentsData.next);
+    }
+  }, [studentsData]);
 
   // Handle refresh function
   const handleRefresh = async () => {
@@ -55,18 +67,30 @@ const StudentVerification = () => {
     }
   };
 
-  // Get the actual students array from the response
-  const students = studentsData?.results || [];
+  // New function: load more students
+  const loadMoreStudents = async () => {
+    if (!nextPageUrl) return;
+    setIsLoadingMore(true);
+    try {
+      const response = await axiosBackendInstance.get(nextPageUrl);
+      setStudentEntries(prev => [...prev, ...response.data.results]);
+      setNextPageUrl(response.data.next);
+    } catch (error) {
+      console.error("Error loading more students:", error);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   // Filter students - using the actual API data structure
-  const filteredStudents = students.filter(student => 
+  const filteredStudents = studentEntries.filter(student => 
     (student.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (student.first_name && student.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (student.last_name && student.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
   // Filter students who are part of the student group
-  const studentUsers = students.filter(user => user.groups.includes("student"));
+  const studentUsers = studentEntries.filter(user => user.groups.includes("student"));
 
   // Helper function to get status (you may need to adjust based on actual data structure)
   const getStatus = (user: User) => {
@@ -162,13 +186,32 @@ const StudentVerification = () => {
             onViewDetails={setSelectedStudent}
             onViewDetailsValue={selectedStudent}
           />
+
+          {/* Pagination: View More Button */}
+          {nextPageUrl && (
+            <div className="mt-4 flex justify-center">
+              <Button 
+                variant="outline" 
+                onClick={loadMoreStudents}
+                disabled={isLoadingMore}
+                className="w-full max-w-xs"
+              >
+                {isLoadingMore ? (
+                  <span className="flex items-center gap-2">
+                    <LoaderCircle size={16} className="animate-spin" />
+                    Loading more...
+                  </span>
+                ) : "View More"}
+              </Button>
+            </div>
+          )}
         </Card>
 
         {/* Student Detail View */}
         {selectedStudent && (
           <>
             {(() => {
-              const student = students.find(s => s.id === selectedStudent);
+              const student = studentEntries.find(s => s.id === selectedStudent);
               if (!student) return null;
               
               return (
