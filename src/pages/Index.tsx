@@ -12,6 +12,7 @@ import BranchManagement from "./Management/BranchManagement";
 const Index = () => {
   const navigate = useNavigate();
   const { userRole, isLoading } = useUser();
+  
 
   useEffect(() => {
     if (!isLoading && !userRole) {
