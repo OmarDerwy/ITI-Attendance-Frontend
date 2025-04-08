@@ -30,6 +30,7 @@ import LeaveRequestCenter from "@/pages/Attendance/LeaveRequestCenter";
 import ItemDetail from "./pages/LostFound/ItemDetail";
 import MatchedItemDetail from "./pages/LostFound/MatchedItemDetail";
 import { ThemeProvider } from "next-themes";
+import LeaveRequestForm from "./pages/Attendance/LeaveRequestForm";
 
 const queryClient = new QueryClient();
 
@@ -84,6 +85,10 @@ const App = () => (
               <Route
                 path="/leave-request-center"
                 element={<LeaveRequestCenter />}
+              />
+              <Route
+                path="/leave-request-form"
+                element={<LeaveRequestForm />}
               />
               <Route path="*" element={<NotFound />} />
             </Routes>

@@ -134,7 +134,13 @@ const Sidebar = () => {
       to: "/schedule",
       roles: ["student", "supervisor"],
     },
-
+    {
+      icon: HandHeart,
+      label: "Leave Request Form",
+      to: "/leave-request-form",
+      roles: ["student"],
+    },
+      
     // Supervisor only
     { icon: Brain, label: "Attendance Insights", to: "/attendance-insights", roles: ["supervisor"] },
     { icon: UserCheck, label: "Student Verification", to: "/student-verification", roles: ["supervisor"] },
