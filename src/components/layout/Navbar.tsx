@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge";
 type NavbarProps = {
   toggleSidebar: () => void;
 };
-};
 
 const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const { userRole, userName, setUserRole } = useUser();
@@ -100,10 +99,6 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             </div>
           )}
 
-          <Link
-            to="/schedule"
-            className="rounded-full p-1.5 hover:bg-muted transition-colors"
-          >
           <Link
             to="/schedule"
             className="rounded-full p-1.5 hover:bg-muted transition-colors"
@@ -233,5 +228,4 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     </header>
   );
 };
-
 export default Navbar;
