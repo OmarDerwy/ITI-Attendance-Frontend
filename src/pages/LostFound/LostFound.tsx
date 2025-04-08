@@ -16,7 +16,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import Layout from "@/components/layout/layout.jsx";
+import Layout from "@/components/layout/Layout.jsx";
 import PageTitle from "@/components/ui/page-title";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
