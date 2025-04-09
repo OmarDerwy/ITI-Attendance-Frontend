@@ -162,7 +162,7 @@ const Sidebar = () => {
     // },
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: MapPin, label: "Tracks", to: "/tracks", roles: ["admin"] },
-    { icon: Users, label: "Supervisors", to: "/supervisors", roles: ["admin"] },
+    { icon: Users, label: "Users", to: "/users", roles: ["admin"] },
 
     {
       icon: Flag,
