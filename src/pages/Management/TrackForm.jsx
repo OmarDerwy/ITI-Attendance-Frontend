@@ -19,7 +19,7 @@ import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent } from "@/components/ui/card";
 import PageTitle from "../../components/ui/page-title";
-import { axiosBackendInstance } from '@/api/config';
+import { axiosBackendInstance } from "@/api/config";
 
 const TrackFormPage = () => {
   const { trackId } = useParams();
@@ -61,7 +61,7 @@ const TrackFormPage = () => {
           axiosBackendInstance.get("/accounts/users/supervisors/"),
         ]);
 
-        const formattedBranches = branchesRes.data.results.map((b) => ({
+        const formattedBranches = branchesRes.data.map((b) => ({
           branch_id: b.id, // Use branch_id instead of id
           name: b.name,
         }));
@@ -78,7 +78,9 @@ const TrackFormPage = () => {
         setSupervisors(formattedSupervisors);
 
         if (trackId && trackId !== "add") {
-          const trackRes = await axiosBackendInstance.get(`/attendance/tracks/${trackId}/`);
+          const trackRes = await axiosBackendInstance.get(
+            `/attendance/tracks/${trackId}/`
+          );
           const trackData = trackRes.data;
           setName(trackData.name || "");
           setDescription(trackData.description || "");
@@ -108,8 +110,14 @@ const TrackFormPage = () => {
     return supervisorSearchTerm
       ? supervisors.filter(
           (s) =>
-            (s.name && s.name.toLowerCase().includes(supervisorSearchTerm.toLowerCase())) ||
-            (s.email && s.email.toLowerCase().includes(supervisorSearchTerm.toLowerCase()))
+            (s.name &&
+              s.name
+                .toLowerCase()
+                .includes(supervisorSearchTerm.toLowerCase())) ||
+            (s.email &&
+              s.email
+                .toLowerCase()
+                .includes(supervisorSearchTerm.toLowerCase()))
         )
       : supervisors;
   }, [supervisorSearchTerm, supervisors]);
@@ -158,7 +166,10 @@ const TrackFormPage = () => {
     try {
       if (trackId && trackId !== "add") {
         console.log("Payload for PUT request:", trackData); // Log payload
-        await axiosBackendInstance.put(`/attendance/tracks/${trackId}/`, trackData);
+        await axiosBackendInstance.put(
+          `/attendance/tracks/${trackId}/`,
+          trackData
+        );
         toast({
           title: "Track Updated",
           description: `${trackData.name} has been updated successfully.`,
@@ -300,7 +311,8 @@ const TrackFormPage = () => {
                         role="combobox"
                         className="w-full justify-between"
                       >
-                        {supervisors.find((s) => s.supervisor_id === supervisor)?.name || "Select supervisor"}
+                        {supervisors.find((s) => s.supervisor_id === supervisor)
+                          ?.name || "Select supervisor"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
@@ -310,7 +322,9 @@ const TrackFormPage = () => {
                           placeholder="Search supervisors..."
                           className="border-0 bg-transparent p-1 shadow-none focus-visible:ring-0"
                           value={supervisorSearchTerm}
-                          onChange={(e) => setSupervisorSearchTerm(e.target.value)}
+                          onChange={(e) =>
+                            setSupervisorSearchTerm(e.target.value)
+                          }
                         />
                       </div>
                       <div className="max-h-60 overflow-y-auto">
@@ -318,17 +332,27 @@ const TrackFormPage = () => {
                           filteredSupervisors.map((s) => (
                             <Button
                               key={s.supervisor_id}
-                              variant={s.supervisor_id === supervisor ? "default" : "ghost"}
+                              variant={
+                                s.supervisor_id === supervisor
+                                  ? "default"
+                                  : "ghost"
+                              }
                               className={`w-full justify-start font-normal ${
-                                s.supervisor_id === supervisor ? "bg-primary text-white" : ""
+                                s.supervisor_id === supervisor
+                                  ? "bg-primary text-white"
+                                  : ""
                               }`}
-                              onClick={() => handleSupervisorSelect(s.supervisor_id)}
+                              onClick={() =>
+                                handleSupervisorSelect(s.supervisor_id)
+                              }
                             >
                               {s.name}
                             </Button>
                           ))
                         ) : (
-                          <p className="p-3 text-muted-foreground">No supervisors found.</p>
+                          <p className="p-3 text-muted-foreground">
+                            No supervisors found.
+                          </p>
                         )}
                       </div>
                     </PopoverContent>
@@ -344,7 +368,8 @@ const TrackFormPage = () => {
                         role="combobox"
                         className="w-full justify-between"
                       >
-                        {branches.find((b) => b.branch_id === branchId)?.name || "Select branch"}
+                        {branches.find((b) => b.branch_id === branchId)?.name ||
+                          "Select branch"}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-full p-0">
@@ -362,9 +387,13 @@ const TrackFormPage = () => {
                           filteredBranches.map((b) => (
                             <Button
                               key={b.branch_id}
-                              variant={b.branch_id === branchId ? "default" : "ghost"}
+                              variant={
+                                b.branch_id === branchId ? "default" : "ghost"
+                              }
                               className={`w-full justify-start font-normal ${
-                                b.branch_id === branchId ? "bg-primary text-white" : ""
+                                b.branch_id === branchId
+                                  ? "bg-primary text-white"
+                                  : ""
                               }`}
                               onClick={() => handleBranchSelect(b.branch_id)}
                             >
@@ -372,7 +401,9 @@ const TrackFormPage = () => {
                             </Button>
                           ))
                         ) : (
-                          <p className="p-3 text-muted-foreground">No branches found.</p>
+                          <p className="p-3 text-muted-foreground">
+                            No branches found.
+                          </p>
                         )}
                       </div>
                     </PopoverContent>

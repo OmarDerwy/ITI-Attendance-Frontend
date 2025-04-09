@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PageTitle from "@/components/ui/page-title";
-import { axiosBackendInstance } from '@/api/config';
+import { axiosBackendInstance } from "@/api/config";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -66,7 +66,8 @@ const TrackManagement = () => {
       .get(`/attendance/tracks/`, { params: { page } })
       .then((response) => {
         const data = response.data;
-        setTracks(data.results);
+        console.log("API Response:", data); // Log the entire response for debugging
+        setTracks(data);
         setPaginationMeta({
           count: data.count,
           next: data.next,
@@ -93,16 +94,16 @@ const TrackManagement = () => {
       axiosBackendInstance
         .delete(`/attendance/tracks/${selectedTrack.id}/`)
         .then(() => {
-          setTracks(tracks.filter(track => track.id !== selectedTrack.id));
+          setTracks(tracks.filter((track) => track.id !== selectedTrack.id));
           toast({
             title: "Track Deleted",
-            description: "The track has been deleted successfully."
+            description: "The track has been deleted successfully.",
           });
         })
         .catch(() => {
           toast({
             title: "Error",
-            description: "Failed to delete the track. Please try again later."
+            description: "Failed to delete the track. Please try again later.",
           });
         })
         .finally(() => {
@@ -114,10 +115,10 @@ const TrackManagement = () => {
 
   const formatDate = (date) => {
     if (!date) return "Not set";
-    return new Intl.DateTimeFormat('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
+    return new Intl.DateTimeFormat("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
     }).format(new Date(date));
   };
 
@@ -126,8 +127,8 @@ const TrackManagement = () => {
     setCurrentPage(page);
   };
 
-  const filteredTracks = tracks.filter((track) =>
-    track.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTracks = tracks?.filter((track) =>
+    track?.name?.toLowerCase().includes(searchTerm?.toLowerCase())
   );
 
   if (isLoading) {
@@ -147,7 +148,11 @@ const TrackManagement = () => {
           title="Track Management"
           subtitle="Create, edit and manage your institution's tracks"
           icon={<MapPin className="h-6 w-6" />}
-          action={<Button onClick={() => navigate("/tracks/add")}><Plus className="mr-2 h-4 w-4" /> Add Track</Button>}
+          action={
+            <Button onClick={() => navigate("/tracks/add")}>
+              <Plus className="mr-2 h-4 w-4" /> Add Track
+            </Button>
+          }
         />
         <div className="rounded-lg border bg-card shadow-sm">
           <div className="flex items-center justify-between p-4 border-b">
@@ -179,7 +184,9 @@ const TrackManagement = () => {
                 {filteredTracks.length > 0 ? (
                   filteredTracks.map((track) => (
                     <TableRow key={track.id}>
-                      <TableCell className="font-medium">{track.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {track.name}
+                      </TableCell>
                       <TableCell>{track.program_type_display}</TableCell>
                       <TableCell>{track.intake || "N/A"}</TableCell>
                       <TableCell>{formatDate(track.start_date)}</TableCell>
@@ -207,8 +214,13 @@ const TrackManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-center py-6 text-muted-foreground">
-                      {searchTerm ? "No tracks found matching your search." : "No tracks added yet."}
+                    <TableCell
+                      colSpan={7}
+                      className="text-center py-6 text-muted-foreground"
+                    >
+                      {searchTerm
+                        ? "No tracks found matching your search."
+                        : "No tracks added yet."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -223,11 +235,17 @@ const TrackManagement = () => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                    onClick={() =>
+                      handlePageChange(Math.max(1, currentPage - 1))
+                    }
+                    className={
+                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
+                    }
                   />
                 </PaginationItem>
-                {[...Array(Math.ceil(paginationMeta.count / ITEMS_PER_PAGE))].map((_, index) => (
+                {[
+                  ...Array(Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)),
+                ].map((_, index) => (
                   <PaginationItem key={index + 1}>
                     <PaginationLink
                       isActive={currentPage === index + 1}
@@ -239,8 +257,20 @@ const TrackManagement = () => {
                 ))}
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => handlePageChange(Math.min(currentPage + 1, Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)))}
-                    className={currentPage === Math.ceil(paginationMeta.count / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : ""}
+                    onClick={() =>
+                      handlePageChange(
+                        Math.min(
+                          currentPage + 1,
+                          Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)
+                        )
+                      )
+                    }
+                    className={
+                      currentPage ===
+                      Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)
+                        ? "pointer-events-none opacity-50"
+                        : ""
+                    }
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -248,17 +278,23 @@ const TrackManagement = () => {
           </div>
         )}
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete {selectedTrack?.name}? This action cannot be undone.
+                Are you sure you want to delete {selectedTrack?.name}? This
+                action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={confirmDelete}>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

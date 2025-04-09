@@ -39,7 +39,20 @@ const App = () => (
     <UserProvider>
       <TooltipProvider>
         <Toaster />
-        <Sonner />
+        <Sonner
+          theme="system"
+          position="bottom-right"
+          closeButton
+          richColors
+          className="toast-theme-override"
+          toastOptions={{
+            classNames: {
+              toast: "toast-with-theme",
+              title: "toast-title",
+              description: "toast-description",
+            },
+          }}
+        />
         <BrowserRouter>
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <Routes>

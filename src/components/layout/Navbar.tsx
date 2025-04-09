@@ -1,18 +1,24 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Bell,
   Calendar,
-  Search,
   User,
   ChevronDown,
   X,
   Menu as MenuIcon,
-  Flag,
+  Search,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
 import { Badge } from "@/components/ui/badge";
+import useWebSocket from "react-use-websocket";
+import {
+  getUserNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+} from "@/api/notifications";
+import { setupAxiosInterceptors } from "@/api/config";
+import { toast } from "sonner"; // Import from sonner directly
 
 type NavbarProps = {
   toggleSidebar: () => void;
@@ -22,23 +28,110 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const { userRole, userName, setUserRole } = useUser();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [notifications, setNotifications] = useState<
+    { id: number; message: string; created_at: string; is_read: boolean }[]
+  >([]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("access");
-    localStorage.removeItem("refresh");
-    setProfileOpen(false);
+  const token = localStorage.getItem("access");
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    setupAxiosInterceptors(() => navigate("/login"));
+  }, [navigate]);
+
+  const SOCKET_URL = `ws://127.0.0.1:8000/ws/notifications/?token=${token}`;
+  const { lastMessage } = useWebSocket(SOCKET_URL, {
+    onOpen: () => console.log("WebSocket Connected"),
+    onClose: () => console.log("WebSocket Disconnected"),
+    onError: (error) => console.error("WebSocket Error:", error),
+    shouldReconnect: () => true,
+  });
+
+  // Improved sort function that handles different date formats
+  const sortNotificationsByDate = (notifs: typeof notifications) => {
+    return [...notifs].sort((a, b) => {
+      // Convert dates to timestamps for reliable comparison
+      const dateA = new Date(a.created_at).getTime();
+      const dateB = new Date(b.created_at).getTime();
+
+      // If dates are invalid, move them to the end
+      if (isNaN(dateA)) return 1;
+      if (isNaN(dateB)) return -1;
+
+      return dateB - dateA; // Sort newest first
+    });
   };
-  const notifications = [
-    // { id: 1, text: "Check-in reminder for today's class", time: "10 min ago" },
-    // { id: 2, text: "New schedule for next week is available", time: "2 hours ago" },
-    // { id: 3, text: "Your lost item has been matched!", time: "1 day ago" },
-  ];
 
-  // For demonstration purposes, allows changing roles in the UI
+  // Fetch notifications from the API
+  const fetchNotifications = async () => {
+    try {
+      const data = await getUserNotifications();
+      // Always sort immediately after fetching
+      const sortedData = sortNotificationsByDate(data);
+      setNotifications(sortedData);
+      console.log("Fetched and sorted notifications:", sortedData);
+    } catch (error) {
+      console.error("Failed to fetch notifications:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  // Handle WebSocket messages
+  useEffect(() => {
+    if (lastMessage !== null) {
+      try {
+        const data = JSON.parse(lastMessage.data);
+        console.log("WebSocket message received:", data.body);
+
+        const newNotification = {
+          id: Date.now(),
+          message: data.body || "New notification",
+          created_at: new Date().toISOString(), // Use ISO format for consistent sorting
+          is_read: false,
+        };
+
+        // Add the new notification and ensure the entire list is sorted
+        setNotifications((prev) => {
+          const updatedNotifications = [newNotification, ...prev];
+          return sortNotificationsByDate(updatedNotifications);
+        });
+
+        // Show toast notification using Sonner
+        toast("New Notification", {
+          description: newNotification.message,
+          position: "bottom-right",
+          duration: 5000,
+        });
+      } catch (err) {
+        console.error("Invalid message received:", lastMessage.data);
+      }
+    }
+  }, [lastMessage]);
+
+  // Calculate the number of unread notifications
+  const unreadCount = notifications.filter((n) => !n.is_read).length;
+
   const handleRoleChange = (role: "student" | "supervisor" | "admin") => {
     setUserRole(role);
     setProfileOpen(false);
+  };
+
+  const handleMarkAsRead = async (id: number) => {
+    try {
+      await markNotificationAsRead(id);
+      setNotifications((prev) =>
+        prev.map((notification) =>
+          notification.id === id
+            ? { ...notification, is_read: true }
+            : notification
+        )
+      );
+    } catch (error) {
+      console.error("Failed to mark notification as read:", error);
+    }
   };
 
   return (
@@ -52,7 +145,6 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
 
       <div className="w-full flex items-center justify-between">
         <div className="flex items-center gap-2 lg:gap-4"></div>
-        <div className="flex items-center gap-2 lg:gap-4"></div>
 
         <div className="flex items-center gap-4">
           <Badge variant="outline" className="hidden md:flex py-1.5 capitalize">
@@ -64,7 +156,11 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             className="relative rounded-full p-1.5 hover:bg-muted transition-colors"
           >
             <Bell className="h-5 w-5" />
-            <span className="absolute top-0 right-0 h-2 w-2 rounded-full bg-primary"></span>
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-xs text-white">
+                {unreadCount}
+              </span>
+            )}
           </button>
 
           {notificationsOpen && (
@@ -79,22 +175,39 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                 </button>
               </div>
               <div className="max-h-[50vh] overflow-y-auto">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="border-b p-3 hover:bg-muted/50 cursor-pointer"
-                  >
-                    <p className="text-sm">{notification.text}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {notification.time}
-                    </p>
+                {notifications.length === 0 ? (
+                  <div className="p-4 text-center text-sm text-muted-foreground">
+                    No notifications
                   </div>
-                ))}
-              </div>
-              <div className="p-2 text-center">
-                {/* <a href="#" className="text-xs text-primary hover:underline">
-                  View all notifications
-                </a> */}
+                ) : (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className={`border-b p-3 cursor-pointer ${
+                        notification.is_read
+                          ? "bg-white hover:bg-muted/50" // read notifications
+                          : "bg-gray-100 hover:bg-gray-200 font-bold" // unread notifications
+                      }`}
+                      onClick={() => handleMarkAsRead(notification.id)}
+                    >
+                      <p className="text-sm">{notification.message}</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {new Date(notification.created_at).toLocaleString(
+                          "en-GB",
+                          {
+                            timeZone: "Africa/Cairo", // Cairo, Egypt timezone
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hour12: true, // Use 12-hour format with AM/PM
+                          }
+                        )}
+                      </p>
+                    </div>
+                  ))
+                )}
               </div>
             </div>
           )}
@@ -127,25 +240,16 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                   <p className="text-xs text-muted-foreground capitalize">
                     {userRole}
                   </p>
-                  <p className="text-xs text-muted-foreground capitalize">
-                    {userRole}
-                  </p>
                 </div>
                 <div className="p-1">
                   {/* Development-only role switcher */}
                   {/* <div className="border-b p-2">
-                    <p className="text-xs text-muted-foreground mb-2">
-                      Dev: Switch Role
-                    </p>
+                    <p className="text-xs text-muted-foreground mb-2">Dev: Switch Role</p>
                     <div className="flex flex-col gap-1">
-                      <button
                       <button
                         onClick={() => handleRoleChange("student")}
                         className={cn(
                           "text-xs text-left px-2 py-1 rounded",
-                          userRole === "student"
-                            ? "bg-primary/10 text-primary"
-                            : "hover:bg-muted"
                           userRole === "student"
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-muted"
@@ -154,13 +258,9 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                         Student
                       </button>
                       <button
-                      <button
                         onClick={() => handleRoleChange("supervisor")}
                         className={cn(
                           "text-xs text-left px-2 py-1 rounded",
-                          userRole === "supervisor"
-                            ? "bg-primary/10 text-primary"
-                            : "hover:bg-muted"
                           userRole === "supervisor"
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-muted"
@@ -169,13 +269,9 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                         Supervisor
                       </button>
                       <button
-                      <button
                         onClick={() => handleRoleChange("admin")}
                         className={cn(
                           "text-xs text-left px-2 py-1 rounded",
-                          userRole === "admin"
-                            ? "bg-primary/10 text-primary"
-                            : "hover:bg-muted"
                           userRole === "admin"
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-muted"
@@ -215,7 +311,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                   <Link
                     to="/login"
                     className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted"
-                    onClick={() => handleLogout()}
+                    onClick={() => setProfileOpen(false)}
                   >
                     Logout
                   </Link>
@@ -228,4 +324,5 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     </header>
   );
 };
+
 export default Navbar;

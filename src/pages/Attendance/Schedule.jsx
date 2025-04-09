@@ -44,7 +44,7 @@ import { useNavigate, useBeforeUnload } from "react-router-dom";
 const Schedule = () => {
   const navigate = useNavigate();
   const { userRole } = useUser();
-  const [isLoading, setIsLoading] = useState(true); 
+  const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
@@ -65,7 +65,7 @@ const Schedule = () => {
   const [pendingTrackId, setPendingTrackId] = useState(null);
   const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
   const [eventToDelete, setEventToDelete] = useState(null);
-  
+
   const filteredEvents = events.filter(
     (event) => event.trackId === selectedTrack
   );
@@ -80,8 +80,8 @@ const Schedule = () => {
   const [branches, setFetchedBranches] = useState([]);
 
   // Track if there are modified events
-  const modifiedEvents = events.filter(event => event.isModified);
-  
+  const modifiedEvents = events.filter((event) => event.isModified);
+
   // Effect to set hasUnsavedChanges based on modified events
   useEffect(() => {
     setHasUnsavedChanges(modifiedEvents.length > 0);
@@ -93,7 +93,8 @@ const Schedule = () => {
       (event) => {
         if (hasUnsavedChanges) {
           event.preventDefault();
-          return (event.returnValue = "You have unsaved changes. Are you sure you want to leave?");
+          return (event.returnValue =
+            "You have unsaved changes. Are you sure you want to leave?");
         }
       },
       [hasUnsavedChanges]
@@ -101,26 +102,29 @@ const Schedule = () => {
   );
 
   // Handle navigation attempts
-  const handleNavigation = useCallback((path) => {
-    if (hasUnsavedChanges) {
-      setNavigationPath(path);
-      setIsLeaveConfirmOpen(true);
-    } else {
-      navigate(path);
-    }
-  }, [hasUnsavedChanges, navigate]);
+  const handleNavigation = useCallback(
+    (path) => {
+      if (hasUnsavedChanges) {
+        setNavigationPath(path);
+        setIsLeaveConfirmOpen(true);
+      } else {
+        navigate(path);
+      }
+    },
+    [hasUnsavedChanges, navigate]
+  );
 
   // Override the history's push method
   useEffect(() => {
     const originalPush = history.pushState;
-    history.pushState = function() {
+    history.pushState = function () {
       if (hasUnsavedChanges) {
         setIsLeaveConfirmOpen(true);
         return;
       }
       return originalPush.apply(this, arguments);
     };
-    
+
     return () => {
       history.pushState = originalPush;
     };
@@ -130,10 +134,12 @@ const Schedule = () => {
   const handleChangesSaved = useCallback(() => {
     setHasUnsavedChanges(false);
     // Reset isModified flag on all events
-    setEvents(prevEvents => prevEvents.map(event => ({
-      ...event,
-      isModified: false
-    })));
+    setEvents((prevEvents) =>
+      prevEvents.map((event) => ({
+        ...event,
+        isModified: false,
+      }))
+    );
     // Refresh calendar data after saving
     fetchEvents(selectedTrack);
   }, [selectedTrack]);
@@ -160,18 +166,18 @@ const Schedule = () => {
         instructor: event.instructor,
         start: event.start,
         end: event.end,
-        isOnline: (event.is_online), 
+        isOnline: event.is_online,
         trackId: event.track_id,
         schedule_date: event.schedule_date,
         schedule_id: event.schedule_id,
         branch: event.branch,
-        backgroundColor: (event.is_online)
+        backgroundColor: event.is_online
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
-        borderColor: (event.is_online)
+        borderColor: event.is_online
           ? "hsl(var(--accent))"
           : "hsl(var(--primary))",
-        textColor: (event.is_online)
+        textColor: event.is_online
           ? "hsl(var(--accent-foreground))"
           : "hsl(var(--primary-foreground))",
       }));
@@ -193,7 +199,7 @@ const Schedule = () => {
       applyTrackChange(trackId);
     }
   };
-  
+
   // New function to actually apply track change
   const applyTrackChange = (trackId) => {
     updateTrackAndBranch(trackId, tracks);
@@ -209,11 +215,13 @@ const Schedule = () => {
         const branchesResponse = await axiosBackendInstance.get(
           "attendance/branches/"
         );
-        setFetchedBranches(branchesResponse.data.results);
+        setFetchedBranches(branchesResponse.data);
 
         // Fetch tracks after branches
-        const tracksResponse = await axiosBackendInstance.get("attendance/tracks/");
-        const fetchedTracks = tracksResponse.data.results;
+        const tracksResponse = await axiosBackendInstance.get(
+          "attendance/tracks/"
+        );
+        const fetchedTracks = tracksResponse.data;
         setTracks(fetchedTracks);
 
         if (fetchedTracks.length > 0) {
@@ -229,7 +237,7 @@ const Schedule = () => {
     };
 
     fetchData();
-    
+
     // Cleanup function to handle any potential event listener issues
     return () => {
       if (calendarRef.current) {
@@ -254,7 +262,7 @@ const Schedule = () => {
         start: newEvent.start,
         end: newEvent.end,
         isOnline: newEvent.isOnline,
-        trackId: selectedTrack , 
+        trackId: selectedTrack,
         branch: newEvent.branch,
         backgroundColor: newEvent.isOnline
           ? "hsl(var(--accent))"
@@ -288,8 +296,12 @@ const Schedule = () => {
     if (eventToDelete) {
       try {
         // Call API to delete the session
-        await axiosBackendInstance.delete(`attendance/sessions/${eventToDelete}/`);
-        setEvents((prev) => prev.filter((event) => String(event.id) !== String(eventToDelete)));
+        await axiosBackendInstance.delete(
+          `attendance/sessions/${eventToDelete}/`
+        );
+        setEvents((prev) =>
+          prev.filter((event) => String(event.id) !== String(eventToDelete))
+        );
         toast({
           title: "Success",
           description: "Event deleted successfully.",
@@ -361,7 +373,7 @@ const Schedule = () => {
             textColor: isOnline
               ? "hsl(var(--accent-foreground))"
               : "hsl(var(--primary-foreground))",
-            isModified: true, 
+            isModified: true,
           };
         }
         return event;
@@ -377,7 +389,7 @@ const Schedule = () => {
               ...event,
               start: dropInfo.event.startStr,
               end: dropInfo.event.endStr,
-              isModified: true, 
+              isModified: true,
             }
           : event
       )
@@ -392,7 +404,7 @@ const Schedule = () => {
     }
     // Reset selectedEvent to ensure we're in "add" mode, not "edit" mode
     setSelectedEvent(null);
-    
+
     // Check for events on the same day and use their branch if available
     const eventsOnSameDay = events.filter((event) => {
       return (
@@ -434,7 +446,7 @@ const Schedule = () => {
       : "text-primary-foreground";
     const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
     const branchColor = isOnline ? "text-gray-700" : "text-gray-300";
-    
+
     return (
       <div
         className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
@@ -462,16 +474,16 @@ const Schedule = () => {
             {eventInfo.event.extendedProps.instructor || ""}
           </div>
         </div>
-          <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
+        <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
           <button
             onClick={(e) => {
               e.preventDefault(); // Ensure event doesn't bubble
-              toggleEventType(e, eventInfo.event.id); 
+              toggleEventType(e, eventInfo.event.id);
             }}
             className={`${textColor} hover:opacity-80 flex items-center justify-center`}
             title={isOnline ? "Switch to Offline" : "Switch to Online"}
           >
-            <div 
+            <div
               className={`w-3 h-3 rounded-full transition-colors ${
                 isOnline ? "bg-green-500" : "bg-gray-400"
               }`}
@@ -501,7 +513,7 @@ const Schedule = () => {
           className="text-gray-500 hover:text-gray-800 m-3 "
           title="Select a Custom branch"
         >
-          <MapPinned size={16}  />
+          <MapPinned size={16} />
         </button>
       </div>
     );
@@ -532,10 +544,10 @@ const Schedule = () => {
           return {
             ...event,
             branch: selectedBranchData,
-            isModified: true 
+            isModified: true,
           };
         }
-        return event; 
+        return event;
       })
     );
     setIsBranchModalOpen(false);
@@ -643,8 +655,8 @@ const Schedule = () => {
           )}
         </>
       )}
-      <Dialog 
-        open={isDialogOpen} 
+      <Dialog
+        open={isDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             // Reset selectedEvent when dialog closes
@@ -810,32 +822,37 @@ const Schedule = () => {
             <AlertTriangle className="h-12 w-12 text-amber-500" />
             <DialogTitle>Unsaved Changes</DialogTitle>
             <DialogDescription>
-              {pendingTrackId 
+              {pendingTrackId
                 ? "You have unsaved changes. Changing tracks will lose these changes."
                 : "You have unsaved changes to the schedule. What would you like to do?"}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => {
-              setIsLeaveConfirmOpen(false);
-              setPendingTrackId(null); // Reset pending track ID
-            }}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsLeaveConfirmOpen(false);
+                setPendingTrackId(null); // Reset pending track ID
+              }}
+            >
               Cancel
             </Button>
             <div className="space-x-2">
               {!pendingTrackId && (
-                <Button onClick={() => {
-                  setIsLeaveConfirmOpen(false);
-                }}>
+                <Button
+                  onClick={() => {
+                    setIsLeaveConfirmOpen(false);
+                  }}
+                >
                   Stay on Page
                 </Button>
               )}
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={() => {
                   setHasUnsavedChanges(false);
                   setIsLeaveConfirmOpen(false);
-                  
+
                   if (pendingTrackId) {
                     // Apply track change if that was the trigger
                     applyTrackChange(pendingTrackId);
@@ -857,17 +874,18 @@ const Schedule = () => {
             <AlertTriangle className="h-12 w-12 text-amber-500" />
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this event? This action cannot be undone.
+              Are you sure you want to delete this event? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="flex justify-between">
-            <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteConfirmOpen(false)}
+            >
               Cancel
             </Button>
-            <Button
-              variant="destructive"
-              onClick={handleDeleteEvent}
-            >
+            <Button variant="destructive" onClick={handleDeleteEvent}>
               Delete
             </Button>
           </DialogFooter>
