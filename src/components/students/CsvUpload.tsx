@@ -28,8 +28,22 @@ interface Track {
 }
 
 const fetchTracks = async (): Promise<Track[]> => {
-  const response = await axiosBackendInstance.get('/attendance/tracks/');
-  return response.data.results;
+  try {
+    const response = await axiosBackendInstance.get('/attendance/tracks/');
+    
+    // Check if results property exists, otherwise return the data directly
+    if (response.data?.results) {
+      return response.data.results;
+    } else if (Array.isArray(response.data)) {
+      return response.data;
+    } else {
+      console.warn('Unexpected API response format:', response.data);
+      return []; // Return empty array instead of undefined
+    }
+  } catch (error) {
+    console.error('Error fetching tracks:', error);
+    return []; // Return empty array on error
+  }
 };
 
 const CsvUpload = ({ onSuccess }: CsvUploadProps) => {
@@ -39,9 +53,11 @@ const CsvUpload = ({ onSuccess }: CsvUploadProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   
-  const { data: tracks, isLoading: isLoadingTracks } = useQuery({
+  const { data: tracks = [], isLoading: isLoadingTracks } = useQuery({
     queryKey: ['tracks'],
     queryFn: fetchTracks,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: 2,
   });
 
   const handleCsvUpload = async () => {
@@ -209,7 +225,7 @@ const CsvUpload = ({ onSuccess }: CsvUploadProps) => {
                   Loading tracks...
                 </SelectItem>
               ) : (
-                tracks.map((track) => (
+                tracks?.map((track) => (
                   <SelectItem key={track.id} value={track.id.toString()}>
                     {`${track.name} - ${track.start_date} - ${track.program_type_display}`}
                   </SelectItem>
