@@ -104,35 +104,39 @@ function LeaveRequestForm() {
         throw new Error('Please select a valid schedule');
       }
       
-      // Parse hour to number and handle 12-hour format
-      let hour = parseInt(data.hour, 10);
-      if (data.period === 'PM' && hour !== 12) {
-        hour += 12;
-      } else if (data.period === 'AM' && hour === 12) {
-        hour = 0;
-      }
-      
-      // Create schedule date with the selected time
-      const scheduleDate = dayjs(schedule.created_at);
-      const adjustedTime = scheduleDate
-        .hour(hour)
-        .minute(parseInt(data.minute, 10))
-        .second(0)
-        .toISOString();
-      
       // Map request types to backend values
       const requestTypeMap = {
-        'early_leave': 'Early Leave',
-        'late_check_in': 'Late Check-In',
-        'day_excuse': 'Day Excuse'
+        'early_leave': 'early_leave',
+        'late_check_in': 'late_check_in',
+        'day_excuse': 'day_excuse'
       };
       
       const payload = {
         schedule: data.schedule,
         request_type: requestTypeMap[data.request_type],
         reason: data.reason,
-        adjusted_time: adjustedTime
       };
+      
+      // Only include adjusted_time if the request is not a day excuse
+      if (data.request_type !== 'day_excuse') {
+        // Parse hour to number and handle 12-hour format
+        let hour = parseInt(data.hour, 10);
+        if (data.period === 'PM' && hour !== 12) {
+          hour += 12;
+        } else if (data.period === 'AM' && hour === 12) {
+          hour = 0;
+        }
+        
+        // Create schedule date with the selected time
+        const scheduleDate = dayjs(schedule.created_at);
+        const adjustedTime = scheduleDate
+          .hour(hour)
+          .minute(parseInt(data.minute, 10))
+          .second(0)
+          .toISOString();
+          
+        payload.adjusted_time = adjustedTime;
+      }
       
       console.log('Submitting leave request:', payload);
       
@@ -265,13 +269,17 @@ function LeaveRequestForm() {
                 />
                 
                 <div className="space-y-2">
-                  <FormLabel>Adjusted Time</FormLabel>
+                  <FormLabel>Adjusted Time {form.watch('request_type') === 'day_excuse' && <span className="text-muted-foreground text-sm">(Not applicable for Day Excuse)</span>}</FormLabel>
                   <div className="flex items-center space-x-2">
                     <FormField
                       control={form.control}
                       name="hour"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={form.watch('request_type') === 'day_excuse'}
+                        >
                           <SelectTrigger className="w-20">
                             <SelectValue placeholder="Hour" />
                           </SelectTrigger>
@@ -290,7 +298,11 @@ function LeaveRequestForm() {
                       control={form.control}
                       name="minute"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={form.watch('request_type') === 'day_excuse'}
+                        >
                           <SelectTrigger className="w-20">
                             <SelectValue placeholder="Min" />
                           </SelectTrigger>
@@ -308,7 +320,11 @@ function LeaveRequestForm() {
                       control={form.control}
                       name="period"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={form.watch('request_type') === 'day_excuse'}
+                        >
                           <SelectTrigger className="w-20">
                             <SelectValue />
                           </SelectTrigger>

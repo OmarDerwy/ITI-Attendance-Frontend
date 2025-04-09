@@ -94,7 +94,7 @@ function LeaveRequestCenter() {
         const typeMap = {
             'late_check_in': 'Late arrival',
             'early_check_out': 'Early departure',
-            'absence': 'Full day absence'
+            'day_excuse': 'Full day excuse'
         };
         return typeMap[type] || type;
     };
@@ -128,44 +128,54 @@ function LeaveRequestCenter() {
         const request = leaveRequests.find(req => req.id === requestId);
         if (!request) return;
         
-        const timeSettings = adjustedTimes[requestId];
-        
-        // Create a dayjs object from the request date
-        const requestDate = dayjs(request.created_at);
-        
-        // Parse hour to number and handle 12-hour format
-        let hour = parseInt(timeSettings.hour, 10);
-        if (timeSettings.period === 'PM' && hour !== 12) {
-            hour += 12;
-        } else if (timeSettings.period === 'AM' && hour === 12) {
-            hour = 0;
+        let payload = {};
+        if (request.request_type !== 'day_excuse') {
+            const timeSettings = adjustedTimes[requestId];
+            
+            // Create a dayjs object from the request date
+            const requestDate = dayjs(request.created_at);
+            
+            // Parse hour to number and handle 12-hour format
+            let hour = parseInt(timeSettings.hour, 10);
+            if (timeSettings.period === 'PM' && hour !== 12) {
+                hour += 12;
+            } else if (timeSettings.period === 'AM' && hour === 12) {
+                hour = 0;
+            }
+            
+            // Create adjusted datetime by setting the hour and minute on the request date
+            const adjustedDateTime = requestDate
+                .hour(hour)
+                .minute(parseInt(timeSettings.minute, 10))
+                .second(0)
+                .toISOString();
+            
+            payload.adjusted_time = adjustedDateTime;
         }
         
-        // Create adjusted datetime by setting the hour and minute on the request date
-        const adjustedDateTime = requestDate
-            .hour(hour)
-            .minute(parseInt(timeSettings.minute, 10))
-            .second(0)
-            .toISOString();
-        
-        console.log('Accept request', requestId, 'with adjusted time', adjustedDateTime);
+        console.log(
+            'Accept request',
+            requestId,
+            request.request_type !== 'day_excuse' ? 'with adjusted time' : 'without adjusted time'
+        );
         
         try {
-            // API call to update the request status with adjusted time
-            const response = await axiosBackendInstance.post(`attendance/permission-requests/${requestId}/approve/`, {
-                adjusted_time: adjustedDateTime,
-            });
+            // API call to update the request status with adjusted time if applicable
+            const response = await axiosBackendInstance.post(
+                `attendance/permission-requests/${requestId}/approve/`,
+                payload
+            );
 
             // show a toast to notify acceptance successful
             toast({
-                title: 'Request Accepted Auccessfully',
+                title: 'Request Accepted Successfully',
                 description: `Leave request for ${getStudentName(request)} has been accepted.`,
                 variant: 'default',
                 duration: 5000,
                 action: <Button variant="link" onClick={() => setSelectedRequest(null)}>Close</Button>,
             });
 
-            console.log('FOCUS HERE: ',response.data);
+            console.log('FOCUS HERE: ', response.data);
             // Refetch the data to update the UI
             refetch();
             setSelectedRequest(null);
@@ -302,7 +312,11 @@ function LeaveRequestCenter() {
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium">Expected Time:</p>
-                                                                        <p>{formatDateTime(request.adjusted_time)}</p>
+                                                                        <p>
+                                                                            {request.request_type === 'day_excuse' ? 
+                                                                            'Not applicable for Day Excuse' : 
+                                                                            formatDateTime(request.adjusted_time)}
+                                                                        </p>
                                                                     </div>
                                                                     <div>
                                                                         <p className="font-medium">Reason:</p>
@@ -311,57 +325,64 @@ function LeaveRequestCenter() {
                                                                 </div>
                                                                 
                                                                 <div className="flex flex-wrap items-center gap-3 mt-4">
-                                                                    <div className="flex items-center space-x-2">
-                                                                        <div className="w-20">
-                                                                            <Select
-                                                                                value={adjustedTimes[request.id]?.hour || ''}
-                                                                                onValueChange={(value) => handleTimeChange(request.id, 'hour', value)}
-                                                                            >
-                                                                                <SelectTrigger>
-                                                                                    <SelectValue placeholder="Hour" />
-                                                                                </SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
-                                                                                        <SelectItem key={hour} value={hour.toString()}>
-                                                                                            {hour}
-                                                                                        </SelectItem>
-                                                                                    ))}
-                                                                                </SelectContent>
-                                                                            </Select>
+                                                                    {request.request_type !== 'day_excuse' && (
+                                                                        <div className="flex items-center space-x-2">
+                                                                            <div className="w-20">
+                                                                                <Select
+                                                                                    value={adjustedTimes[request.id]?.hour || ''}
+                                                                                    onValueChange={(value) => handleTimeChange(request.id, 'hour', value)}
+                                                                                >
+                                                                                    <SelectTrigger>
+                                                                                        <SelectValue placeholder="Hour" />
+                                                                                    </SelectTrigger>
+                                                                                    <SelectContent>
+                                                                                        {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
+                                                                                            <SelectItem key={hour} value={hour.toString()}>
+                                                                                                {hour}
+                                                                                            </SelectItem>
+                                                                                        ))}
+                                                                                    </SelectContent>
+                                                                                </Select>
+                                                                            </div>
+                                                                            <span>:</span>
+                                                                            <div className="w-20">
+                                                                                <Select
+                                                                                    value={adjustedTimes[request.id]?.minute || ''}
+                                                                                    onValueChange={(value) => handleTimeChange(request.id, 'minute', value)}
+                                                                                >
+                                                                                    <SelectTrigger>
+                                                                                        <SelectValue placeholder="Min" />
+                                                                                    </SelectTrigger>
+                                                                                    <SelectContent>
+                                                                                        {Array.from({length: 60}, (_, i) => i).map((minute) => (
+                                                                                            <SelectItem key={minute} value={minute}>
+                                                                                                {minute}
+                                                                                            </SelectItem>
+                                                                                        ))}
+                                                                                    </SelectContent>
+                                                                                </Select>
+                                                                            </div>
+                                                                            <div className="w-20">
+                                                                                <Select
+                                                                                    value={adjustedTimes[request.id]?.period || ''}
+                                                                                    onValueChange={(value) => handleTimeChange(request.id, 'period', value)}
+                                                                                >
+                                                                                    <SelectTrigger>
+                                                                                        <SelectValue placeholder="AM/PM" />
+                                                                                    </SelectTrigger>
+                                                                                    <SelectContent>
+                                                                                        <SelectItem value="AM">AM</SelectItem>
+                                                                                        <SelectItem value="PM">PM</SelectItem>
+                                                                                    </SelectContent>
+                                                                                </Select>
+                                                                            </div>
                                                                         </div>
-                                                                        <span>:</span>
-                                                                        <div className="w-20">
-                                                                            <Select
-                                                                                value={adjustedTimes[request.id]?.minute || ''}
-                                                                                onValueChange={(value) => handleTimeChange(request.id, 'minute', value)}
-                                                                            >
-                                                                                <SelectTrigger>
-                                                                                    <SelectValue placeholder="Min" />
-                                                                                </SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    {Array.from({length: 60}, (_, i) => i).map((minute) => (
-                                                                                        <SelectItem key={minute} value={minute}>
-                                                                                            {minute}
-                                                                                        </SelectItem>
-                                                                                    ))}
-                                                                                </SelectContent>
-                                                                            </Select>
+                                                                    )}
+                                                                    {request.request_type === 'day_excuse' && (
+                                                                        <div className="text-muted-foreground italic mr-auto">
+                                                                            Time adjustment not applicable for Day Excuse
                                                                         </div>
-                                                                        <div className="w-20">
-                                                                            <Select
-                                                                                value={adjustedTimes[request.id]?.period || ''}
-                                                                                onValueChange={(value) => handleTimeChange(request.id, 'period', value)}
-                                                                            >
-                                                                                <SelectTrigger>
-                                                                                    <SelectValue placeholder="AM/PM" />
-                                                                                </SelectTrigger>
-                                                                                <SelectContent>
-                                                                                    <SelectItem value="AM">AM</SelectItem>
-                                                                                    <SelectItem value="PM">PM</SelectItem>
-                                                                                </SelectContent>
-                                                                            </Select>
-                                                                        </div>
-                                                                    </div>
+                                                                    )}
                                                                     <Button
                                                                         variant="default"
                                                                         size="sm"
