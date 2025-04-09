@@ -64,21 +64,19 @@ function LeaveRequestForm() {
 
   // Replace useState and useEffect with useQuery
   const fetchSchedules = async () => {
-    const response = await axiosBackendInstance.get('attendance/schedules');
-    // Filter schedules that are not in the past
-    const now = dayjs();
-    const futureSchedules = response.data.filter(schedule => {
-      const dayjsObj = dayjs(schedule.created_at)
-      return dayjs(dayjsObj).isAfter(now)
-    });
-    return futureSchedules;
+    const response = await axiosBackendInstance.get('attendance/upcoming-records');
+    // Extract schedules from the new response structure
+    const records = response.data.data || [];
+    // Map to get the schedule objects from each record
+    return records.map(record => record.schedule);
   };
 
   const { 
     data: schedules = [], 
     isLoading, 
     isError, 
-    error 
+    error,
+    refetch 
   } = useQuery({
     queryKey: ['schedules'],
     queryFn: fetchSchedules,
@@ -148,7 +146,7 @@ function LeaveRequestForm() {
       
       // Reset form
       form.reset();
-      
+      refetch();
       // Redirect to a confirmation page or back to schedule
       navigate('/schedule');
       
@@ -176,6 +174,13 @@ function LeaveRequestForm() {
       />
       <Card className="p-6">
         <div className="container mx-auto max-w-3xl">
+        {schedules.length === 0 && !isLoading && (
+            <div className="rounded-md bg-muted p-4 text-center border-red-700 border-x-2 border-y-2 mb-4">
+              <p className="text-muted-foreground">
+                No upcoming schedules available for leave requests.
+              </p>
+            </div>
+          )}
           {isLoading && !form.formState.isSubmitting ? (
             <div className="flex items-center justify-center py-8">
               <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -205,7 +210,7 @@ function LeaveRequestForm() {
                           {schedules.length > 0 ? (
                             schedules.map((schedule) => (
                               <SelectItem key={schedule.id} value={schedule.id.toString()}>
-                                {schedule.name} ({schedule.sessions ? 'No sessions' : schedule.sessions.join(', ')})
+                                {schedule.name} ({schedule.sessions ? schedule.sessions.join(', ') : 'No sessions'})
                               </SelectItem>
                             ))
                           ) : (
@@ -332,14 +337,6 @@ function LeaveRequestForm() {
                 </div>
               </form>
             </Form>
-          )}
-          
-          {schedules.length === 0 && !isLoading && (
-            <div className="rounded-md bg-muted p-4 text-center">
-              <p className="text-muted-foreground">
-                No upcoming schedules available for leave requests.
-              </p>
-            </div>
           )}
         </div>
       </Card>

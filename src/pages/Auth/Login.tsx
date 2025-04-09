@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { axiosBackendInstance } from "@/api/config";
 import { useUser } from "@/context/UserContext";
-
+import { toast } from 'sonner';
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
@@ -49,6 +49,7 @@ const Login = () => {
     } catch (error) {
       console.error("Login failed:", error);
       // Handle login errors here - show error message to user
+      toast.error("Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
