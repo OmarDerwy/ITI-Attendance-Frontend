@@ -31,6 +31,8 @@ import ItemDetail from "./pages/LostFound/ItemDetail";
 import MatchedItemDetail from "./pages/LostFound/MatchedItemDetail";
 import { ThemeProvider } from "next-themes";
 import LeaveRequestForm from "./pages/Attendance/LeaveRequestForm";
+import UserForm from "./pages/Management/UserForm";
+import UserManagement from './pages/Management/UserManagement';
 
 const queryClient = new QueryClient();
 
@@ -90,6 +92,9 @@ const App = () => (
               <Route path="/tracks" element={<TrackManagement />} />
               <Route path="/tracks/add" element={<TrackForm />} />
               <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/users/add" element={<UserForm />} />
+              <Route path="/users/edit/:userId" element={<UserForm />} />
               <Route
                 path="/attendance-status/:date"
                 element={<AttendanceStatus />}
