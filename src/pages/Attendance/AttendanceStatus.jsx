@@ -84,11 +84,11 @@ function AttendanceStatus() {
   //-------------------------------------------------//
 
   useEffect(() => {
-    if (isSuccess) {
+    if (isSuccess && schedulesData) {
       setScheduleEntries(schedulesData.results);
       setNextPageUrl(schedulesData.next);
     }
-  }, [isSuccess]);
+  }, [isSuccess, schedulesData]);
 
   const handleRefresh = () => {
     refetch();
@@ -161,7 +161,7 @@ function AttendanceStatus() {
           {/* Use scheduleEntries instead of schedulesData.results */}
           {!isLoading ? (
             <>
-              <AttendanceStatusTable data={scheduleEntries} />
+              <AttendanceStatusTable schedules={scheduleEntries} selectedTrackId={selectedTrackId} />
 
               {/* View More button */}
               {nextPageUrl && (
