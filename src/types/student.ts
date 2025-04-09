@@ -16,6 +16,8 @@ export interface ApiResponse {
   next: string | null;
   previous: string | null;
   results: User[];
+  active_users: number;
+  inactive_users: number;
 }
 
 export interface CsvStudentData {

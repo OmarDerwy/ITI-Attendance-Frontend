@@ -39,7 +39,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     setupAxiosInterceptors(() => navigate("/login"));
   }, [navigate]);
 
-  const SOCKET_URL = `ws://127.0.0.1:8000/ws/notifications/?token=${token}`;
+  const SOCKET_URL = `ws://localhost:8000/ws/notifications/?token=${token}`;
   const { lastMessage } = useWebSocket(SOCKET_URL, {
     onOpen: () => console.log("WebSocket Connected"),
     onClose: () => console.log("WebSocket Disconnected"),
