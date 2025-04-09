@@ -33,6 +33,7 @@ import { ThemeProvider } from "next-themes";
 import LeaveRequestForm from "./pages/Attendance/LeaveRequestForm";
 import UserForm from "./pages/Management/UserForm";
 import UserManagement from './pages/Management/UserManagement';
+import StudentSchedule from './pages/Attendance/StudentSchedule';
 
 const queryClient = new QueryClient();
 
@@ -108,6 +109,7 @@ const App = () => (
                 path="/leave-request-form"
                 element={<LeaveRequestForm />}
               />
+              <Route path="/student-schedule" element={<StudentSchedule />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ThemeProvider>
