@@ -46,7 +46,7 @@ const App = () => (
         <BrowserRouter>
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <Routes>
-              {/* <Route path="/" element={<Index />} /> */}
+              <Route path="/" element={<Index />} />
               <Route path="/" element={<LostFound />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />

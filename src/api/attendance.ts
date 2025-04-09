@@ -23,6 +23,7 @@ export const getTodaysAttendancePercentage = async (): Promise<{
 }> => {
   try {
     const response = await axiosBackendInstance.get('attendance/attendance-percentage/today');
+    console.log("today",response.data);
     
     return response.data;
   } catch (error) {
@@ -41,7 +42,9 @@ export const getWeeklyAttendancePercentage = async (): Promise<{
 }> => {
   try {
     const response = await axiosBackendInstance.get('attendance/attendance-percentage/weekly');
-    return response.data.data;
+    console.log("weekly",response.data);
+    
+    return response.data;
   } catch (error) {
     console.error('Error fetching weekly attendance percentage:', error);
     throw error;

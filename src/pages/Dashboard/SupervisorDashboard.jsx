@@ -3,23 +3,23 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, Calendar, Clock, Check, Users, AlertTriangle, BellRing } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  LineChart, 
-  Line, 
-  PieChart, 
-  Pie, 
-  Cell 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends} from '@/api/attendance';
+import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends } from '@/api/attendance';
 import { usePermissions } from '@/context/PermissionsContext';
 import RecentAbsences from '../../components/dashboard/RecentAbsences';
 
@@ -63,6 +63,7 @@ const SupervisorDashboard = () => {
   // const [todayAttendance, setTodayAttendance] = useState(null);
   // const [weeklyAttendance, setWeeklyAttendance] = useState(null);
   const [filteredData, setFilteredData] = useState([]);
+  const [dailyTrends, setDailyTrends] = useState([]);
   const { totalPendingPermissions, isLoading: permissionsLoading, error } = usePermissions();
 
   const { data: todayAttendance, isLoading, isError, errorr } = useQuery({
@@ -76,37 +77,53 @@ const SupervisorDashboard = () => {
   });
 
   const { data: weeklyAttendance, isLoading: weeklyLoading, isError: weeklyError, error: weeklyErrorData } = useQuery({
-  queryKey: ['weeklyAttendancePercentage'],
-  queryFn: getWeeklyAttendancePercentage,
-  staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
-  cacheTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
-  onError: (error) => {
-    console.error("Error fetching weekly attendance:", error);
-  },
-});
+    queryKey: ['weeklyAttendancePercentage'],
+    queryFn: getWeeklyAttendancePercentage,
+    staleTime: 5 * 60 * 1000, // Cache data for 5 minutes
+    cacheTime: 10 * 60 * 1000, // Keep data in cache for 10 minutes
+    onSuccess: (data) => {
+      console.log('Weekly Attendance Data:', data);  // Debugging
+    },
+    onError: (error) => {
+      console.error("Error fetching weekly attendance:", error);
+    },
+  });
 
-const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error: trendsErrorData } = useQuery({
-  queryKey: 'attendanceTrends',
-  queryFn: getAttendanceTrends,
-  onError: (error) => {
-    console.error("Error fetching attendance trends:", error);
-  },
-});
+
+  const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error: trendsErrorData } = useQuery({
+    queryKey: 'attendanceTrends',
+    queryFn: getAttendanceTrends,
+    onError: (error) => {
+      console.error("Error fetching attendance trends:", error);
+    },
+  });
 
   useEffect(() => {
     if (trendsData) {
       const currentDate = new Date();
       const fourWeeksAgo = new Date();
+      const sevenDaysAgo = new Date();
       fourWeeksAgo.setDate(currentDate.getDate() - 28);
+      sevenDaysAgo.setDate(currentDate.getDate() - 7);
 
-      const filtered = trendsData.weekly_trends.filter((weekData) => {
+      // Filter for weekly trends (last 4 weeks)
+      const weeklyFiltered = trendsData.weekly_trends.filter((weekData) => {
         const weekDate = new Date(weekData.week);
         return weekDate >= fourWeeksAgo && weekDate <= currentDate;
       });
 
-      setFilteredData(filtered);
+      // Filter for daily trends (last 7 days)
+      const dailyFiltered = trendsData.daily_trends.filter((dayData) => {
+        const dayDate = new Date(dayData.date); // Assuming 'date' is the field holding the date
+        return dayDate >= sevenDaysAgo && dayDate <= currentDate;
+      });
+
+      // Combine both filtered data
+      setFilteredData(weeklyFiltered);
+      setDailyTrends(dailyFiltered);
     }
   }, [trendsData]);
+
 
   // useEffect(() => {
   //   const fetchAttendance = async () => {
@@ -150,7 +167,7 @@ const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error:
               </div>
             </div>
             <div className="text-2xl font-bold text-blue-700">
-              {weeklyLoading || weeklyAttendance === undefined ? 'Loading...' : `${weeklyAttendance.attendance_percentage}%`}
+              {weeklyLoading || !weeklyAttendance ? 'Loading...' : `${weeklyAttendance.attendance_percentage}%`}
             </div>
             <CardDescription>Weekly Average</CardDescription>
           </CardContent>
@@ -164,7 +181,7 @@ const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error:
                 <AlertTriangle className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-amber-700">{permissionsLoading||totalPendingPermissions === null? 'Loading...':`${totalPendingPermissions}`}</div>
+            <div className="text-2xl font-bold text-amber-700">{permissionsLoading || totalPendingPermissions === null ? 'Loading...' : `${totalPendingPermissions}`}</div>
             <CardDescription>permission Requests</CardDescription>
           </CardContent>
         </Card>
@@ -173,39 +190,31 @@ const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error:
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Card>
           <CardContent className="pt-6">
-            <div className="flex justify-between items-center mb-4">
-              <CardTitle className="text-lg">Track Attendance</CardTitle>
-              <Link to="/attendance-insights" className="text-sm text-primary flex items-center">
-                View Detailed Analytics <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
-            </div>
+            <CardTitle className="text-lg mb-4">Attendance Daily Trends</CardTitle>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={trackAttendance}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={true}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {trackAttendance.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
+                <LineChart data={dailyTrends}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" />
+                  <YAxis domain={[60, 100]} />
                   <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} />
-                </PieChart>
+                  <Line
+                    type="monotone"
+                    dataKey="attended"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: "#3b82f6" }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
-            <CardTitle className="text-lg mb-4">Attendance Trends</CardTitle>
+            <CardTitle className="text-lg mb-4">Attendance Weekly Trends</CardTitle>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={filteredData}>
@@ -213,10 +222,10 @@ const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error:
                   <XAxis dataKey="week" />
                   <YAxis domain={[60, 100]} />
                   <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="attendance" 
-                    stroke="#3b82f6" 
+                  <Line
+                    type="monotone"
+                    dataKey="attended"
+                    stroke="#3b82f6"
                     strokeWidth={2}
                     dot={{ r: 4, fill: "#3b82f6" }}
                     activeDot={{ r: 6 }}
@@ -398,44 +407,14 @@ const { data: trendsData, isLoading: trendsLoading, isError: trendsError, error:
             </div>
           </CardContent>
         </Card>
-              {/* Attendance Insights and Recent Absences */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <RecentAbsences 
-                  absences={recentAbsences}
-                  onViewAll={() => navigate("/attendance-reports")}
-                />
-              </div>
-        <Card>
-          <CardContent className="pt-6">
-            <CardTitle className="text-lg mb-4">Quick Actions</CardTitle>
-            <div className="grid grid-cols-2 gap-3">
-              <Link to="/schedule">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-50 to-blue-100/30 hover:bg-blue-100/50 border-blue-200">
-                  <Calendar className="h-6 w-6 text-blue-600" />
-                  <span>View Schedule</span>
-                </Button>
-              </Link>
-              <Link to="/attendance-insights">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-emerald-50 to-emerald-100/30 hover:bg-emerald-100/50 border-emerald-200">
-                  <BarChart3 className="h-6 w-6 text-emerald-600" />
-                  <span>Attendance Analytics</span>
-                </Button>
-              </Link>
-              <Link to="/student-verification">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-amber-50 to-amber-100/30 hover:bg-amber-100/50 border-amber-200">
-                  <AlertTriangle className="h-6 w-6 text-amber-600" />
-                  <span>Verification Requests</span>
-                </Button>
-              </Link>
-              <Link to="/announcements">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-purple-50 to-purple-100/30 hover:bg-purple-100/50 border-purple-200">
-                  <BellRing className="h-6 w-6 text-purple-600" />
-                  <span>Create Announcement</span>
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Attendance Insights and Recent Absences */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <RecentAbsences
+            absences={recentAbsences}
+            onViewAll={() => navigate("/attendance-reports")}
+          />
+        </div>
+
       </div>
     </div>
   );
@@ -450,7 +429,7 @@ const ClassBadge = ({ status }) => {
       </div>
     );
   }
-  
+
   if (status === "upcoming") {
     return (
       <div className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
@@ -458,7 +437,7 @@ const ClassBadge = ({ status }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600">
       <Check className="h-3 w-3 mr-1" />
@@ -475,7 +454,7 @@ const RequestBadge = ({ status }) => {
       </div>
     );
   }
-  
+
   if (status === "approved") {
     return (
       <div className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
@@ -484,10 +463,10 @@ const RequestBadge = ({ status }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
-        Declined
+      Declined
     </div>
   );
 };
