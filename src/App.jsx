@@ -12,7 +12,6 @@ import LostFound from "./pages/LostFound/LostFound";
 import StudentVerification from "./pages/Management/StudentVerification";
 import AttendanceInsights from "./pages/Attendance/AttendanceInsights";
 import ManageMyItems from "./pages/LostFound/ManageMyItems";
-import SupervisorManagement from "./pages/Management/SupervisorManagement";
 import Announcements from "./pages/Announcement/Announcements";
 import TrackManagement from "./pages/Management/TrackManagement";
 import ReportLostFound from "./pages/LostFound/ReportLostFound";
@@ -85,7 +84,6 @@ const App = () => (
                 element={<AttendanceInsights />}
               />
               <Route path="/my-items" element={<ManageMyItems />} />
-              <Route path="/supervisors" element={<SupervisorManagement />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/branches" element={<BranchManagement />} />
               <Route path="/branches/add" element={<BranchForm />} />
