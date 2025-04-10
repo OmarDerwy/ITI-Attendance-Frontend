@@ -29,7 +29,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<
-    { id: number; message: string; created_at: string; is_read: boolean }[]
+    { id: number; message: string; created_at: string; is_read: boolean; matched_item: number }[]
   >([]);
 
   const token = localStorage.getItem("access");
@@ -91,6 +91,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
           message: data.body || "New notification",
           created_at: new Date().toISOString(), // Use ISO format for consistent sorting
           is_read: false,
+          matched_item: data.matched_item,
         };
 
         // Add the new notification and ensure the entire list is sorted
@@ -129,6 +130,12 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             : notification
         )
       );
+      notifications.filter((notification) =>  {
+        if (notification.id === id && notification.matched_item) {
+          navigate(`/matched-item-details/${notification.matched_item}`);
+        }
+        return notification;
+      })
     } catch (error) {
       console.error("Failed to mark notification as read:", error);
     }
