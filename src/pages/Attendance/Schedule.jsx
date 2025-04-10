@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   X,
   MapPinned,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
@@ -36,10 +37,11 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
 import { axiosBackendInstance } from "@/api/config";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useBeforeUnload } from "react-router-dom";
+import { toast } from "sonner";
+import { getDate } from "date-fns";
 
 const Schedule = () => {
   const navigate = useNavigate();
@@ -50,7 +52,6 @@ const Schedule = () => {
   const [events, setEvents] = useState([]);
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState("timeGridWeek");
-  const { toast } = useToast();
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -76,7 +77,12 @@ const Schedule = () => {
     branch: defaultBranch,
     instructor: "",
   });
-
+  const isDateInPast = (date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Set time to the start of the day
+    const inputDate = new Date(date);
+    return inputDate < today; // Check if the input date is before today
+  };
   const [branches, setFetchedBranches] = useState([]);
 
   // Track if there are modified events
@@ -248,13 +254,48 @@ const Schedule = () => {
   }, []);
 
   const handleEventSubmit = () => {
+    const startDate = new Date(selectedEvent ? selectedEvent.start : newEvent.start);
+    const endDate = new Date(selectedEvent ? selectedEvent.end : newEvent.end);
+  
+    // Validate that start date equals end date
+    if (startDate.toDateString() !== endDate.toDateString()) {
+      toast.error("Session duration must be on the same day.");
+      return;
+    }
+    // Validate that start time is before end time
+    if (startDate >= endDate) {
+      toast.error("Start time must be before end time.");
+      return;
+    }
+    if (isDateInPast(startDate)) {
+      toast.error("Cannot add sessions to past dates");
+      return;
+    }
+  
+    // Validate that the event does not overlap with existing events
+    const isOverlapping = events.some((event) => {
+      if (selectedEvent && event.id === selectedEvent.id) return false; // Skip the current event in edit mode
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      return (
+        (startDate >= eventStart && startDate < eventEnd) || // Overlaps start
+        (endDate > eventStart && endDate <= eventEnd) || // Overlaps end
+        (startDate <= eventStart && endDate >= eventEnd) // Fully overlaps
+      );
+    });
+  
+    if (isOverlapping) {
+      toast.error("This event overlaps with an existing event.");
+      return;
+    }
+  
+    // Proceed with adding or updating the event
     if (!selectedEvent) {
       // Add mode
       if (!newEvent.title) {
         alert("Title is required.");
         return;
       }
-      console.log("Creating event with properties:", newEvent); // DEV DEBUG
       const newEventData = {
         id: "react" + uuidv4(),
         title: newEvent.title,
@@ -294,28 +335,39 @@ const Schedule = () => {
 
   const handleDeleteEvent = async () => {
     if (eventToDelete) {
+      const event = events.find((e) => String(e.id) === String(eventToDelete));
+      
+      // Check if event is in the past
+      if (event && isDateInPast(event.start)) {
+        toast.error("Cannot delete sessions from past dates");
+        setEventToDelete(null);
+        setIsDeleteConfirmOpen(false);
+        return;
+      }
+      
+      // Continue with the existing delete logic
+      if (!event || !event.schedule_id) {
+        // If the event is not saved (no schedule_id), remove it locally
+        setEvents((prev) =>
+          prev.filter((e) => String(e.id) !== String(eventToDelete))
+        );
+        toast.success("You have cancelled the event.");
+        setEventToDelete(null);
+        setIsDeleteConfirmOpen(false);
+        return;
+      }
+
       try {
         // Call API to delete the session
         await axiosBackendInstance.delete(
           `attendance/sessions/${eventToDelete}/`
         );
         setEvents((prev) =>
-          prev.filter((event) => String(event.id) !== String(eventToDelete))
+          prev.filter((e) => String(e.id) !== String(eventToDelete))
         );
-        toast({
-          title: "Success",
-          description: "Event deleted successfully.",
-          variant: "success",
-        });
-        // Refresh calendar data after deleting
-        fetchEvents(selectedTrack);
+        toast.success("Event deleted successfully.");
       } catch (error) {
-        console.error("Error deleting event:", error); // DEV DEBUG
-        toast({
-          title: "Error",
-          description: "Failed to delete the event. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to delete the event. Please try again.");
       }
       setEventToDelete(null);
       setIsDeleteConfirmOpen(false);
@@ -323,6 +375,12 @@ const Schedule = () => {
   };
 
   const handleEventResize = (resizeInfo) => {
+    // Prevent resizing events in past dates
+    if (isDateInPast(resizeInfo.event.start)) {
+      resizeInfo.revert(); // Revert the resize operation
+      toast.error("Cannot modify sessions from past dates");
+      return;
+    }
     setEvents((prev) =>
       prev.map((event) =>
         String(event.id) === String(resizeInfo.event.id)
@@ -356,6 +414,14 @@ const Schedule = () => {
   };
   const toggleEventType = (e, eventId) => {
     e.stopPropagation();
+    
+    // First check if event is in the past
+    const event = events.find(e => String(e.id) === String(eventId));
+    if (event && isDateInPast(event.start)) {
+      toast.error("Cannot modify sessions from past dates");
+      return;
+    }
+    
     setEvents((prev) => {
       const updatedEvents = prev.map((event) => {
         if (String(event.id) === String(eventId)) {
@@ -382,6 +448,12 @@ const Schedule = () => {
     });
   };
   const handleEventDrop = (dropInfo) => {
+    // Prevent dropping to a past date
+    if (isDateInPast(dropInfo.event.start)) {
+      dropInfo.revert(); // Revert the drag operation
+      toast.error("Cannot modify sessions from past dates");
+      return;
+    }
     setEvents((prev) =>
       prev.map((event) =>
         String(event.id) === String(dropInfo.event.id)
@@ -399,8 +471,10 @@ const Schedule = () => {
     if (currentView === "dayGridMonth") {
       return;
     }
-    if (new Date(selectInfo.start) < new Date()) {
-      return; // Prevent selecting past dates
+    // Check if selected date is in the past
+    if (isDateInPast(selectInfo.start)) {
+      toast.error("Cannot add sessions to past dates");
+      return;
     }
     // Reset selectedEvent to ensure we're in "add" mode, not "edit" mode
     setSelectedEvent(null);
@@ -428,12 +502,22 @@ const Schedule = () => {
   };
 
   const openEditDialog = (event) => {
-    debugger;
+    // Check if event is in the past before allowing edit
+    if (isDateInPast(event.start)) {
+      toast.info("Cannot modify sessions from past dates");
+      return;
+    }
     setSelectedEvent(event);
     setIsDialogOpen(true);
   };
 
   const handleDayHeaderClick = (day) => {
+    // Prevent branch selection for past days
+    if (isDateInPast(day)) {
+      toast.info("Cannot change branch for past dates");
+      return;
+    }
+    
     setSelectedDay(day);
     setIsBranchModalOpen(true);
   };
@@ -446,10 +530,13 @@ const Schedule = () => {
       : "text-primary-foreground";
     const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
     const branchColor = isOnline ? "text-gray-700" : "text-gray-300";
+    
+    // Check if event is in the past
+    const isPastEvent = isDateInPast(eventInfo.event.start);
 
     return (
       <div
-        className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full`}
+        className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full ${isPastEvent ? 'opacity-75' : ''}`}
       >
         {currentView !== "dayGridMonth" && (
           <div
@@ -474,47 +561,51 @@ const Schedule = () => {
             {eventInfo.event.extendedProps.instructor || ""}
           </div>
         </div>
-        <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
-          <button
-            onClick={(e) => {
-              e.preventDefault(); // Ensure event doesn't bubble
-              toggleEventType(e, eventInfo.event.id);
-            }}
-            className={`${textColor} hover:opacity-80 flex items-center justify-center`}
-            title={isOnline ? "Switch to Offline" : "Switch to Online"}
-          >
-            <div
-              className={`w-3 h-3 rounded-full transition-colors ${
-                isOnline ? "bg-green-500" : "bg-gray-400"
-              }`}
-            ></div>
-          </button>
-          <button
-            onClick={(e) => {
-              e.stopPropagation(); // Prevent dialog from opening
-              setEventToDelete(eventInfo.event.id);
-              setIsDeleteConfirmOpen(true);
-            }}
-            className={`${textColor} hover:opacity-80`}
-            title="Delete"
-          >
-            <X size={13} />
-          </button>
-        </div>
+        {!isPastEvent && (
+          <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
+            <button
+              onClick={(e) => {
+                e.preventDefault(); // Ensure event doesn't bubble
+                toggleEventType(e, eventInfo.event.id);
+              }}
+              className={`${textColor} hover:opacity-80 flex items-center justify-center`}
+              title={isOnline ? "Switch to Offline" : "Switch to Online"}
+            >
+              <div
+                className={`w-3 h-3 rounded-full transition-colors ${
+                  isOnline ? "bg-green-500" : "bg-gray-400"
+                }`}
+              ></div>
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent dialog from opening
+                setEventToDelete(eventInfo.event.id);
+                setIsDeleteConfirmOpen(true);
+              }}
+              className={`${textColor} hover:opacity-80`}
+              title="Delete"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        )}
       </div>
     );
   };
   const renderDayHeaderContent = (headerInfo) => {
+    // Check if day is in the past
+    
     return (
       <div className="flex items-center justify-between">
         <span>{headerInfo.text}</span>
-        <button
-          onClick={() => handleDayHeaderClick(headerInfo.date)}
-          className="text-gray-500 hover:text-gray-800 m-3 "
-          title="Select a Custom branch"
-        >
-          <MapPinned size={16} />
-        </button>
+          <button
+            onClick={() => handleDayHeaderClick(headerInfo.date)}
+            className="text-gray-500 hover:text-gray-800 m-3 "
+            title="Select a Custom branch"
+          >
+            <MapPinned size={16} />
+          </button>
       </div>
     );
   };
@@ -524,11 +615,7 @@ const Schedule = () => {
       (branch) => branch.id === branchId
     );
     if (!selectedBranchData) {
-      toast({
-        title: "Error",
-        description: "Could not find the selected branch.",
-        variant: "destructive",
-      });
+      toast.info("Could not find the selected branch.");
       return;
     }
     setSelectedBranch({
@@ -556,9 +643,10 @@ const Schedule = () => {
   return (
     <Layout>
       {isLoading ? (
-        <div className="flex justify-center items-center h-screen">
-          <p className="text-gray-500">Loading...</p>
-        </div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
       ) : (
         <>
           <PageTitle
@@ -625,12 +713,12 @@ const Schedule = () => {
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
                 height="auto"
-                validRange={{ start: new Date() }}
+                // validRange={{ start: new Date() }}
                 timeZone="local"
                 nowIndicator={true}
                 now={new Date()}
                 slotMinTime="09:00:00"
-                slotMaxTime="22:00:00"
+                slotMaxTime="23:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:30:00"
                 allDaySlot={false}
@@ -646,8 +734,18 @@ const Schedule = () => {
                 selectAllow={function (selectInfo) {
                   const start = selectInfo.start;
                   const end = selectInfo.end;
-
-                  // Allow only if start and end are on the same calendar day
+                  // Prevent selection on past dates
+                  if (isDateInPast(start)) {
+                    return false;
+                  }
+                  // Allow only if start and end are on the same calendar day and starttime before endtime
+                  if (start.getDate() !== end.getDate()) {
+                    return false;
+                  }
+                  if (start.getHours() >= end.getHours()) {
+                    return false;
+                  } 
+   
                   return start.toDateString() === end.toDateString();
                 }}
               />

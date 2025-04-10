@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { axiosBackendInstance } from "../api/config";
 
@@ -13,6 +12,8 @@ export const UserProvider = ({ children }) => {
   const [userAnnouncements, setUserAnnouncements] = useState([]);
   const [readAnnouncements, setReadAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);  
+  const [studentTrack, setStudentTrack] = useState(null);
+
   const addUserItem = (item) => {
     setUserItems([...userItems, item]);
   };
@@ -58,6 +59,12 @@ export const UserProvider = ({ children }) => {
           setUserId(userId);
           setUserRole(role);
           setUserName(email);
+
+          //Load student track data from localStorage if it exists
+          const storedTrackData = localStorage.getItem('studentTrack');
+           if (storedTrackData && role === 'student') {
+            setStudentTrack(JSON.parse(storedTrackData));
+           }
         } catch (error) {
           console.error("Failed to initialize authentication:", error);
           // Clear invalid token
@@ -75,8 +82,10 @@ export const UserProvider = ({ children }) => {
     const logout = () => {
       localStorage.removeItem('access');
       localStorage.removeItem('refresh');
+      localStorage.removeItem('studentTrack');
       setUserRole(null);
       setUserName(null);
+      setStudentTrack(null);
     };
   
 
@@ -101,6 +110,8 @@ export const UserProvider = ({ children }) => {
         isAnnouncementRead,
         isLoading,
         logout,
+        studentTrack,
+        setStudentTrack,
       }}
     >
       {children}

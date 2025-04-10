@@ -12,7 +12,6 @@ import LostFound from "./pages/LostFound/LostFound";
 import StudentVerification from "./pages/Management/StudentVerification";
 import AttendanceInsights from "./pages/Attendance/AttendanceInsights";
 import ManageMyItems from "./pages/LostFound/ManageMyItems";
-import SupervisorManagement from "./pages/Management/SupervisorManagement";
 import Announcements from "./pages/Announcement/Announcements";
 import TrackManagement from "./pages/Management/TrackManagement";
 import ReportLostFound from "./pages/LostFound/ReportLostFound";
@@ -33,6 +32,7 @@ import { ThemeProvider } from "next-themes";
 import LeaveRequestForm from "./pages/Attendance/LeaveRequestForm";
 import UserForm from "./pages/Management/UserForm";
 import UserManagement from './pages/Management/UserManagement';
+import StudentSchedule from './pages/Attendance/StudentSchedule';
 
 const queryClient = new QueryClient();
 
@@ -84,7 +84,6 @@ const App = () => (
                 element={<AttendanceInsights />}
               />
               <Route path="/my-items" element={<ManageMyItems />} />
-              <Route path="/supervisors" element={<SupervisorManagement />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/branches" element={<BranchManagement />} />
               <Route path="/branches/add" element={<BranchForm />} />
@@ -108,6 +107,7 @@ const App = () => (
                 path="/leave-request-form"
                 element={<LeaveRequestForm />}
               />
+              <Route path="/student-schedule" element={<StudentSchedule />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ThemeProvider>
