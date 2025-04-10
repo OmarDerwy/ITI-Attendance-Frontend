@@ -62,11 +62,39 @@ export const getAttendanceTrends = async (trackId?: number): Promise<{
     if (trackId) params.track_id = trackId;
 
     const response = await axiosBackendInstance.get('attendance/attendance-trends', { params });
-    console.log(response.data);
+    console.log('Attendance Trends Response:', response.data);
     
-    return response.data;
+    return {
+      daily_trends: response.data.daily_trends || [],
+      weekly_trends: response.data.weekly_trends || [],
+      monthly_trends: response.data.monthly_trends || []
+    };
   } catch (error) {
     console.error('Error fetching attendance trends:', error);
+    return {
+      daily_trends: [],
+      weekly_trends: [],
+      monthly_trends: []
+    };
+  }
+};
+
+export const getScheduledClasses = async (trackId?: number) => {
+  try {
+    const response = await axiosBackendInstance.get(`attendance/sessions/calendar-data/?track_id=${trackId}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching scheduled classes:', error);
+    throw error;
+  }
+};
+
+export const get_weekly_attendance_by_track = async () => {
+  try {
+    const response = await axiosBackendInstance.get(`attendance/weekly-breakdown/`);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching weekly attendance breakdown by track:', error);
     throw error;
   }
 };
