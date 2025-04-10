@@ -1,22 +1,37 @@
 
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowLeft, Mail, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { axiosBackendInstance } from '@/api/config';
+import  { toast } from "sonner"
+import { set } from "date-fns";
 
 const ForgetPassword = () => {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
+    try {
+      const response = await axiosBackendInstance.post("/accounts/reset/", { email });
+      console.log("DEBUG: here is the reset link: ", response.data);
+      setIsLoading(false);
+      setIsSubmitted(true);
+    } catch (error) {
+      console.error("Error sending reset link:", error);
+      toast.error("Failed to send reset link. You will be redirected to login");
+      setIsLoading(false);
+      navigate("/login");
+      return;
+    }
     
   };
 
@@ -102,13 +117,14 @@ const ForgetPassword = () => {
                   variant="outline"
                   className="w-full h-11 mt-4"
                   onClick={() => {
+                    navigate('/login');
                     setIsSubmitted(false);
                     setEmail("");
                   }}
                 >
                   <div className="flex items-center justify-center">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Reset Password
+                    Back to Login
                   </div>
                 </Button>
               </div>

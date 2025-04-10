@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { z } from "zod";
 import { toast } from "@/components/ui/use-toast";
+import { axiosBackendInstance } from '@/api/config';
 
 // Password reset validation schema
 const passwordResetSchema = z.object({
@@ -64,22 +65,21 @@ const ResetPassword = () => {
       // Simulate API call - replace with actual API call
       console.log("Password reset attempt with:", { userId, token, password });
       
-      // API call would go here
-      // const response = await apiClient.post("/auth/reset-password", {
-      //   userId,
-      //   token,
-      //   newPassword: password
-      // });
+      const response = await axiosBackendInstance.post("/accounts/reset-confirmation/", {
+        userId,
+        token,
+        newPassword: password
+      });
       
       // Simulate success
-      setTimeout(() => {
-        toast({
-          title: "Password reset successful",
-          description: "Your password has been updated. You can now log in with your new password.",
-        });
-        setIsLoading(false);
-        navigate("/login");
-      }, 1500);
+  
+      toast({
+        title: "Password reset successful",
+        description: "Your password has been updated. You can now log in with your new password.",
+      });
+      setIsLoading(false);
+      navigate("/login");
+
     } catch (error) {
       console.error("Password reset failed:", error);
       toast({
