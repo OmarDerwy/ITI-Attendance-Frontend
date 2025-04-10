@@ -248,6 +248,39 @@ const Schedule = () => {
   }, []);
 
   const handleEventSubmit = () => {
+    const startDate = new Date(selectedEvent ? selectedEvent.start : newEvent.start);
+    const endDate = new Date(selectedEvent ? selectedEvent.end : newEvent.end);
+  
+    // Validate that start date equals end date
+    if (startDate.toDateString() !== endDate.toDateString()) {
+      toast.error("Session duration must be on the same day.");
+      return;
+    }
+  
+    // Validate that start time is before end time
+    if (startDate >= endDate) {
+      toast.error("Start time must be before end time.");
+      return;
+    }
+  
+    // Validate that the event does not overlap with existing events
+    const isOverlapping = events.some((event) => {
+      if (selectedEvent && event.id === selectedEvent.id) return false; // Skip the current event in edit mode
+      const eventStart = new Date(event.start);
+      const eventEnd = new Date(event.end);
+      return (
+        (startDate >= eventStart && startDate < eventEnd) || // Overlaps start
+        (endDate > eventStart && endDate <= eventEnd) || // Overlaps end
+        (startDate <= eventStart && endDate >= eventEnd) // Fully overlaps
+      );
+    });
+  
+    if (isOverlapping) {
+      toast.error("This event overlaps with an existing event.");
+      return;
+    }
+  
+    // Proceed with adding or updating the event
     if (!selectedEvent) {
       // Add mode
       if (!newEvent.title) {
@@ -627,7 +660,7 @@ const Schedule = () => {
                 nowIndicator={true}
                 now={new Date()}
                 slotMinTime="09:00:00"
-                slotMaxTime="22:00:00"
+                slotMaxTime="23:00:00"
                 slotDuration="00:30:00"
                 snapDuration="00:30:00"
                 allDaySlot={false}
@@ -644,7 +677,13 @@ const Schedule = () => {
                   const start = selectInfo.start;
                   const end = selectInfo.end;
 
-                  // Allow only if start and end are on the same calendar day
+                  // Allow only if start and end are on the same calendar day and starttime before endtime
+                  if (start.getDate() !== end.getDate()) {
+                    return false;
+                  }
+                  if (start.getHours() >= end.getHours()) {
+                    return false;
+                  } 
                   return start.toDateString() === end.toDateString();
                 }}
               />
