@@ -294,13 +294,29 @@ const Schedule = () => {
 
   const handleDeleteEvent = async () => {
     if (eventToDelete) {
+      const event = events.find((e) => String(e.id) === String(eventToDelete));
+      if (!event || !event.schedule_id) {
+        // If the event is not saved (no schedule_id), remove it locally
+        setEvents((prev) =>
+          prev.filter((e) => String(e.id) !== String(eventToDelete))
+        );
+        toast({
+          title: "Success",
+          description: "You have cancelled the event.",
+          variant: "success",
+        });
+        setEventToDelete(null);
+        setIsDeleteConfirmOpen(false);
+        return;
+      }
+
       try {
         // Call API to delete the session
         await axiosBackendInstance.delete(
           `attendance/sessions/${eventToDelete}/`
         );
         setEvents((prev) =>
-          prev.filter((event) => String(event.id) !== String(eventToDelete))
+          prev.filter((e) => String(e.id) !== String(eventToDelete))
         );
         toast({
           title: "Success",
