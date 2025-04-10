@@ -116,14 +116,44 @@ const StudentVerification = () => {
     setSelectedStudent(null);
   };
 
-  const handleReject = (studentId: number) => {
-    toast({
-      title: "Student Rejected",
-      description: "The student verification has been rejected.",
-      variant: "destructive",
-    });
-    setSelectedStudent(null);
+  const handleRevoke = async (studentId: number) => {
+    try {
+      const response = await axiosBackendInstance.get(`/accounts/students/${studentId}/make-inactive/`);
+      toast({
+        title: "Student Revoked",
+        description: "The student verification has been revoked.",
+        variant: "destructive",
+      });
+      setSelectedStudent(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to revoke student verification.",
+        variant: "destructive",
+      });
+      return;
+    }
   };
+
+  const handleResendActivation = async (studentId: number) => {
+    try{
+      const response  = await axiosBackendInstance.get(`/accounts/students/${studentId}/resend-activation/`);
+      toast({
+        title: "Activation Email Resent",
+        description: "The activation email has been resent to the student.",
+      });
+      console.log("Activation email resent successfully:", response.data);
+      setSelectedStudent(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to resend activation email.",
+        variant: "destructive",
+      });
+      console.error("Error resending activation email:", error);
+      return;
+    }
+  }
 
   if (userRole !== "admin" && userRole !== "supervisor") {
     return (
@@ -176,7 +206,7 @@ const StudentVerification = () => {
               <h2 className="text-xl font-semibold mb-4">Loading students...</h2>
             </Card>
             ) : (<StudentTable
-              students={studentsData.results}
+              students={studentEntries}
               getFullName={getFullName}
               getStatus={getStatus}
               onViewDetails={setSelectedStudent}
@@ -216,8 +246,8 @@ const StudentVerification = () => {
                   getFullName={getFullName}
                   getStatus={getStatus}
                   onClose={() => setSelectedStudent(null)}
-                  onVerify={handleVerify}
-                  onReject={handleReject}
+                  onRevoke={handleRevoke}
+                  onResendActivation={handleResendActivation}
                 />
               );
             })()}
