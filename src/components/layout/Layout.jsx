@@ -13,7 +13,7 @@ const Layout = ({ children }) => {
 
   const isLoginPage = 
     location.pathname === "/login" || 
-    location.pathname === "/register" || 
+    location.pathname === "/reset-password" || 
     location.pathname === "/forget-password" ||
     location.pathname === "/otp-verification";
 

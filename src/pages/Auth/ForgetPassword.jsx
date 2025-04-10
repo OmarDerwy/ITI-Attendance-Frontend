@@ -17,12 +17,7 @@ const ForgetPassword = () => {
     e.preventDefault();
     setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      console.log("Password reset requested for:", email);
-      setIsLoading(false);
-      setIsSubmitted(true);
-    }, 1500);
+    
   };
 
   return (
