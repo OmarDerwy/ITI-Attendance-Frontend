@@ -12,14 +12,13 @@ import LostFound from "./pages/LostFound/LostFound";
 import StudentVerification from "./pages/Management/StudentVerification";
 import AttendanceInsights from "./pages/Attendance/AttendanceInsights";
 import ManageMyItems from "./pages/LostFound/ManageMyItems";
-import SupervisorManagement from "./pages/Management/SupervisorManagement";
 import Announcements from "./pages/Announcement/Announcements";
 import TrackManagement from "./pages/Management/TrackManagement";
 import ReportLostFound from "./pages/LostFound/ReportLostFound";
 import Profile from "./pages/Account/Profile";
 import PreviousCourses from "./pages/Attendance/PreviousCourses";
 import NotFound from "./pages/NotFound";
-import Register from "./pages/Auth/Register";
+import ResetPassword from "./pages/Auth/ResetPassword";
 import ForgetPassword from "./pages/Auth/ForgetPassword";
 import Activate from "./pages/Auth/Activate";
 import BranchManagement from "./pages/Management/BranchManagement";
@@ -62,7 +61,7 @@ const App = () => (
               {/* <Route path="/" element={<Index />} /> */}
               <Route path="/" element={<LostFound />} />
               <Route path="/login" element={<Login />} />
-              <Route path="/register" element={<Register />} />
+              <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
               <Route path="/activate/:token" element={<Activate />} />
               <Route path="/forget-password" element={<ForgetPassword />} />
               <Route path="/otp-verification" element={<OtpVerification />} />
@@ -85,7 +84,6 @@ const App = () => (
                 element={<AttendanceInsights />}
               />
               <Route path="/my-items" element={<ManageMyItems />} />
-              <Route path="/supervisors" element={<SupervisorManagement />} />
               <Route path="/announcements" element={<Announcements />} />
               <Route path="/branches" element={<BranchManagement />} />
               <Route path="/branches/add" element={<BranchForm />} />

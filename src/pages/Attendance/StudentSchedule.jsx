@@ -5,7 +5,7 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import listPlugin from "@fullcalendar/list"; // Added for list view
 import Layout from "@/components/layout/Layout";
-import { Calendar, MapPin, BookOpen } from "lucide-react";
+import { Calendar, MapPin, BookOpen, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
 import { useUser } from "@/context/UserContext";
@@ -124,12 +124,9 @@ const StudentSchedule = () => {
   return (
     <Layout>
       {isLoading ? (
-        <div className="flex justify-center items-center h-screen">
-          <div className="animate-pulse flex flex-col items-center">
-            <div className="h-12 w-12 rounded-full bg-gray-300 mb-4"></div>
-            <div className="h-4 w-48 bg-gray-300 rounded mb-2"></div>
-            <div className="h-4 w-36 bg-gray-300 rounded"></div>
-          </div>
+          <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading data...</p>
         </div>
       ) : (
         <>

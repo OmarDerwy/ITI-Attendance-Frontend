@@ -238,7 +238,7 @@ const Sidebar = () => {
               <div className="mb-2 flex items-center justify-center w-8 h-9 rounded-md  text-primary-foreground font-bold">
                 <img src="/public/images/iti-logo.png" alt="logo" />
               </div>
-              <span className="text-lg font-semibold">Attendance</span>
+              <span className="text-lg font-semibold">TrackIt</span>
             </Link>
           )}
 

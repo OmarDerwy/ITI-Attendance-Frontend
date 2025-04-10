@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { User } from "lucide-react";
+import { Loader2, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import PageTitle from "../../components/ui/page-title";
 import { axiosBackendInstance } from '@/api/config';
@@ -96,7 +96,7 @@ const UserForm = () => {
 
     try {
       if (userId && userId !== "add") {
-        await axiosBackendInstance.put(`/accounts/users/${userId}/`, userData);
+        await axiosBackendInstance.patch(`/accounts/users/${userId}/`, userData);
         toast({
           title: "User Updated",
           description: `User ${firstName} ${lastName} has been updated successfully.`,
@@ -127,9 +127,10 @@ const UserForm = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-8">
-          <p>Loading...</p>
-        </div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
       </Layout>
     );
   }

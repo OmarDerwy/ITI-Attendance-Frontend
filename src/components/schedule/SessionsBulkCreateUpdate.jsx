@@ -17,8 +17,12 @@ import { Badge } from "@/components/ui/badge";
 
 const SessionsBulkCreateUpdate = ({ events, onSaveSuccess }) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  
+  const [isSubmitting, setIsSubmitting] = useState(false); // Add isSubmitting state
+
   const handleSaveChanges = async () => {
+    if (isSubmitting) return; // Prevent multiple submissions
+    setIsSubmitting(true); // Set loading state
+
     const newEvents = events.filter((event) =>
       String(event.id)?.startsWith("react")
     );
@@ -71,6 +75,8 @@ const SessionsBulkCreateUpdate = ({ events, onSaveSuccess }) => {
       }
     } catch (error) {
       toast.error("An error occurred while submitting the schedule.");
+    } finally {
+      setIsSubmitting(false); // Reset loading state
     }
   };
 
@@ -182,6 +188,7 @@ const SessionsBulkCreateUpdate = ({ events, onSaveSuccess }) => {
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
+              disabled={isSubmitting} // Disable cancel button while submitting
             >
               <X className="h-4 w-4 mr-2" />
               Cancel
@@ -190,8 +197,9 @@ const SessionsBulkCreateUpdate = ({ events, onSaveSuccess }) => {
               <Button 
                 onClick={handleSaveChanges}
                 className="bg-primary hover:bg-primary/90"
+                disabled={isSubmitting} // Disable submit button while submitting
               >
-                Submit Changes
+                {isSubmitting ? "Submitting..." : "Submit Changes"}
               </Button>
             )}
           </DialogFooter>
