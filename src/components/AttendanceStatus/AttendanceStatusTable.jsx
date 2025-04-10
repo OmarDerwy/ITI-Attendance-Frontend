@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { Calendar, Clock2 } from 'lucide-react';
+import { Calendar, Clock2, CheckCircle, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
@@ -87,6 +87,18 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
     staleTime: 0, // Don't use stale data
   });
   //----------------------------------------------//
+
+  // Function to handle attendance override
+  const handleAttendanceOverride = (studentId, currentStatus) => {
+    const newStatus = ['pending', 'absent'].includes(currentStatus) ? 'attended' : 'absent';
+    console.log(`Changing student ${studentId} status from ${currentStatus} to ${newStatus}`);
+    
+    // if ['pending', 'absent'].includes(currentStatus) {
+      // const response = await axiosBackendInstance.post(`/attendance/);
+    
+    // For now, just log it
+    alert(`Student status would change from ${currentStatus} to ${newStatus}`);
+  };
 
   const formatTime = (time) => {
     if (!time) return "N/A";
@@ -181,11 +193,29 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
                                     {student.check_in_time ? formatTime(student.check_in_time) : "N/A"} / {student.check_out_time ? formatTime(student.check_out_time) : "N/A"}
                                   </td>
                                   <td className="py-2 px-3">
-                                    {student.pending_leave_request === true && (
-                                      <Link to="/leave-request-center" className="text-blue-600 hover:underline">
-                                        Permission requested
-                                      </Link>
-                                    )}
+                                    <div className="flex items-center space-x-2">
+                                      {student.pending_leave_request === true && (
+                                        <Link to="/leave-request-center" className="text-blue-600 hover:underline">
+                                          Permission requested
+                                        </Link>
+                                      )}
+                                      
+                                      {/* Attendance override button */}
+                                      <Button 
+                                        size="xsm"
+                                        variant={['pending', 'absent'].includes(student.status) ? "default" : "outline"}
+                                        className={['pending', 'absent'].includes(student.status) 
+                                          ? "bg-green-600 hover:bg-green-700" 
+                                          : "border-red-600 text-red-600 hover:bg-red-50"}
+                                        onClick={() => handleAttendanceOverride(student.id, student.status)}
+                                      >
+                                        {['pending', 'absent'].includes(student.status) ? (
+                                          <><CheckCircle className="h-4 w-4 mx-1" /> <p className='py-0.5 pr-2'>Make Attend</p></>
+                                        ) : (
+                                          <><XCircle className="h-4 w-4 mx-1" /> <p className='py-0.5 pr-2'>Make Absent</p></>
+                                        )}
+                                      </Button>
+                                    </div>
                                   </td>
                                 </tr>
                               ))}
