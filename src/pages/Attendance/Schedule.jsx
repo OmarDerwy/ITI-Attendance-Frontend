@@ -323,8 +323,6 @@ const Schedule = () => {
           description: "Event deleted successfully.",
           variant: "success",
         });
-        // Refresh calendar data after deleting
-        fetchEvents(selectedTrack);
       } catch (error) {
         console.error("Error deleting event:", error); // DEV DEBUG
         toast({
