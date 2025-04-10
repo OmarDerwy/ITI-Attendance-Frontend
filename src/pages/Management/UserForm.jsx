@@ -96,7 +96,7 @@ const UserForm = () => {
 
     try {
       if (userId && userId !== "add") {
-        await axiosBackendInstance.put(`/accounts/users/${userId}/`, userData);
+        await axiosBackendInstance.patch(`/accounts/users/${userId}/`, userData);
         toast({
           title: "User Updated",
           description: `User ${firstName} ${lastName} has been updated successfully.`,
