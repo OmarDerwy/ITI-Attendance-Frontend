@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { CalendarIcon, MapPin, Search } from "lucide-react";
+import { CalendarIcon, Loader2, MapPin, Search } from "lucide-react";
 import { format } from "date-fns";
 import {
   Popover,
@@ -197,9 +197,10 @@ const TrackFormPage = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-8">
-          <p>Loading...</p>
-        </div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
       </Layout>
     );
   }

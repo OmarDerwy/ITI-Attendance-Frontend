@@ -11,6 +11,7 @@ import {
   AlertTriangle,
   X,
   MapPinned,
+  Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import PageTitle from "@/components/ui/page-title";
@@ -36,10 +37,10 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
 import { axiosBackendInstance } from "@/api/config";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useBeforeUnload } from "react-router-dom";
+import { toast } from "sonner";
 
 const Schedule = () => {
   const navigate = useNavigate();
@@ -50,7 +51,6 @@ const Schedule = () => {
   const [events, setEvents] = useState([]);
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState("timeGridWeek");
-  const { toast } = useToast();
   const [isBranchModalOpen, setIsBranchModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState(null);
   const [selectedBranch, setSelectedBranch] = useState(null);
@@ -254,7 +254,6 @@ const Schedule = () => {
         alert("Title is required.");
         return;
       }
-      console.log("Creating event with properties:", newEvent); // DEV DEBUG
       const newEventData = {
         id: "react" + uuidv4(),
         title: newEvent.title,
@@ -300,11 +299,7 @@ const Schedule = () => {
         setEvents((prev) =>
           prev.filter((e) => String(e.id) !== String(eventToDelete))
         );
-        toast({
-          title: "Success",
-          description: "You have cancelled the event.",
-          variant: "success",
-        });
+        toast.success("You have cancelled the event.");
         setEventToDelete(null);
         setIsDeleteConfirmOpen(false);
         return;
@@ -318,18 +313,9 @@ const Schedule = () => {
         setEvents((prev) =>
           prev.filter((e) => String(e.id) !== String(eventToDelete))
         );
-        toast({
-          title: "Success",
-          description: "Event deleted successfully.",
-          variant: "success",
-        });
+        toast.success("Event deleted successfully.");
       } catch (error) {
-        console.error("Error deleting event:", error); // DEV DEBUG
-        toast({
-          title: "Error",
-          description: "Failed to delete the event. Please try again.",
-          variant: "destructive",
-        });
+        toast.error("Failed to delete the event. Please try again.");
       }
       setEventToDelete(null);
       setIsDeleteConfirmOpen(false);
@@ -538,11 +524,7 @@ const Schedule = () => {
       (branch) => branch.id === branchId
     );
     if (!selectedBranchData) {
-      toast({
-        title: "Error",
-        description: "Could not find the selected branch.",
-        variant: "destructive",
-      });
+      toast.info("Could not find the selected branch.");
       return;
     }
     setSelectedBranch({
@@ -570,9 +552,10 @@ const Schedule = () => {
   return (
     <Layout>
       {isLoading ? (
-        <div className="flex justify-center items-center h-screen">
-          <p className="text-gray-500">Loading...</p>
-        </div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
       ) : (
         <>
           <PageTitle
