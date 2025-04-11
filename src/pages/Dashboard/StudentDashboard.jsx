@@ -4,11 +4,10 @@ import { Calendar, CheckSquare, Search, Flag, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import TrackBranchCard from "@/components/dashboard/TrackBranchCard";
-import TodayScheduleCard from "@/components/dashboard/TodayScheduleCard";
-import UpcomingScheduleCard from "@/components/dashboard/UpcomingScheduleCard";
 import AttendanceCalendar from "@/components/dashboard/AttendanceCalendar";
 import ItiValuesCard from "@/components/dashboard/ItiValuesCard";
 import Layout from "../../components/layout/Layout";
+import CombinedScheduleCard from "../../components/dashboard/CombinedScheduleCard";
 
 const StudentDashboard = () => {
   return (
@@ -29,17 +28,15 @@ const StudentDashboard = () => {
         </div>
 
         {/* Second Row: Today's Schedule | Upcoming Schedule */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Today's Schedule */}
           <div>
-            <TodayScheduleCard />
+            <CombinedScheduleCard />
           </div>
 
           {/* Upcoming Schedule */}
-          <div>
+          {/* <div>
             <UpcomingScheduleCard />
-          </div>
-        </div>
+          </div> */}
 
         {/* Third Row: Quick Actions - Full Width */}
         <div className="w-full">
@@ -52,7 +49,7 @@ const StudentDashboard = () => {
                 <Link to="/student-schedule" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-50 to-blue-100/30 hover:bg-blue-100/50 border-blue-200"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-blue-50 hover:bg-blue-100 border-0"
                   >
                     <Calendar className="h-6 w-6 text-blue-600" />
                     <span>View Schedule</span>
@@ -61,7 +58,7 @@ const StudentDashboard = () => {
                 <Link to="/leave-request-form" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-purple-50 to-purple-100/30 hover:bg-purple-100/50 border-purple-200"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-purple-50 hover:bg-purple-100 border-0"
                   >
                     <CheckSquare className="h-6 w-6 text-purple-600" />
                     <span>Request Leave</span>
@@ -70,7 +67,7 @@ const StudentDashboard = () => {
                 <Link to="/report-lost-found" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-amber-50 to-amber-100/30 hover:bg-amber-100/50 border-amber-200"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-amber-50 hover:bg-amber-100 border-0"
                   >
                     <Flag className="h-6 w-6 text-amber-600" />
                     <span>Report Lost Item</span>
@@ -79,7 +76,7 @@ const StudentDashboard = () => {
                 <Link to="/lost-found" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-emerald-50 to-emerald-100/30 hover:bg-emerald-100/50 border-emerald-200"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-emerald-50 hover:bg-emerald-100 border-0"
                   >
                     <Search className="h-6 w-6 text-emerald-600" />
                     <span>Lost & Found</span>
