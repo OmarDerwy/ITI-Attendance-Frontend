@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import TrackBranchCard from "@/components/dashboard/TrackBranchCard";
 import AttendanceCalendar from "@/components/dashboard/AttendanceCalendar";
 import ItiValuesCard from "@/components/dashboard/ItiValuesCard";
-import Layout from "../../components/layout/Layout";
+import Layout from "@/components/layout/Layout";
 import CombinedScheduleCard from "../../components/dashboard/CombinedScheduleCard";
 
 const StudentDashboard = () => {
