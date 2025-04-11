@@ -127,20 +127,8 @@ const Sidebar = () => {
       to: "/student-dashboard",
       roles: ["student"],
     },
-    // {
-    //   icon: CheckSquare,
-    //   label: "Attendance history",
-    //   to: "/previous-courses",
-    //   roles: ["student"],
-    // },
     { icon: Home, label: "Dashboard", to: "/", roles: [ "supervisor", "admin"] },
 
-    {
-      icon: CheckSquare,
-      label: "Attendance history",
-      to: "/previous-courses",
-      roles: ["student"],
-    },
     {
       icon: CalendarDays,
       label: "Schedule",
@@ -161,7 +149,7 @@ const Sidebar = () => {
     },
 
     // Supervisor only
-    { icon: Brain, label: "Attendance Insights", to: "/attendance-insights", roles: ["supervisor"] },
+    // { icon: Brain, label: "Attendance Insights", to: "/attendance-insights", roles: ["supervisor"] },
     { icon: UserCheck, label: "Student Verification", to: "/student-verification", roles: ["supervisor"] },
     { icon: Clock2, label: "Attendance Status", to: "/attendance-status", roles: ["supervisor"] },
     { icon: HandHeart, label: "Leave Request Center", to: "/leave-request-center", roles: ["supervisor"] },
