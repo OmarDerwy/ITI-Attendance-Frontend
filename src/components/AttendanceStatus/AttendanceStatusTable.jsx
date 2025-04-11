@@ -5,47 +5,9 @@ import { useState, Fragment } from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '@/components/ui/card';
 import dayjs from 'dayjs';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { axiosBackendInstance } from '@/api/config';
-
-// //mock data for attendance status with students
-// const schedules = [
-//     {
-//         date: '2023-10-01',
-//         fromto: '10:00AM/1:00PM',
-//         sessions: 'Flask, Flask lab',
-//         students: [
-//             { id: 1, name: 'John Doe', status: 'attended', adjustedTime: 'N/A', checkinout: '10:00AM/-' },
-//             { id: 2, name: 'Jane Smith', status: 'absent', adjustedTime: 'N/A', checkinout: 'N/A' },
-//             { id: 3, name: 'Mike Brown', status: 'late', adjustedTime: 'N/A', checkinout: '10:30AM/1:00PM' },
-//             { id: 4, name: 'Sarah Wilson', status: 'excused', adjustedTime: 'all day', checkinout: 'N/A' },
-//             { id: 5, name: 'Alex Johnson', status: 'excused but late', adjustedTime: '11:00 AM', checkinout: '11:00AM/1:00PM' },
-//             { id: 6, name: 'Emma Davis', status: 'pending', adjustedTime: '10:30 AM', requestType: 'late', checkinout: 'N/A' }
-//         ]
-//     },
-//     {
-//         date: '2023-10-02',
-//         fromto: '9:00AM/12:00PM',
-//         sessions: 'Django, Django lab',
-//         students: [
-//             { id: 1, name: 'John Doe', status: 'attended', adjustedTime: 'N/A', checkinout: '9:00AM/12:00PM' },
-//             { id: 2, name: 'Jane Smith', status: 'attended', adjustedTime: 'N/A', checkinout: '9:00AM/12:00PM' },
-//             { id: 3, name: 'Mike Brown', status: 'pending', adjustedTime: 'all day', requestType: 'absence', checkinout: 'N/A' },
-//             { id: 4, name: 'Sarah Wilson', status: 'attended', adjustedTime: 'N/A', checkinout: '9:00AM/12:00PM' }
-//         ]
-//     },
-//     {
-//         date: '2023-10-03',
-//         fromto: '10:00AM/2:00PM',
-//         sessions: 'AI Session',
-//         students: [
-//             { id: 1, name: 'John Doe', status: 'attended', adjustedTime: 'N/A', checkinout: '10:00AM/2:00PM' },
-//             { id: 2, name: 'Jane Smith', status: 'attended', adjustedTime: 'N/A', checkinout: '10:00AM/2:00PM' },
-//             { id: 3, name: 'Mike Brown', status: 'attended', adjustedTime: 'N/A', checkinout: '10:15AM/2:00PM' }
-//         ]
-//     }
-// ]
-
+import { toast } from '@/components/ui/use-toast';
 // Function to get status color
 const getStatusColor = (status) => {
   switch (status) {
@@ -63,6 +25,8 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
   const [onViewDetails, setOnViewDetails] = useState(null)
   const [scheduleId, setScheduleId] = useState("")
   const isSchedulesEmpty = !schedules || schedules.length === 0
+  const queryClient = useQueryClient();
+  const [actionedStudent, setActionedStudent] = useState(null)
   
   // Reset the view details when track changes
   useEffect(() => {
@@ -86,18 +50,92 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
     refetchOnWindowFocus: false,
     staleTime: 0, // Don't use stale data
   });
-  //----------------------------------------------//
+  
+  // Mutation for updating attendance status
+  const updateAttendanceMutation = useMutation({
+    mutationFn: async ({ attendanceRecordId, newStatus }) => {
+      const endpoint = newStatus === 'attended' 
+        ? `/attendance/${attendanceRecordId}/manual-attend/` 
+        : `/attendance/${attendanceRecordId}/reset-attendance/`;
+      
+      const response = await axiosBackendInstance.patch(endpoint);
+      return { attendanceRecordId, newStatus, response: response.data };
+    },
+    onMutate: async ({ attendanceRecordId, newStatus }) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['attendanceStatus', scheduleId, selectedTrackId] });
+      
+      // Snapshot the previous value
+      const previousData = queryClient.getQueryData(['attendanceStatus', scheduleId, selectedTrackId]);
+      
+      // Optimistically update the cache with the new status
+      queryClient.setQueryData(['attendanceStatus', scheduleId, selectedTrackId], (oldData) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          attendance_records: oldData.attendance_records.map(record => 
+            record.id === attendanceRecordId 
+              ? { ...record, status: newStatus }
+              : record
+          )
+        };
+      });
+      
+      return { previousData };
+    },
+    onSuccess: (data) => {
+      console.log('Mutation success response:', data.response);
+      
+      toast({
+        variant: "default",
+        title: "Attendance Override",
+        description: `Student status changed to ${data.newStatus}`,
+      });
+
+      // Update the cache with the actual response data
+      queryClient.setQueryData(['attendanceStatus', scheduleId, selectedTrackId], (oldData) => {
+        if (!oldData) return oldData;
+        
+        return {
+          ...oldData,
+          attendance_records: oldData.attendance_records.map(record => 
+            record.id === data.attendanceRecordId 
+              ? { 
+                  ...record, 
+                  check_in_time: data.newStatus == 'attended'? data.response.check_in_time :data.response.current_check_in,
+                  check_out_time: data.newStatus == 'attended'? data.response.check_out_time :data.response.current_check_out,
+                  adjusted_time: data.response.adjusted_time
+                }
+              : record
+          )
+        };
+      });
+      
+      // Force a refresh to ensure UI is updated with latest data
+      refetch();
+    },
+    onError: (error, variables, context) => {
+      // Rollback to the previous state if there's an error
+      if (context?.previousData) {
+        queryClient.setQueryData(['attendanceStatus', scheduleId, selectedTrackId], context.previousData);
+      }
+      
+      console.error('Error changing attendance status:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: `Failed to change student status`,
+      });
+    }
+  });
 
   // Function to handle attendance override
-  const handleAttendanceOverride = (studentId, currentStatus) => {
-    const newStatus = ['pending', 'absent'].includes(currentStatus) ? 'attended' : 'absent';
-    console.log(`Changing student ${studentId} status from ${currentStatus} to ${newStatus}`);
-    
-    // if ['pending', 'absent'].includes(currentStatus) {
-      // const response = await axiosBackendInstance.post(`/attendance/);
-    
-    // For now, just log it
-    alert(`Student status would change from ${currentStatus} to ${newStatus}`);
+  const handleAttendanceOverride = (attendanceRecordId, currentStatus) => {
+    setActionedStudent(attendanceRecordId);
+    const newStatus = ['absent'].includes(currentStatus) ? 'attended' : 'absent';
+    console.log(`Changing student ${attendanceRecordId} status from ${currentStatus} to ${newStatus}`);
+    updateAttendanceMutation.mutate({ attendanceRecordId, newStatus });
   };
 
   const formatTime = (time) => {
@@ -187,10 +225,10 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
                                     </span>
                                   </td>
                                   <td className="py-2 px-3">
-                                    {student.adjusted_time ? formatTime(student.adjusted_time) : "N/A"}
+                                    {updateAttendanceMutation.isPending && actionedStudent == student.id ?  'loading...' : student.leave_request_status == 'approved'? student.adjusted_time ? formatTime(student.adjusted_time) : "N/A": "N/A"}
                                   </td>
                                   <td className="py-2 px-3">
-                                    {student.check_in_time ? formatTime(student.check_in_time) : "N/A"} / {student.check_out_time ? formatTime(student.check_out_time) : "N/A"}
+                                    {updateAttendanceMutation.isPending && actionedStudent == student.id ? 'loading...' : student.check_in_time ? formatTime(student.check_in_time) : "N/A"} / {updateAttendanceMutation.isPending && actionedStudent == student.id ? 'loading...' : student.check_out_time ? formatTime(student.check_out_time) : "N/A"}
                                   </td>
                                   <td className="py-2 px-3">
                                     <div className="flex items-center space-x-2">
@@ -201,20 +239,20 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
                                       )}
                                       
                                       {/* Attendance override button */}
-                                      <Button 
+                                      { student.status !== 'pending' && <Button 
                                         size="xsm"
-                                        variant={['pending', 'absent'].includes(student.status) ? "default" : "outline"}
-                                        className={['pending', 'absent'].includes(student.status) 
+                                        variant={['absent'].includes(student.status) ? "default" : "outline"}
+                                        className={['absent'].includes(student.status) 
                                           ? "bg-green-600 hover:bg-green-700" 
                                           : "border-red-600 text-red-600 hover:bg-red-50"}
                                         onClick={() => handleAttendanceOverride(student.id, student.status)}
                                       >
-                                        {['pending', 'absent'].includes(student.status) ? (
-                                          <><CheckCircle className="h-4 w-4 mx-1" /> <p className='py-0.5 pr-2'>Make Attend</p></>
+                                        {['absent'].includes(student.status) ? (
+                                          <><CheckCircle className="h-4 w-4 ms-1" /> <p className='py-0.5 pr-2'>Force Attend</p></>
                                         ) : (
-                                          <><XCircle className="h-4 w-4 mx-1" /> <p className='py-0.5 pr-2'>Make Absent</p></>
+                                          <><XCircle className="h-4 w-4 ms-1" /> <p className='py-0.5 pr-2'>Force Absent</p></>
                                         )}
-                                      </Button>
+                                      </Button>}
                                     </div>
                                   </td>
                                 </tr>
