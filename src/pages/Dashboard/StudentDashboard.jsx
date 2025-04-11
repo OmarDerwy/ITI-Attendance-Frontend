@@ -26,19 +26,9 @@ const StudentDashboard = () => {
             </Card>
           </div>
         </div>
-
-        {/* Second Row: Today's Schedule | Upcoming Schedule */}
-          {/* Today's Schedule */}
           <div>
             <CombinedScheduleCard />
           </div>
-
-          {/* Upcoming Schedule */}
-          {/* <div>
-            <UpcomingScheduleCard />
-          </div> */}
-
-        {/* Third Row: Quick Actions - Full Width */}
         <div className="w-full">
           <Card className="w-full">
             <CardContent className="pt-6">
