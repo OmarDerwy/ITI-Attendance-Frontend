@@ -21,7 +21,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends, getScheduledClasses, get_weekly_attendance_by_track } from '@/api/attendance';
 import { usePermissions } from '@/context/PermissionsContext';
-import RecentAbsences from '../../components/dashboard/RecentAbsences';
+import RecentAbsences from '@/components/dashboard/RecentAbsences';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { axiosBackendInstance } from '@/api/config';
 import dayjs from 'dayjs';

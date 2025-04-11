@@ -11,6 +11,7 @@ import CombinedScheduleCard from "../../components/dashboard/CombinedScheduleCar
 
 const StudentDashboard = () => {
   return (
+    <Layout>
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
           <div className="md:col-span-7">
@@ -76,6 +77,7 @@ const StudentDashboard = () => {
           </Card>
         </div>
       </div>
+    </Layout>
   );
 };
 
