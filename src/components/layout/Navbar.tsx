@@ -43,7 +43,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const { lastMessage } = useWebSocket(SOCKET_URL, {
     onOpen: () => console.log("WebSocket Connected"),
     onClose: () => console.log("WebSocket Disconnected"),
-    onError: (error) => console.error("WebSocket Error:", error),
+    // onError: (error) => console.error("WebSocket Error:", error),
     shouldReconnect: () => true,
   });
 
