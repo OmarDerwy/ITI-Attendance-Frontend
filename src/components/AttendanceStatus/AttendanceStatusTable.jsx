@@ -157,8 +157,8 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
           </tr>
         </thead>
         <tbody>
-          {schedules.data.length > 0 ? (
-            schedules.data.map((schedule, index) => (
+          {schedules.length > 0 ? (
+            schedules.map((schedule, index) => (
               <Fragment key={index}>
                 <tr className='border-b'>
                   <td className="py-3 px-4">
