@@ -76,7 +76,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   };
 
   useEffect(() => {
-    // fetchNotifications();
+      fetchNotifications();
   }, []);
 
   // Handle WebSocket messages
