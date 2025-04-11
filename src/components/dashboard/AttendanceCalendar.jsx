@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
-import { Calendar } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { axiosBackendInstance } from '@/api/config';
@@ -125,7 +125,10 @@ const AttendanceCalendar = () => {
         </div>
         
         {isLoading ? (
-          <div className="text-center py-8">Loading attendance data...</div>
+                   <div className="flex flex-col items-center justify-center py-12">
+                     <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                     <p className="text-muted-foreground">Loading data...</p>
+                   </div>
         ) : (
           <div className="space-y-3">
             {monthRows.map((row, rowIndex) => (

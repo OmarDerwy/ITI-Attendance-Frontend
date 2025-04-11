@@ -24,12 +24,10 @@ const Index = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center h-[50vh]">
-          <Card className="p-8 text-center">
-            <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
-            <h2 className="text-xl font-semibold">Loading your dashboard...</h2>
-          </Card>
-        </div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
       </Layout>
     );
   }
@@ -40,8 +38,9 @@ const Index = () => {
   return (
  
     <>
+     {userRole === "admin" && <BranchManagement />}
        <Layout>
-      {userRole === "admin" && <AdminDashboard />}
+     
       {userRole === "supervisor" && <SupervisorDashboard />} 
     </Layout>
      {userRole === "student" && <StudentDashboard />} 
