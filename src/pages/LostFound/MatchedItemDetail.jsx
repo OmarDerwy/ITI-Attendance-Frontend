@@ -33,7 +33,7 @@ const MatchedItemDetail = () => {
 
   // Add default image URL constant near the top of the component
   const DEFAULT_IMAGE_URL =
-    "https://media.discordapp.net/attachments/1347736304397582456/1358295324820770836/ChatGPT_Image_Apr_6_2025_06_18_28_AM.png?ex=67f35299&is=67f20119&hm=1b43ebbc3ccf0a978e90e97c8b3eb275ec2614aeffeb6364a3fc3763692788d4&=&format=webp&quality=lossless&width=960&height=960";
+    "https://res.cloudinary.com/dha2yp5tj/image/upload/v1743913360/annonymous_photo_ny7plk.png";
 
   useEffect(() => {
     const fetchMatchedItemDetails = async () => {
