@@ -35,6 +35,7 @@ import UserManagement from './pages/Management/UserManagement';
 import StudentSchedule from './pages/Attendance/StudentSchedule';
 import { PermissionsProvider } from "@/context/PermissionsContext"; 
 
+import StudentDashboard from './pages/Dashboard/StudentDashboard';
 
 const queryClient = new QueryClient();
 
@@ -111,6 +112,7 @@ const App = () => (
                 element={<LeaveRequestForm />}
               />
               <Route path="/student-schedule" element={<StudentSchedule />} />
+              <Route path="/student-dashboard" element={<StudentDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ThemeProvider>
