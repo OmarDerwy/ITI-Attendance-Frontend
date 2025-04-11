@@ -1,20 +1,36 @@
-
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
-import { Layers, Users, BarChart4, FileText } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import AttendanceBarChart from '@/components/dashboard/AttendanceBarChart';
-import RecentAbsences from '@/components/dashboard/RecentAbsences';
-import QuickActions from '@/components/dashboard/QuickActions';
-import AnnouncementCard from '@/components/dashboard/AnnouncementCard';
-import { Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { Layers, Users, BarChart4, FileText } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import AttendanceBarChart from "@/components/dashboard/AttendanceBarChart";
+import RecentAbsences from "@/components/dashboard/RecentAbsences";
+import QuickActions from "@/components/dashboard/QuickActions";
+import AnnouncementCard from "@/components/dashboard/AnnouncementCard";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
-  const [selectedPeriod, setSelectedPeriod] = useState('week');
+  const [selectedPeriod, setSelectedPeriod] = useState("week");
   const pendingSupervisors = 3;
 
   // Mock data
@@ -48,29 +64,31 @@ const AdminDashboard = () => {
     {
       id: 1,
       title: "New Track Added: Cybersecurity",
-      content: "We're excited to announce a new Cybersecurity track starting next month. Applications are now open.",
+      content:
+        "We're excited to announce a new Cybersecurity track starting next month. Applications are now open.",
       createdAt: "2023-06-10T09:30:00",
-      isPinned: true
+      isPinned: true,
     },
     {
       id: 2,
       title: "System Maintenance",
-      content: "The attendance system will be undergoing maintenance this weekend. Please record attendance manually.",
+      content:
+        "The attendance system will be undergoing maintenance this weekend. Please record attendance manually.",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-      isPinned: false
+      isPinned: false,
     },
     {
       id: 3,
       title: "End of Term Evaluations",
-      content: "Please complete all student evaluations by the end of next week.",
+      content:
+        "Please complete all student evaluations by the end of next week.",
       createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24 * 5).toISOString(),
-      isPinned: false
-    }
+      isPinned: false,
+    },
   ];
 
   return (
-    <>
-    </>
+    <></>
     // <div className="space-y-6 p-6 min-h-screen">
     //   <motion.div
     //     initial={{ opacity: 0, y: 10 }}
@@ -87,8 +105,8 @@ const AdminDashboard = () => {
     //             </p>
     //             <div className="flex space-x-2">
     //               <Button onClick={() => navigate('/admin/tracks')}>Add New Track</Button>
-    //               <Button 
-    //                 variant="outline" 
+    //               <Button
+    //                 variant="outline"
     //                 className="relative"
     //                 onClick={() => navigate('/admin/verify-supervisors')}
     //               >
@@ -97,14 +115,14 @@ const AdminDashboard = () => {
     //             </div>
     //           </div>
     //           <div className="hidden md:flex justify-end">
-    //             <motion.div 
-    //               animate={{ 
+    //             <motion.div
+    //               animate={{
     //                 rotate: [0, 5, 0, -5, 0],
     //               }}
-    //               transition={{ 
-    //                 repeat: Infinity, 
+    //               transition={{
+    //                 repeat: Infinity,
     //                 duration: 5,
-    //                 ease: "easeInOut" 
+    //                 ease: "easeInOut"
     //               }}
     //               className="w-32 h-32 bg-red-200 rounded-full flex items-center justify-center"
     //             >
@@ -175,9 +193,9 @@ const AdminDashboard = () => {
     //               Students most frequently forget to check out on Thursdays, with a 23% higher incidence rate than other days of the week.
     //             </p>
     //           </div>
-              
-    //           <Button 
-    //             variant="outline" 
+
+    //           <Button
+    //             variant="outline"
     //             className="w-full mt-4 border-red-200 text-red-700 hover:bg-red-50"
     //             onClick={() => navigate('/admin/tracks')}
     //           >
@@ -226,7 +244,7 @@ const AdminDashboard = () => {
     //                 </PieChart>
     //               </ResponsiveContainer>
     //             </div>
-              
+
     //             <div className="border border-red-100 rounded-lg p-3 shadow-sm">
     //               <div className="flex justify-between items-start">
     //                 <div className="flex items-start space-x-3">
@@ -253,7 +271,7 @@ const AdminDashboard = () => {
     //                 </div>
     //               </div>
     //             </div>
-                
+
     //             <div className="border border-red-100 rounded-lg p-3 shadow-sm">
     //               <div className="flex justify-between items-start">
     //                 <div className="flex items-start space-x-3">
@@ -286,10 +304,10 @@ const AdminDashboard = () => {
     //     </motion.div>
     //   </div>
     //   <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        
+
     //     {/* Attendance Bar Chart */}
     //     <div className="md:col-span-2">
-    //       <AttendanceBarChart 
+    //       <AttendanceBarChart
     //         data={attendanceData}
     //         title="Weekly Attendance"
     //         description="Daily attendance rate for this week"
@@ -297,9 +315,9 @@ const AdminDashboard = () => {
     //         onPeriodChange={setSelectedPeriod}
     //       />
     //     </div>
-      
+
     //   </div>
-      
+
     //   {/* Announcements */}
     //   <div className="mb-6">
     //     <AnnouncementCard announcements={mockAnnouncements} />

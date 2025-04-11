@@ -12,7 +12,6 @@ import BranchManagement from "./Management/BranchManagement";
 const Index = () => {
   const navigate = useNavigate();
   const { userRole, isLoading } = useUser();
-  
 
   useEffect(() => {
     if (!isLoading && !userRole) {
@@ -24,10 +23,10 @@ const Index = () => {
   if (isLoading) {
     return (
       <Layout>
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading data...</p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading data...</p>
+        </div>
       </Layout>
     );
   }
@@ -36,14 +35,12 @@ const Index = () => {
   if (!userRole) return null;
 
   return (
- 
     <>
-     {userRole === "admin" && <BranchManagement />}
-       <Layout>
-     
-      {userRole === "supervisor" && <SupervisorDashboard />} 
-    </Layout>
-     {userRole === "student" && <StudentDashboard />} 
+      <Layout>
+        {userRole === "admin" && <AdminDashboard />}
+        {userRole === "supervisor" && <SupervisorDashboard />}
+      </Layout>
+      {userRole === "student" && <StudentDashboard />}
     </>
   );
 };
