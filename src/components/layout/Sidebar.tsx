@@ -21,7 +21,7 @@ import {
   Building,
   Megaphone,
   Clock2,
-  HandHeart
+  HandHeart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
@@ -132,7 +132,13 @@ const Sidebar = () => {
       icon: CalendarDays,
       label: "Schedule",
       to: "/schedule",
-      roles: ["student", "supervisor"],
+      roles: ["supervisor"],
+    },
+    {
+      icon: CalendarDays,
+      label: "Schedule",
+      to: "/student-schedule",
+      roles: ["student"],
     },
     {
       icon: HandHeart,
@@ -140,9 +146,9 @@ const Sidebar = () => {
       to: "/leave-request-form",
       roles: ["student"],
     },
-      
+
     // Supervisor only
-    // { icon: Brain, label: "Attendance Insights", to: "/attendance-insights", roles: ["supervisor"] },
+    { icon: Brain, label: "Attendance Insights", to: "/attendance-insights", roles: ["supervisor"] },
     { icon: UserCheck, label: "Student Verification", to: "/student-verification", roles: ["supervisor"] },
     { icon: Clock2, label: "Attendance Status", to: "/attendance-status", roles: ["supervisor"] },
     { icon: HandHeart, label: "Leave Request Center", to: "/leave-request-center", roles: ["supervisor"] },
@@ -162,7 +168,7 @@ const Sidebar = () => {
     // },
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: MapPin, label: "Tracks", to: "/tracks", roles: ["admin"] },
-    { icon: Users, label: "Supervisors", to: "/supervisors", roles: ["admin"] },
+    { icon: Users, label: "Users", to: "/users", roles: ["admin"] },
 
     {
       icon: Flag,
@@ -217,7 +223,7 @@ const Sidebar = () => {
               <div className="mb-2 flex items-center justify-center w-8 h-9 rounded-md  text-primary-foreground font-bold">
                 <img src="/public/images/iti-logo.png" alt="logo" />
               </div>
-              <span className="text-lg font-semibold">Attendance</span>
+              <span className="text-lg font-semibold">TrackIt</span>
             </Link>
           )}
 

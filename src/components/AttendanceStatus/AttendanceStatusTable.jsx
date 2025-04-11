@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { Calendar, Clock2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useState, Fragment } from 'react';
@@ -59,25 +59,32 @@ const getStatusColor = (status) => {
   }
 }
 
-function AttendanceStatusTable(schedules) {
+function AttendanceStatusTable({schedules, selectedTrackId}) {
   const [onViewDetails, setOnViewDetails] = useState(null)
   const [scheduleId, setScheduleId] = useState("")
-  const isSchedulesEmpty = false
-  console.log('schedules', schedules, 'isSchedulesEmpty', isSchedulesEmpty)
+  const isSchedulesEmpty = !schedules || schedules.length === 0
+  
+  // Reset the view details when track changes
+  useEffect(() => {
+    setOnViewDetails(null);
+    setScheduleId("");
+  }, [selectedTrackId]);
+
   //--------------------APIs---------------------//
-    // api for fetching student attendance status for each given day
   const fetchAttendanceStatus = async () => {
-    const response  = await axiosBackendInstance.get(`/attendance/schedules/${scheduleId}`, );
+    const response = await axiosBackendInstance.get(`/attendance/schedules/${scheduleId}`);
     console.log('Attendance Status Response:', response.data);
     return response.data;
   };
   //----------------------------------------------//
+  
   //------------------Queries-------------------//
-    const { data: attendanceData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ['attendanceStatus', scheduleId],
+  const { data: attendanceData, isLoading, isError, error, refetch } = useQuery({
+    queryKey: ['attendanceStatus', scheduleId, selectedTrackId],
     enabled: !!scheduleId, // Only run the query if scheduleId is not null
     queryFn: fetchAttendanceStatus,
     refetchOnWindowFocus: false,
+    staleTime: 0, // Don't use stale data
   });
   //----------------------------------------------//
 
@@ -101,7 +108,7 @@ function AttendanceStatusTable(schedules) {
         </thead>
         <tbody>
           {schedules.data.length > 0 ? (
-            schedules.data?.map((schedule, index) => (
+            schedules.data.map((schedule, index) => (
               <Fragment key={index}>
                 <tr className='border-b'>
                   <td className="py-3 px-4">

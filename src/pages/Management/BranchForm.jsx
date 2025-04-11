@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { MapPin } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -67,7 +67,10 @@ const BranchFormPage = () => {
     <Layout>
       <div className="space-y-6 p-6 min-h-screen">
         {isLoading ? (
-          <p>Loading...</p>
+                    <div className="flex flex-col items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+                    <p className="text-muted-foreground">Loading data...</p>
+                  </div>
         ) : (
           <BranchForm branch={branch} onSave={handleSaveBranch} isLoading={isLoading} />
         )}

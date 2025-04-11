@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import {
   Search,
@@ -69,11 +69,26 @@ const LostFound = () => {
   const [foundItemsPage, setFoundItemsPage] = useState(1);
   const [matchedItemsPage, setMatchedItemsPage] = useState(1);
 
-  // API fetching functions
-  const fetchLostItems = async (page = 1) => {
-    console.log("Fetching lost items for page:");
+  // Add debounced search to prevent too many API calls
+  const [debouncedSearch, setDebouncedSearch] = useState(searchQuery);
+
+  // Debounce the search query
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchQuery);
+      // Reset to page 1 when search changes
+      if (activeTab === "lost") setLostItemsPage(1);
+      if (activeTab === "found") setFoundItemsPage(1);
+    }, 800); // 300ms delay
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, activeTab]);
+
+  // API fetching functions - modify to include search parameter
+  const fetchLostItems = async (page = 1, search = "") => {
+    console.log("Fetching lost items for page:", page, "search:", search);
     const response = await axios.get(
-      `http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/?page=${page}`,
+      `http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/?page=${page}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -83,9 +98,9 @@ const LostFound = () => {
     return response.data;
   };
 
-  const fetchFoundItems = async (page = 1) => {
+  const fetchFoundItems = async (page = 1, search = "") => {
     const response = await axios.get(
-      `http://127.0.0.1:8000/api/v1/lost-and-found/found-items/?page=${page}`,
+      `http://127.0.0.1:8000/api/v1/lost-and-found/found-items/?page=${page}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -95,9 +110,11 @@ const LostFound = () => {
     return response.data;
   };
 
-  const fetchMatchedItems = async (page = 1) => {
+  const fetchMatchedItems = async (page = 1, search = "") => {
     const response = await axios.get(
-      `http://127.0.0.1:8000/api/v1/lost-and-found/matched-items/?page=${page}`,
+      `http://127.0.0.1:8000/api/v1/lost-and-found/matched-items/?page=${page}${
+        search ? `&search=${search}` : ""
+      }`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -113,8 +130,8 @@ const LostFound = () => {
     isLoading: isLoadingLost,
     error: errorLost,
   } = useQuery({
-    queryKey: ["lostItems", lostItemsPage],
-    queryFn: () => fetchLostItems(lostItemsPage),
+    queryKey: ["lostItems", lostItemsPage, debouncedSearch],
+    queryFn: () => fetchLostItems(lostItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "lost" || lostItemsPage === 1),
     staleTime: 15 * 60 * 1000, // 15 minutes
   });
@@ -124,10 +141,10 @@ const LostFound = () => {
     isLoading: isLoadingFound,
     error: errorFound,
   } = useQuery({
-    queryKey: ["foundItems", foundItemsPage],
-    queryFn: () => fetchFoundItems(foundItemsPage),
+    queryKey: ["foundItems", foundItemsPage, debouncedSearch],
+    queryFn: () => fetchFoundItems(foundItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "found" || foundItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
   const {
@@ -135,10 +152,10 @@ const LostFound = () => {
     isLoading: isLoadingMatched,
     error: errorMatched,
   } = useQuery({
-    queryKey: ["matchedItems", matchedItemsPage],
-    queryFn: () => fetchMatchedItems(matchedItemsPage),
+    queryKey: ["matchedItems", matchedItemsPage, debouncedSearch],
+    queryFn: () => fetchMatchedItems(matchedItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "matched" || matchedItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 5 minutes
+    staleTime: 15 * 60 * 1000, // 15 minutes
   });
 
   // Combined loading and error states
@@ -181,38 +198,12 @@ const LostFound = () => {
 
   // Filter items based on search query
   const getFilteredItems = () => {
-    // Handle matched items tab differently
+    // Items are already filtered by the server based on search query
     if (activeTab === "matched") {
       return matchedItems;
     }
 
-    const itemsToFilter = activeTab === "lost" ? lostItems : foundItems;
-
-    // Filter items based on search query
-    const filtered = itemsToFilter.filter(
-      (item) =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.place.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-
-    // Ensure all items have valid IDs and filter out any duplicates
-    const uniqueItemIds = new Set();
-    return filtered.filter((item) => {
-      // Skip items with undefined IDs
-      if (item.item_id === undefined) {
-        console.warn("Found item with undefined ID:", item);
-        return false;
-      }
-
-      // Ensure uniqueness
-      if (uniqueItemIds.has(item.item_id)) {
-        return false;
-      }
-
-      uniqueItemIds.add(item.item_id);
-      return true;
-    });
+    return activeTab === "lost" ? lostItems : foundItems;
   };
 
   const filteredItems = getFilteredItems();
@@ -340,10 +331,15 @@ const LostFound = () => {
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search items by name, description or location..."
+            placeholder={
+              activeTab === "matched"
+                ? "Search is not available for matched items"
+                : "Search items by name, description or location..."
+            }
             className="pl-10"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            disabled={activeTab === "matched"}
           />
         </div>
       </div>

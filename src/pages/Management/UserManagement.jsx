@@ -2,8 +2,8 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { Button } from "@/components/ui/button";
-import { Plus, Edit, Trash2, Search, MapPin, Loader2 } from "lucide-react";
-import { toast } from "@/hooks/use-toast";
+import { Plus, Edit, Trash2, Search, User, Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/context/UserContext";
 import { Input } from "@/components/ui/input";
 import {
@@ -33,93 +33,98 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import PageTitle from "@/components/ui/page-title";
-import { axiosBackendInstance } from "@/api/config";
+import { axiosBackendInstance } from '@/api/config';
 
 const ITEMS_PER_PAGE = 6;
 
-const TrackManagement = () => {
-  const [tracks, setTracks] = useState([]);
+const UserManagement = () => {
+  const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedTrack, setSelectedTrack] = useState(null);
+  const [selectedUser, setSelectedUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [paginationMeta, setPaginationMeta] = useState({});
   const { userRole } = useUser();
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     // Redirect if user is not an admin
-    if (userRole !== "admin") {
-      navigate("/");
-      return;
-    }
+    // if (userRole !== "admin") {
+    //   toast({
+    //     title: "Access Denied",
+    //     description: "You do not have permission to access this page.",
+    //     variant: "destructive",
+    //   });
+    //   navigate("/");
+    //   return;
+    // }
 
-    // Fetch paginated tracks from backend
-    fetchTracks(currentPage);
+    // Fetch paginated users from backend
+    fetchUsers(currentPage);
   }, [userRole, navigate, currentPage]);
 
-  const fetchTracks = (page) => {
+  const fetchUsers = (page) => {
     setIsLoading(true);
 
     axiosBackendInstance
-      .get(`/attendance/tracks/`, { params: { page } })
+      .get(`/accounts/users/admins-and-supervisors`, { params: { page } })
       .then((response) => {
         const data = response.data;
-        console.log("API Response:", data); // Log the entire response for debugging
-        setTracks(data);
-        setPaginationMeta({
-          count: data.count,
-          next: data.next,
-          previous: data.previous,
-        });
+        console.log("Fetched users:", data);
+        setUsers(data.results || data); // Handle both paginated and non-paginated responses
+        
+        // Set pagination metadata if available
+        if (data.count !== undefined) {
+          setPaginationMeta({
+            count: data.count,
+            next: data.next,
+            previous: data.previous,
+          });
+        }
+        
         setIsLoading(false);
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error("Error fetching users:", error);
         toast({
           title: "Error",
-          description: "Failed to load tracks. Please try again later.",
+          description: "Failed to load users. Please try again later.",
+          variant: "destructive",
         });
         setIsLoading(false);
       });
   };
 
-  const handleDeleteClick = (track) => {
-    setSelectedTrack(track);
+  const handleDeleteClick = (user) => {
+    setSelectedUser(user);
     setIsDeleteDialogOpen(true);
   };
 
   const confirmDelete = () => {
-    if (selectedTrack) {
+    if (selectedUser) {
       axiosBackendInstance
-        .delete(`/attendance/tracks/${selectedTrack.id}/`)
+        .delete(`/accounts/users/${selectedUser.id}/`)
         .then(() => {
-          setTracks(tracks.filter((track) => track.id !== selectedTrack.id));
+          setUsers(users.filter(user => user.id !== selectedUser.id));
           toast({
-            title: "Track Deleted",
-            description: "The track has been deleted successfully.",
+            title: "User Deleted",
+            description: "The user has been deleted successfully."
           });
         })
-        .catch(() => {
+        .catch((error) => {
+          console.error("Error deleting user:", error);
           toast({
             title: "Error",
-            description: "Failed to delete the track. Please try again later.",
+            description: "Failed to delete the user. Please try again later."
           });
         })
         .finally(() => {
           setIsDeleteDialogOpen(false);
-          setSelectedTrack(null);
+          setSelectedUser(null);
         });
     }
-  };
-
-  const formatDate = (date) => {
-    if (!date) return "Not set";
-    return new Intl.DateTimeFormat("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    }).format(new Date(date));
   };
 
   // Handle page change
@@ -127,9 +132,12 @@ const TrackManagement = () => {
     setCurrentPage(page);
   };
 
-  const filteredTracks = tracks?.filter((track) =>
-    track?.name?.toLowerCase().includes(searchTerm?.toLowerCase())
+  const filteredUsers = users.filter((user) =>
+    `${user.first_name} ${user.last_name} ${user.email}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase())
   );
+
 
   if (isLoading) {
     return (
@@ -146,21 +154,17 @@ const TrackManagement = () => {
     <Layout>
       <div className="space-y-6 p-6 min-h-screen">
         <PageTitle
-          title="Track Management"
-          subtitle="Create, edit and manage your institution's tracks"
-          icon={<MapPin className="h-6 w-6" />}
-          action={
-            <Button onClick={() => navigate("/tracks/add")}>
-              <Plus className="mr-2 h-4 w-4" /> Add Track
-            </Button>
-          }
+          title="User Management"
+          subtitle="Create, edit and manage system users (supervisors and admins)."
+          icon={<User className="h-6 w-6" />}
+          action={<Button onClick={() => navigate("/users/add")}><Plus className="mr-2 h-4 w-4" /> Add User</Button>}
         />
         <div className="rounded-lg border bg-card shadow-sm">
           <div className="flex items-center justify-between p-4 border-b">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tracks..."
+                placeholder="Search users..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 w-full"
@@ -173,39 +177,33 @@ const TrackManagement = () => {
               <TableHeader>
                 <TableRow>
                   <TableHead>Name</TableHead>
-                  <TableHead>Program Type</TableHead>
-                  <TableHead>Intake</TableHead>
-                  <TableHead>Start Date</TableHead>
-                  <TableHead>Supervisor</TableHead>
-                  <TableHead>Branch</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Type</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredTracks.length > 0 ? (
-                  filteredTracks.map((track) => (
-                    <TableRow key={track.id}>
+                {filteredUsers.length > 0 ? (
+                  filteredUsers.map((user) => (
+                    <TableRow key={user.id}>
                       <TableCell className="font-medium">
-                        {track.name}
+                        {user.first_name} {user.last_name}
                       </TableCell>
-                      <TableCell>{track.program_type_display}</TableCell>
-                      <TableCell>{track.intake || "N/A"}</TableCell>
-                      <TableCell>{formatDate(track.start_date)}</TableCell>
-                      <TableCell>{track.supervisor}</TableCell>
-                      <TableCell>{track.default_branch || "N/A"}</TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.groups[0]}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => navigate(`/tracks/edit/${track.id}`)}
+                            onClick={() => navigate(`/users/edit/${user.id}`)}
                           >
                             <Edit className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleDeleteClick(track)}
+                            onClick={() => handleDeleteClick(user)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -215,13 +213,8 @@ const TrackManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={7}
-                      className="text-center py-6 text-muted-foreground"
-                    >
-                      {searchTerm
-                        ? "No tracks found matching your search."
-                        : "No tracks added yet."}
+                    <TableCell colSpan={4} className="text-center py-6 text-muted-foreground">
+                      {searchTerm ? "No users found matching your search." : "No users added yet."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -236,17 +229,11 @@ const TrackManagement = () => {
               <PaginationContent>
                 <PaginationItem>
                   <PaginationPrevious
-                    onClick={() =>
-                      handlePageChange(Math.max(1, currentPage - 1))
-                    }
-                    className={
-                      currentPage === 1 ? "pointer-events-none opacity-50" : ""
-                    }
+                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
-                {[
-                  ...Array(Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)),
-                ].map((_, index) => (
+                {[...Array(Math.ceil(paginationMeta.count / ITEMS_PER_PAGE))].map((_, index) => (
                   <PaginationItem key={index + 1}>
                     <PaginationLink
                       isActive={currentPage === index + 1}
@@ -258,20 +245,8 @@ const TrackManagement = () => {
                 ))}
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() =>
-                      handlePageChange(
-                        Math.min(
-                          currentPage + 1,
-                          Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)
-                        )
-                      )
-                    }
-                    className={
-                      currentPage ===
-                      Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)
-                        ? "pointer-events-none opacity-50"
-                        : ""
-                    }
+                    onClick={() => handlePageChange(Math.min(currentPage + 1, Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)))}
+                    className={currentPage === Math.ceil(paginationMeta.count / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
               </PaginationContent>
@@ -279,23 +254,17 @@ const TrackManagement = () => {
           </div>
         )}
 
-        <AlertDialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-        >
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete {selectedTrack?.name}? This
-                action cannot be undone.
+                Are you sure you want to delete {selectedUser?.first_name} {selectedUser?.last_name}? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={confirmDelete}>
-                Delete
-              </AlertDialogAction>
+              <AlertDialogAction onClick={confirmDelete}>Delete</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -304,4 +273,4 @@ const TrackManagement = () => {
   );
 };
 
-export default TrackManagement;
+export default UserManagement;

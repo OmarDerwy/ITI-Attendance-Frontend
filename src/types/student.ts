@@ -9,6 +9,7 @@ export interface User {
   is_superuser: boolean;
   is_active?: boolean;
   tracks?: string;
+  date_joined: string;
 }
 
 export interface ApiResponse {
@@ -16,6 +17,8 @@ export interface ApiResponse {
   next: string | null;
   previous: string | null;
   results: User[];
+  active_users: number;
+  inactive_users: number;
 }
 
 export interface CsvStudentData {

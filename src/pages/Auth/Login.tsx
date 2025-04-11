@@ -7,7 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { axiosBackendInstance } from "@/api/config";
-import { useUser } from "@/context/UserContext";
+import { toast } from 'sonner';
+import { useUser } from '@/context/UserContext';
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -40,7 +41,25 @@ const Login = () => {
         "accounts/auth/users/me/"
       );
       const userData = userResponse.data;
-      user.setUserRole(userResponse.data.groups[0]);
+      const userRole = userResponse.data.groups[0];
+      user.setUserRole(userRole);
+      
+      //Check if user is a student and fetch track information
+      if (userRole === "student") {
+        try {
+          const studentTrackResponse = await axiosBackendInstance.get(
+            `attendance/students/by-user-id?userId=${Number(userData.id)}`
+          );
+          const trackData = studentTrackResponse.data;
+          localStorage.setItem("studentTrack", JSON.stringify(trackData));
+          user.setStudentTrack?.(trackData); // Optional chaining in case this method doesn't exist yet
+          // console.log("Student track data:", trackData);
+        } catch (error) {
+          console.error("Failed to fetch student track:", error);
+          toast.error("Could not retrieve student track information");
+        }
+      }
+      
       user.setUserName(userResponse.data.email);
       user.setUserId(userResponse.data.id);
       localStorage.setItem("userId", userData.id.toString());
@@ -49,6 +68,7 @@ const Login = () => {
     } catch (error) {
       console.error("Login failed:", error);
       // Handle login errors here - show error message to user
+      toast.error("Login failed. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
@@ -164,18 +184,6 @@ const Login = () => {
             </form>
           </div>
         </Card>
-
-        <div className="mt-6 text-center">
-          <p className="text-sm text-muted-foreground">
-            Don't have an account?{" "}
-            <Link
-              to="/signup"
-              className="text-primary font-medium hover:underline"
-            >
-              Create an account
-            </Link>
-          </p>
-        </div>
       </div>
     </div>
   );

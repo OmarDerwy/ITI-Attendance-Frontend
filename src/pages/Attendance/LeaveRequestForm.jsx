@@ -64,21 +64,19 @@ function LeaveRequestForm() {
 
   // Replace useState and useEffect with useQuery
   const fetchSchedules = async () => {
-    const response = await axiosBackendInstance.get('attendance/schedules');
-    // Filter schedules that are not in the past
-    const now = dayjs();
-    const futureSchedules = response.data.filter(schedule => {
-      const dayjsObj = dayjs(schedule.created_at)
-      return dayjs(dayjsObj).isAfter(now)
-    });
-    return futureSchedules;
+    const response = await axiosBackendInstance.get('attendance/upcoming-records');
+    // Extract schedules from the new response structure
+    const records = response.data.data || [];
+    // Map to get the schedule objects from each record
+    return records.map(record => record.schedule);
   };
 
   const { 
     data: schedules = [], 
     isLoading, 
     isError, 
-    error 
+    error,
+    refetch 
   } = useQuery({
     queryKey: ['schedules'],
     queryFn: fetchSchedules,
@@ -106,35 +104,39 @@ function LeaveRequestForm() {
         throw new Error('Please select a valid schedule');
       }
       
-      // Parse hour to number and handle 12-hour format
-      let hour = parseInt(data.hour, 10);
-      if (data.period === 'PM' && hour !== 12) {
-        hour += 12;
-      } else if (data.period === 'AM' && hour === 12) {
-        hour = 0;
-      }
-      
-      // Create schedule date with the selected time
-      const scheduleDate = dayjs(schedule.created_at);
-      const adjustedTime = scheduleDate
-        .hour(hour)
-        .minute(parseInt(data.minute, 10))
-        .second(0)
-        .toISOString();
-      
       // Map request types to backend values
       const requestTypeMap = {
-        'early_leave': 'Early Leave',
-        'late_check_in': 'Late Check-In',
-        'day_excuse': 'Day Excuse'
+        'early_leave': 'early_leave',
+        'late_check_in': 'late_check_in',
+        'day_excuse': 'day_excuse'
       };
       
       const payload = {
         schedule: data.schedule,
         request_type: requestTypeMap[data.request_type],
         reason: data.reason,
-        adjusted_time: adjustedTime
       };
+      
+      // Only include adjusted_time if the request is not a day excuse
+      if (data.request_type !== 'day_excuse') {
+        // Parse hour to number and handle 12-hour format
+        let hour = parseInt(data.hour, 10);
+        if (data.period === 'PM' && hour !== 12) {
+          hour += 12;
+        } else if (data.period === 'AM' && hour === 12) {
+          hour = 0;
+        }
+        
+        // Create schedule date with the selected time
+        const scheduleDate = dayjs(schedule.created_at);
+        const adjustedTime = scheduleDate
+          .hour(hour)
+          .minute(parseInt(data.minute, 10))
+          .second(0)
+          .toISOString();
+          
+        payload.adjusted_time = adjustedTime;
+      }
       
       console.log('Submitting leave request:', payload);
       
@@ -148,7 +150,7 @@ function LeaveRequestForm() {
       
       // Reset form
       form.reset();
-      
+      refetch();
       // Redirect to a confirmation page or back to schedule
       navigate('/schedule');
       
@@ -176,6 +178,13 @@ function LeaveRequestForm() {
       />
       <Card className="p-6">
         <div className="container mx-auto max-w-3xl">
+        {schedules.length === 0 && !isLoading && (
+            <div className="rounded-md bg-muted p-4 text-center border-red-700 border-x-2 border-y-2 mb-4">
+              <p className="text-muted-foreground">
+                No upcoming schedules available for leave requests.
+              </p>
+            </div>
+          )}
           {isLoading && !form.formState.isSubmitting ? (
             <div className="flex items-center justify-center py-8">
               <LoaderCircle className="h-8 w-8 animate-spin text-primary" />
@@ -205,7 +214,7 @@ function LeaveRequestForm() {
                           {schedules.length > 0 ? (
                             schedules.map((schedule) => (
                               <SelectItem key={schedule.id} value={schedule.id.toString()}>
-                                {schedule.name} ({schedule.sessions ? 'No sessions' : schedule.sessions.join(', ')})
+                                {schedule.name} ({schedule.sessions ? schedule.sessions.join(', ') : 'No sessions'})
                               </SelectItem>
                             ))
                           ) : (
@@ -260,13 +269,17 @@ function LeaveRequestForm() {
                 />
                 
                 <div className="space-y-2">
-                  <FormLabel>Adjusted Time</FormLabel>
+                  <FormLabel>Adjusted Time {form.watch('request_type') === 'day_excuse' && <span className="text-muted-foreground text-sm">(Not applicable for Day Excuse)</span>}</FormLabel>
                   <div className="flex items-center space-x-2">
                     <FormField
                       control={form.control}
                       name="hour"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={form.watch('request_type') === 'day_excuse'}
+                        >
                           <SelectTrigger className="w-20">
                             <SelectValue placeholder="Hour" />
                           </SelectTrigger>
@@ -285,7 +298,11 @@ function LeaveRequestForm() {
                       control={form.control}
                       name="minute"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={form.watch('request_type') === 'day_excuse'}
+                        >
                           <SelectTrigger className="w-20">
                             <SelectValue placeholder="Min" />
                           </SelectTrigger>
@@ -303,7 +320,11 @@ function LeaveRequestForm() {
                       control={form.control}
                       name="period"
                       render={({ field }) => (
-                        <Select onValueChange={field.onChange} value={field.value}>
+                        <Select 
+                          onValueChange={field.onChange} 
+                          value={field.value}
+                          disabled={form.watch('request_type') === 'day_excuse'}
+                        >
                           <SelectTrigger className="w-20">
                             <SelectValue />
                           </SelectTrigger>
@@ -332,14 +353,6 @@ function LeaveRequestForm() {
                 </div>
               </form>
             </Form>
-          )}
-          
-          {schedules.length === 0 && !isLoading && (
-            <div className="rounded-md bg-muted p-4 text-center">
-              <p className="text-muted-foreground">
-                No upcoming schedules available for leave requests.
-              </p>
-            </div>
           )}
         </div>
       </Card>

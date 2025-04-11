@@ -29,12 +29,14 @@ const StudentVerification = () => {
 
   // Real student data from the server using tanstack query
   const fetchStudents = async () => {
-    const response = await axiosBackendInstance.get('/accounts/students/');
+    const response = await axiosBackendInstance.get('/accounts/students/', {
+      params: { search: searchQuery }
+    });
     return response.data as ApiResponse;
   };
 
   const { data: studentsData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["students"],
+    queryKey: ["students", searchQuery],
     queryFn: fetchStudents,
     refetchOnWindowFocus: false,
   });
@@ -83,14 +85,14 @@ const StudentVerification = () => {
   };
 
   // Filter students - using the actual API data structure
-  const filteredStudents = studentEntries.filter(student => 
-    (student.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (student.first_name && student.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-    (student.last_name && student.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  // const filteredStudents = studentEntries.filter(student =>
+  //   (student.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+  //   (student.first_name && student.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
+  //   (student.last_name && student.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
+  // );
 
-  // Filter students who are part of the student group
-  const studentUsers = studentEntries.filter(user => user.groups.includes("student"));
+  // // Filter students who are part of the student group
+  // const studentUsers = studentEntries.filter(user => user.groups.includes("student"));
 
   // Helper function to get status (you may need to adjust based on actual data structure)
   const getStatus = (user: User) => {
@@ -114,14 +116,44 @@ const StudentVerification = () => {
     setSelectedStudent(null);
   };
 
-  const handleReject = (studentId: number) => {
-    toast({
-      title: "Student Rejected",
-      description: "The student verification has been rejected.",
-      variant: "destructive",
-    });
-    setSelectedStudent(null);
+  const handleRevoke = async (studentId: number) => {
+    try {
+      const response = await axiosBackendInstance.get(`/accounts/students/${studentId}/make-inactive/`);
+      toast({
+        title: "Student Revoked",
+        description: "The student verification has been revoked.",
+        variant: "destructive",
+      });
+      setSelectedStudent(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to revoke student verification.",
+        variant: "destructive",
+      });
+      return;
+    }
   };
+
+  const handleResendActivation = async (studentId: number) => {
+    try{
+      const response  = await axiosBackendInstance.get(`/accounts/students/${studentId}/resend-activation/`);
+      toast({
+        title: "Activation Email Resent",
+        description: "The activation email has been resent to the student.",
+      });
+      console.log("Activation email resent successfully:", response.data);
+      setSelectedStudent(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to resend activation email.",
+        variant: "destructive",
+      });
+      console.error("Error resending activation email:", error);
+      return;
+    }
+  }
 
   if (userRole !== "admin" && userRole !== "supervisor") {
     return (
@@ -131,16 +163,6 @@ const StudentVerification = () => {
           <p className="text-muted-foreground">
             You don't have permission to access this page.
           </p>
-        </Card>
-      </Layout>
-    );
-  }
-
-  if (isLoading) {
-    return (
-      <Layout>
-        <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold mb-4">Loading students...</h2>
         </Card>
       </Layout>
     );
@@ -169,29 +191,33 @@ const StudentVerification = () => {
 
       <div className="space-y-6">
         <Card className="p-6">
-          <SearchToolbar 
+          <SearchToolbar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
             onAddStudent={() => setIsAddStudentModalOpen(true)}
             onRefresh={handleRefresh}
             isRefreshing={isRefreshing}
-            pendingCount={studentUsers.filter(s => getStatus(s) === "pending").length}
-            verifiedCount={studentUsers.filter(s => getStatus(s) === "verified").length}
+            pendingCount={studentsData?.inactive_users}
+            verifiedCount={studentsData?.active_users}
           />
 
-          <StudentTable 
-            students={filteredStudents}
-            getFullName={getFullName}
-            getStatus={getStatus}
-            onViewDetails={setSelectedStudent}
-            onViewDetailsValue={selectedStudent}
-          />
+          {isLoading ?
+            (<Card className="p-8 text-center">
+              <h2 className="text-xl font-semibold mb-4">Loading students...</h2>
+            </Card>
+            ) : (<StudentTable
+              students={studentEntries}
+              getFullName={getFullName}
+              getStatus={getStatus}
+              onViewDetails={setSelectedStudent}
+              onViewDetailsValue={selectedStudent}
+            />)}
 
           {/* Pagination: View More Button */}
-          {nextPageUrl && (
+          { isLoading || nextPageUrl && (
             <div className="mt-4 flex justify-center">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={loadMoreStudents}
                 disabled={isLoadingMore}
                 className="w-full max-w-xs"
@@ -213,15 +239,15 @@ const StudentVerification = () => {
             {(() => {
               const student = studentEntries.find(s => s.id === selectedStudent);
               if (!student) return null;
-              
+
               return (
-                <StudentDetail 
+                <StudentDetail
                   student={student}
                   getFullName={getFullName}
                   getStatus={getStatus}
                   onClose={() => setSelectedStudent(null)}
-                  onVerify={handleVerify}
-                  onReject={handleReject}
+                  onRevoke={handleRevoke}
+                  onResendActivation={handleResendActivation}
                 />
               );
             })()}
@@ -230,7 +256,7 @@ const StudentVerification = () => {
       </div>
 
       {/* Add Student Modal */}
-      <AddStudentModal 
+      <AddStudentModal
         open={isAddStudentModalOpen}
         onOpenChange={setIsAddStudentModalOpen}
       />

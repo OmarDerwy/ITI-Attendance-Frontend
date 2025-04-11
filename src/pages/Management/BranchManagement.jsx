@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, Plus, Pencil, Trash2, Building } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Building, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +25,7 @@ import {
 import PageTitle from "@/components/ui/page-title";
 import Layout from "@/components/layout/Layout";
 import { useUser } from "@/context/UserContext";
-import { axiosBackendInstance } from '@/api/config';
+import { axiosBackendInstance } from "@/api/config";
 
 const BranchManagement = () => {
   const [branches, setBranches] = useState([]);
@@ -43,24 +43,43 @@ const BranchManagement = () => {
       return;
     }
 
-    axiosBackendInstance.get("/attendance/branches/")
-      .then(response => setBranches(response.data.results))
-      .catch(() => toast({ title: "Error", description: "Failed to load branches", variant: "destructive" }))
+    axiosBackendInstance
+      .get("/attendance/branches/")
+      .then((response) => setBranches(response.data))
+      .catch(() =>
+        toast({
+          title: "Error",
+          description: "Failed to load branches",
+          variant: "destructive",
+        })
+      )
       .finally(() => setIsLoading(false));
   }, [userRole, navigate, toast]);
 
-  const filteredBranches = branches.filter(branch =>
-    branch.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredBranches = branches?.filter((branch) =>
+    branch?.name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleDeleteBranch = () => {
     if (selectedBranch) {
-      axiosBackendInstance.delete(`/attendance/branches/${selectedBranch.id}/`)
+      axiosBackendInstance
+        .delete(`/attendance/branches/${selectedBranch.id}/`)
         .then(() => {
-          setBranches(branches.filter(branch => branch.id !== selectedBranch.id));
-          toast({ title: "Branch deleted", description: `${selectedBranch.name} has been removed.` });
+          setBranches(
+            branches.filter((branch) => branch.id !== selectedBranch.id)
+          );
+          toast({
+            title: "Branch deleted",
+            description: `${selectedBranch.name} has been removed.`,
+          });
         })
-        .catch(() => toast({ title: "Error", description: "Failed to delete branch", variant: "destructive" }));
+        .catch(() =>
+          toast({
+            title: "Error",
+            description: "Failed to delete branch",
+            variant: "destructive",
+          })
+        );
     }
     setIsDeleteDialogOpen(false);
     setSelectedBranch(null);
@@ -69,9 +88,10 @@ const BranchManagement = () => {
   if (isLoading) {
     return (
       <Layout>
-        <div className="container py-8">
-          <p>Loading...</p>
-        </div>
+          <div className="flex flex-col items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+            <p className="text-muted-foreground">Loading data...</p>
+          </div>
       </Layout>
     );
   }
@@ -79,18 +99,27 @@ const BranchManagement = () => {
   return (
     <Layout>
       <div className="space-y-6 p-6 min-h-screen">
-        <PageTitle 
-          title="Branch Management" 
+        <PageTitle
+          title="Branch Management"
           subtitle="Manage your institution's branches and locations"
           icon={<Building className="h-6 w-6" />}
-          action={<Button onClick={() => navigate("/branches/add")}><Plus className="mr-2 h-4 w-4" /> Add Branch</Button>}
+          action={
+            <Button onClick={() => navigate("/branches/add")}>
+              <Plus className="mr-2 h-4 w-4" /> Add Branch
+            </Button>
+          }
         />
 
         <div className="rounded-lg border bg-card shadow-sm">
           <div className="flex items-center justify-between p-4 border-b">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="Search branches..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="pl-8 w-full" />
+              <Input
+                placeholder="Search branches..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-8 w-full"
+              />
             </div>
           </div>
 
@@ -106,19 +135,36 @@ const BranchManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredBranches.length > 0 ? (
-                  filteredBranches.map((branch) => (
+                {filteredBranches?.length > 0 ? (
+                  filteredBranches?.map((branch) => (
                     <TableRow key={branch.id}>
-                      <TableCell className="font-medium">{branch.name}</TableCell>
+                      <TableCell className="font-medium">
+                        {branch.name}
+                      </TableCell>
                       <TableCell>{branch.latitude || "Not provided"}</TableCell>
-                      <TableCell>{branch.longitude || "Not provided"}</TableCell>
+                      <TableCell>
+                        {branch.longitude || "Not provided"}
+                      </TableCell>
                       <TableCell>{branch.radius || "Not provided"}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Button variant="ghost" size="sm" onClick={() => navigate(`/branches/edit/${branch.id}`)}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() =>
+                              navigate(`/branches/edit/${branch.id}`)
+                            }
+                          >
                             <Pencil className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="sm" onClick={() => { setSelectedBranch(branch); setIsDeleteDialogOpen(true); }}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setSelectedBranch(branch);
+                              setIsDeleteDialogOpen(true);
+                            }}
+                          >
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
@@ -127,8 +173,13 @@ const BranchManagement = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6 text-muted-foreground">
-                      {searchTerm ? "No branches found matching your search." : "No branches added yet."}
+                    <TableCell
+                      colSpan={5}
+                      className="text-center py-6 text-muted-foreground"
+                    >
+                      {searchTerm
+                        ? "No branches found matching your search."
+                        : "No branches added yet."}
                     </TableCell>
                   </TableRow>
                 )}
@@ -137,17 +188,23 @@ const BranchManagement = () => {
           </div>
         </div>
 
-        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Confirm Deletion</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete the {selectedBranch?.name} branch? This action cannot be undone.
+                Are you sure you want to delete the {selectedBranch?.name}{" "}
+                branch? This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDeleteBranch}>Delete</AlertDialogAction>
+              <AlertDialogAction onClick={handleDeleteBranch}>
+                Delete
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
