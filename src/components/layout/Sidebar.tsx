@@ -133,7 +133,7 @@ const Sidebar = () => {
     //   to: "/previous-courses",
     //   roles: ["student"],
     // },
-    { icon: Home, label: "Dashboard", to: "/", roles: ["student", "supervisor", "admin"] },
+    { icon: Home, label: "Dashboard", to: "/", roles: [ "supervisor", "admin"] },
 
     {
       icon: CheckSquare,

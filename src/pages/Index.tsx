@@ -38,12 +38,14 @@ const Index = () => {
   if (!userRole) return null;
 
   return (
-    <Layout>
+ 
+    <>
+       <Layout>
       {userRole === "admin" && <AdminDashboard />}
       {userRole === "supervisor" && <SupervisorDashboard />} 
-      {userRole === "student" && <StudentDashboard />} 
-
     </Layout>
+     {userRole === "student" && <StudentDashboard />} 
+    </>
   );
 };
 
