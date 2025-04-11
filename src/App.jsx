@@ -33,11 +33,15 @@ import LeaveRequestForm from "./pages/Attendance/LeaveRequestForm";
 import UserForm from "./pages/Management/UserForm";
 import UserManagement from './pages/Management/UserManagement';
 import StudentSchedule from './pages/Attendance/StudentSchedule';
+import { PermissionsProvider } from "@/context/PermissionsContext"; 
+
+import StudentDashboard from './pages/Dashboard/StudentDashboard';
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
+     <PermissionsProvider>
     <UserProvider>
       <TooltipProvider>
         <Toaster />
@@ -58,7 +62,7 @@ const App = () => (
         <BrowserRouter>
           <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
             <Routes>
-              {/* <Route path="/" element={<Index />} /> */}
+              <Route path="/" element={<Index />} />
               <Route path="/" element={<LostFound />} />
               <Route path="/login" element={<Login />} />
               <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
@@ -108,12 +112,14 @@ const App = () => (
                 element={<LeaveRequestForm />}
               />
               <Route path="/student-schedule" element={<StudentSchedule />} />
+              <Route path="/student-dashboard" element={<StudentDashboard />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ThemeProvider>
         </BrowserRouter>
       </TooltipProvider>
     </UserProvider>
+    </PermissionsProvider>
   </QueryClientProvider>
 );
 

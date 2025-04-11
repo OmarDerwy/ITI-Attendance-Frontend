@@ -176,8 +176,8 @@ function LeaveRequestForm() {
         subtitle="Fill out the form to request a leave."
         icon={<HandHeart />}
       />
+      <div className="space-y-6 p-6 min-h-screen">
       <Card className="p-6">
-        <div className="container mx-auto max-w-3xl">
         {schedules.length === 0 && !isLoading && (
             <div className="rounded-md bg-muted p-4 text-center border-red-700 border-x-2 border-y-2 mb-4">
               <p className="text-muted-foreground">
@@ -354,8 +354,8 @@ function LeaveRequestForm() {
               </form>
             </Form>
           )}
-        </div>
       </Card>
+      </div>
     </Layout>
   );
 }

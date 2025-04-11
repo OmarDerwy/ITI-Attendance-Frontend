@@ -9,6 +9,7 @@ export interface User {
   is_superuser: boolean;
   is_active?: boolean;
   tracks?: string;
+  date_joined: string;
 }
 
 export interface ApiResponse {

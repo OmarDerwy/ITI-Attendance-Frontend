@@ -3,14 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { CheckCircle2, XCircle } from "lucide-react";
+import dayjs from "dayjs"
 
 interface StudentDetailProps {
   student: User;
   getFullName: (user: User) => string;
   getStatus: (user: User) => string;
   onClose: () => void;
-  onVerify: (studentId: number) => void;
-  onReject: (studentId: number) => void;
+  onRevoke: (studentId: number) => void;
+  onResendActivation: (studentId: number) => void;
 }
 
 const StudentDetail = ({
@@ -18,8 +19,8 @@ const StudentDetail = ({
   getFullName,
   getStatus,
   onClose,
-  onVerify,
-  onReject,
+  onRevoke,
+  onResendActivation,
 }: StudentDetailProps) => {
   const status = getStatus(student);
   
@@ -67,22 +68,48 @@ const StudentDetail = ({
             </div>
           </div>
           
-          <div className="w-full md:w-72 space-y-4">
+          <div className="w-full md:w-72 space-y-1">
             <h4 className="text-sm font-medium text-muted-foreground">Account Information</h4>
-            <div className="rounded-md border p-4 space-y-4">
+            <div className="rounded-md border p-4 grid grid-cols-2 gap-4">
               <div className="py-2">
-                <p className="text-sm mb-1 font-medium">Status</p>
-                <p className="text-sm">{status === "pending" ? "Awaiting Verification" : status}</p>
+                <p className="text-xs text-muted-foreground ms-2 mb-1 font-medium">Status</p>
+                <Badge 
+                    variant={
+                      status === "verified" ? "default" : 
+                      status === "pending" ? "secondary" : 
+                      "outline"
+                    }
+                    className="capitalize"
+                  >
+                    {status}
+                </Badge>
+              </div>
+              <div className="py-2">
+                <p className="text-xs text-muted-foreground mb-1 font-medium">Registeration Date</p>
+                <p className="text-sm">{dayjs(student.date_joined).format('DD/MM/YYYY hh:mma')}</p>
               </div>
               
-              <div className="py-2">
-                <p className="text-sm mb-1 font-medium">Registration Date</p>
-                <p className="text-sm">Not available</p>
-              </div>
+              <Button
+                variant="outline"
+                className="w-full text-wrap"
+                onClick={() => {onResendActivation(student.id)}}
+                disabled={status !== "pending"}
+              >
+                Resend Activation
+              </Button>
+
+              <Button
+                variant="destructive" 
+                className="w-full text-wrap"
+                onClick={() => {onRevoke(student.id)}}
+                disabled={status == "pending"}
+              >
+                Revoke Verification
+              </Button>
               
               <Button 
                 variant="ghost"
-                className="w-full mt-2" 
+                className="w-full col-span-2" 
                 onClick={onClose}
               >
                 Close

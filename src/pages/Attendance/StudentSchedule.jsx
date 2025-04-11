@@ -63,13 +63,13 @@ const StudentSchedule = () => {
       setEvents(fetchedEvents);
       setIsLoading(false);
     } catch (error) {
-      console.error("Error fetching events:", error);
+      // console.error("Error fetching events:", error);
       setIsLoading(false);
-      toast({
-        title: "Error",
-        description: "Failed to fetch your schedule. Please try again later.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Failed to fetch your schedule. Please try again later.",
+      //   variant: "destructive",
+      // });
     }
   };
 

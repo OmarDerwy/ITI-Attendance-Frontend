@@ -1,24 +1,34 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, BarChart3, Calendar, Clock, Check, Users, AlertTriangle, BellRing } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { 
-  ResponsiveContainer, 
-  BarChart, 
-  Bar, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  Legend, 
-  LineChart, 
-  Line, 
-  PieChart, 
-  Pie, 
-  Cell 
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
+import { useQuery } from '@tanstack/react-query';
+import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends, getScheduledClasses, get_weekly_attendance_by_track } from '@/api/attendance';
+import { usePermissions } from '@/context/PermissionsContext';
 import RecentAbsences from '../../components/dashboard/RecentAbsences';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { axiosBackendInstance } from '@/api/config';
+import dayjs from 'dayjs';
+import isToday from 'dayjs/plugin/isToday';
+
+dayjs.extend(isToday);
+
 const attendanceData = [
   { name: "Mon", attendance: 85, absence: 15 },
   { name: "Tue", attendance: 88, absence: 12 },
@@ -27,37 +37,235 @@ const attendanceData = [
   { name: "Fri", attendance: 80, absence: 20 },
 ];
 
-const trendsData = [
-  { week: "Week 1", attendance: 78 },
-  { week: "Week 2", attendance: 82 },
-  { week: "Week 3", attendance: 75 },
-  { week: "Week 4", attendance: 85 },
-  { week: "Week 5", attendance: 90 },
-];
 
-const verificationRequests = [
-  { id: 1, student: "Alex Morgan", type: "Medical Leave", submitted: "2 hours ago", status: "pending" },
-  { id: 2, student: "Jamie Smith", type: "Attendance Correction", submitted: "1 day ago", status: "pending" },
-  { id: 3, student: "Taylor Johnson", type: "Late Arrival", submitted: "3 days ago", status: "approved" },
-];
+// const verificationRequests = [
+//   { id: 1, student: "Alex Morgan", type: "Medical Leave", submitted: "2 hours ago", status: "pending" },
+//   { id: 2, student: "Jamie Smith", type: "Attendance Correction", submitted: "1 day ago", status: "pending" },
+//   { id: 3, student: "Taylor Johnson", type: "Late Arrival", submitted: "3 days ago", status: "approved" },
+// ];
 
-const trackAttendance = [
-  { name: "Web Dev", value: 95 },
-  { name: "Mobile", value: 88 },
-  { name: "Data Science", value: 78 },
-];
+// const trackAttendance = [
+//   { name: "Web Dev", value: 95 },
+//   { name: "Mobile", value: 88 },
+//   { name: "Data Science", value: 78 },
+// ];
+
 const recentAbsences = [
   { id: 1, student: "Alice Johnson", date: "Jun 15, 2023", reason: "Sick leave", status: "excused" },
   { id: 2, student: "Bob Smith", date: "Jun 14, 2023", reason: "Family event", status: "pending" },
   { id: 3, student: "Charlie Brown", date: "Jun 12, 2023", reason: "N/A", status: "unexcused" },
   { id: 4, student: "Diana Ross", date: "Jun 9, 2023", reason: "Medical appointment", status: "excused" },
 ];
+
 const SupervisorDashboard = () => {
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b'];
+  const [filteredData, setFilteredData] = useState([]);
+  const [dailyTrends, setDailyTrends] = useState([]);
+  const [selectedTrack, setSelectedTrack] = useState("1");
+  const [selectedDailyTrendTrack, setSelectedDailyTrendTrack] = useState("all");
+  const [selectedWeeklyTrendTrack, setSelectedWeeklyTrendTrack] = useState("all");
+  const { totalPendingPermissions, isLoading: permissionsLoading, error } = usePermissions();
+  const [scheduledClasses, setScheduledClasses] = useState([]);
+  const [weeklyBreakdown, setWeeklyBreakdown] = useState([]);
+  const [weeklyBreakdownTrack, setWeeklyBreakdownTrack] = useState("All tracks");
+
+  // Fetch tracks
+  const { data: tracksData } = useQuery({
+    queryKey: ['tracks'],
+    queryFn: async () => {
+      const response = await axiosBackendInstance.get('attendance/tracks/');
+      return response.data.results;
+    },
+    onSuccess: (data) => {
+      if (data && data.length > 0) {
+        setSelectedTrack(data[0].id.toString());
+      }
+    }
+  });
+
+  const { data: todayAttendance, isLoading, isError, errorr } = useQuery({
+    queryKey: ['todayAttendancePercentage'],
+    queryFn: getTodaysAttendancePercentage,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    onError: (errorr) => {
+      console.error("Error fetching today's attendance:", errorr);
+    },
+  });
+
+  const { data: weeklyAttendance, isLoading: weeklyLoading, isError: weeklyError, error: weeklyErrorData } = useQuery({
+    queryKey: ['weeklyAttendancePercentage'],
+    queryFn: getWeeklyAttendancePercentage,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    onSuccess: (data) => {
+      console.log('Weekly Attendance Data:', data);
+    },
+    onError: (error) => {
+      console.error("Error fetching weekly attendance:", error);
+    },
+  });
+
+  const { data: dailyTrendsData, isLoading: dailyTrendsLoading, isError: dailyTrendsError } = useQuery({
+    queryKey: ['dailyAttendanceTrends', selectedDailyTrendTrack],
+    queryFn: () => getAttendanceTrends(selectedDailyTrendTrack === "all" ? null : parseInt(selectedDailyTrendTrack)),
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    onSuccess: (data) => {
+      console.log('Daily Trends Data Success:', data);
+      console.log('Daily Trends:', data.daily_trends);
+    },
+    onError: (error) => {
+      console.error("Error fetching daily trends:", error);
+    },
+  });
+
+  const { data: weeklyTrendsData, isLoading: weeklyTrendsLoading, isError: weeklyTrendsError } = useQuery({
+    queryKey: ['weeklyAttendanceTrends', selectedWeeklyTrendTrack],
+    queryFn: () => getAttendanceTrends(selectedWeeklyTrendTrack === "all" ? null : parseInt(selectedWeeklyTrendTrack)),
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    onSuccess: (data) => {
+      console.log('Weekly Trends Data Success:', data);
+      console.log('Weekly Trends:', data.weekly_trends);
+    },
+    onError: (error) => {
+      console.error("Error fetching weekly trends:", error);
+    },
+  });
+
+  const { data: scheduledClassesData, isLoading: scheduledClassesLoading, isError: scheduledClassesError, error: scheduledClassesErrorData } = useQuery({
+    queryKey: ['scheduledClasses', selectedTrack],
+    queryFn: () => getScheduledClasses(parseInt(selectedTrack)),
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    enabled: Boolean(selectedTrack) && !isNaN(parseInt(selectedTrack)),
+    onSuccess: (data) => {
+      console.log('Fetched Scheduled Classes Data:', data);
+    },
+    onError: (error) => {
+      console.error("Error fetching scheduled classes:", error);
+    },
+  });
+
+  const { data: weeklyAttendanceBreakdown, isLoading: weeklyAttendanceBreakdownLoading, isError: weeklyAttendanceBreakdownError } = useQuery({
+    queryKey: ['weeklyAttendanceBreakdown'],
+    queryFn: get_weekly_attendance_by_track,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    onSuccess: (data) => {
+      console.log('Weekly Attendance Breakdown Data:', data);
+    },
+    onError: (error) => {
+      console.error("Error fetching weekly attendance breakdown:", error);
+    },
+  });
+
+
+  useEffect(() => {
+    if (weeklyAttendanceBreakdown) {
+      console.log('Weekly Attendance Breakdown Data:', weeklyAttendanceBreakdown);
+
+      // Create an array of all days from Saturday to Friday
+      const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+
+      // Transform the data to include all days
+      const transformedData = days.map(day => {
+        const dayData = weeklyAttendanceBreakdown[day] || {};
+        const trackData = dayData[weeklyBreakdownTrack] || dayData['All tracks'] || {};
+        const isFreeDay = trackData.status === 'Free Day';
+
+        return {
+          name: day,
+          attendance: isFreeDay ? null : (trackData.present_percent || 0),
+          isFreeDay,
+          absent: isFreeDay ? null : (trackData.absent_percent || 0)
+        };
+      });
+
+      console.log('Transformed Data:', transformedData);
+      setWeeklyBreakdown(transformedData);
+    }
+  }, [weeklyAttendanceBreakdown, weeklyBreakdownTrack]);
+
+  useEffect(() => {
+    if (dailyTrendsData) {
+      console.log('Raw Daily Trends Data in useEffect:', dailyTrendsData);
+
+      const currentDate = new Date();
+      const sevenDaysAgo = new Date();
+      sevenDaysAgo.setDate(currentDate.getDate() - 7);
+
+      console.log('Date Range:', {
+        currentDate,
+        sevenDaysAgo
+      });
+
+      // Get total students for percentage calculation
+      const totalStudents = todayAttendance?.total_students || 0;
+
+      // Transform daily trends into percentages
+      const dailyFiltered = dailyTrendsData.daily_trends
+        .filter((dayData) => {
+          const dayDate = new Date(dayData.date);
+          return dayDate >= sevenDaysAgo && dayDate <= currentDate;
+        })
+        .map(dayData => ({
+          date: dayData.date,
+          attendance_percentage: totalStudents > 0 ? Math.round((dayData.attended / totalStudents) * 100) : 0
+        }));
+
+      console.log('Transformed Daily Data:', dailyFiltered);
+      setDailyTrends(dailyFiltered);
+    }
+  }, [dailyTrendsData, todayAttendance]);
+
+  useEffect(() => {
+    if (weeklyTrendsData) {
+      const currentDate = new Date();
+      const fourWeeksAgo = new Date();
+      fourWeeksAgo.setDate(currentDate.getDate() - 28);
+
+      // Get total students for percentage calculation
+      const totalStudents = todayAttendance?.total_students || 0;
+
+      // Transform weekly trends into percentages
+      const weeklyFiltered = weeklyTrendsData.weekly_trends
+        .filter((weekData) => {
+          const weekDate = new Date(weekData.week);
+          return weekDate >= fourWeeksAgo && weekDate <= currentDate;
+        })
+        .map(weekData => ({
+          week: weekData.week,
+          attendance_percentage: totalStudents > 0 ? Math.round((weekData.attended / (totalStudents * 5)) * 100) : 0
+        }));
+
+      console.log('Transformed Weekly Data:', weeklyFiltered);
+      setFilteredData(weeklyFiltered);
+    }
+  }, [weeklyTrendsData, todayAttendance]);
+
+  useEffect(() => {
+    if (selectedTrack === "all") {
+      setScheduledClasses([]);
+      return;
+    }
+    if (scheduledClassesData) {
+      console.log('Raw Scheduled Classes Data:', scheduledClassesData);
+      const todayClasses = scheduledClassesData.filter(cls =>
+        cls.start && dayjs(cls.start).isToday()
+      );
+      console.log('Filtered Today\'s Classes:', todayClasses);
+      setScheduledClasses(todayClasses);
+    } else {
+      setScheduledClasses([]);
+    }
+  }, [scheduledClassesData, selectedTrack]);
 
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        {/* Today's Attendance */}
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 text-center border border-emerald-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -65,10 +273,14 @@ const SupervisorDashboard = () => {
                 <Check className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-700">87.5%</div>
+            <div className="text-2xl font-bold text-emerald-700">
+              {isLoading || todayAttendance === null ? 'Loading...' : `${todayAttendance?.attendance_percentage}%`}
+            </div>
             <CardDescription>Today's Attendance</CardDescription>
           </CardContent>
         </Card>
+
+        {/* Weekly Attendance */}
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -76,10 +288,14 @@ const SupervisorDashboard = () => {
                 <BarChart3 className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-700">92%</div>
+            <div className="text-2xl font-bold text-blue-700">
+              {weeklyLoading || !weeklyAttendance ? 'Loading...' : `${weeklyAttendance?.attendance_percentage}%`}
+            </div>
             <CardDescription>Weekly Average</CardDescription>
           </CardContent>
         </Card>
+
+        {/* permissions Requests */}
         <Card className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 text-center border border-amber-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -87,8 +303,8 @@ const SupervisorDashboard = () => {
                 <AlertTriangle className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-amber-700">5</div>
-            <CardDescription>Verification Requests</CardDescription>
+            <div className="text-2xl font-bold text-amber-700">{permissionsLoading || totalPendingPermissions === null ? 'Loading...' : `${totalPendingPermissions}`}</div>
+            <CardDescription>permission Requests</CardDescription>
           </CardContent>
         </Card>
       </div>
@@ -97,49 +313,77 @@ const SupervisorDashboard = () => {
         <Card>
           <CardContent className="pt-6">
             <div className="flex justify-between items-center mb-4">
-              <CardTitle className="text-lg">Track Attendance</CardTitle>
-              <Link to="/attendance-insights" className="text-sm text-primary flex items-center">
-                View Detailed Analytics <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
+              <CardTitle className="text-lg">Attendance Daily Trends</CardTitle>
+              <Select
+                value={selectedDailyTrendTrack}
+                onValueChange={setSelectedDailyTrendTrack}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Track" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tracks</SelectItem>
+                  {tracksData?.map((track) => (
+                    <SelectItem key={track.id} value={track.id.toString()}>
+                      {track.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={trackAttendance}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={true}
-                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {trackAttendance.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
+                <LineChart data={dailyTrends}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="date" />
+                  <YAxis domain={[60, 100]} />
                   <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} />
-                </PieChart>
+                  <Line
+                    type="monotone"
+                    dataKey="attendance_percentage"
+                    stroke="#3b82f6"
+                    strokeWidth={2}
+                    dot={{ r: 4, fill: "#3b82f6" }}
+                    activeDot={{ r: 6 }}
+                  />
+                </LineChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
         </Card>
-        
+
         <Card>
           <CardContent className="pt-6">
-            <CardTitle className="text-lg mb-4">Attendance Trends</CardTitle>
+            <div className="flex justify-between items-center mb-4">
+              <CardTitle className="text-lg">Attendance Weekly Trends</CardTitle>
+              <Select
+                value={selectedWeeklyTrendTrack}
+                onValueChange={setSelectedWeeklyTrendTrack}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Track" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Tracks</SelectItem>
+                  {tracksData?.map((track) => (
+                    <SelectItem key={track.id} value={track.id.toString()}>
+                      {track.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendsData}>
+                <LineChart data={filteredData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="week" />
                   <YAxis domain={[60, 100]} />
                   <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} />
-                  <Line 
-                    type="monotone" 
-                    dataKey="attendance" 
-                    stroke="#3b82f6" 
+                  <Line
+                    type="monotone"
+                    dataKey="attendance_percentage"
+                    stroke="#3b82f6"
                     strokeWidth={2}
                     dot={{ r: 4, fill: "#3b82f6" }}
                     activeDot={{ r: 6 }}
@@ -154,77 +398,78 @@ const SupervisorDashboard = () => {
       <Card>
         <CardContent className="pt-6">
           <div className="flex justify-between items-center mb-6">
-            <CardTitle className="text-lg">Today's Classes</CardTitle>
+            <div className="flex items-center gap-4">
+              <CardTitle className="text-lg">Today's Classes</CardTitle>
+              <Select
+                value={selectedTrack}
+                onValueChange={setSelectedTrack}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Track" />
+                </SelectTrigger>
+                <SelectContent>
+                  {tracksData?.map((track) => (
+                    <SelectItem key={track.id} value={track.id.toString()}>
+                      {track.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
             <Link to="/schedule" className="text-sm text-primary flex items-center">
               View Full Schedule <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
           <div className="space-y-4">
-            <div className="flex justify-between items-center p-3 rounded-lg border shadow-sm bg-gradient-to-r from-gray-50 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-100 text-emerald-700 p-3 rounded-full">
-                  <Check className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-medium">Web Development</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>09:00 - 11:00</span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground inline-block"></span>
-                    <span>Room 101</span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground inline-block"></span>
-                    <Users className="h-3.5 w-3.5" />
-                    <span>28/30</span>
+            {scheduledClassesLoading ? (
+              <p className="text-sm text-muted-foreground">Loading classes...</p>
+            ) : scheduledClassesError ? (
+              <p className="text-sm text-red-500">Error loading classes.</p>
+            ) : scheduledClasses.length > 0 ? (
+              scheduledClasses.map((cls) => {
+                // Determine class status (completed, active, upcoming)
+                const now = dayjs();
+                const startTime = dayjs(cls.start);
+                const endTime = dayjs(cls.end);
+                let status = "upcoming";
+                if (now.isAfter(endTime)) {
+                  status = "completed";
+                } else if (now.isAfter(startTime) && now.isBefore(endTime)) {
+                  status = "active";
+                }
+
+                return (
+                  <div key={cls.id} className="flex justify-between items-center p-3 rounded-lg border shadow-sm bg-gradient-to-r from-gray-50 to-transparent">
+                    <div className="flex items-center gap-3">
+                      <div className={`${status === 'active' ? 'bg-emerald-100 text-emerald-700' : status === 'upcoming' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'} p-3 rounded-full`}>
+                        {status === 'active' ? <Clock className="h-5 w-5" /> : status === 'upcoming' ? <Clock className="h-5 w-5" /> : <Check className="h-5 w-5" />}
+                      </div>
+                      <div>
+                        <p className="font-medium">{cls.title}</p>
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Clock className="h-3.5 w-3.5" />
+                          <span>{startTime.format('HH:mm')} - {endTime.format('HH:mm')}</span>
+                          {cls.branch?.name && (
+                            <>
+                              <span className="w-1 h-1 rounded-full bg-muted-foreground inline-block"></span>
+                              <span>{cls.branch.name}</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                    <ClassBadge status={status} />
                   </div>
-                </div>
-              </div>
-              <ClassBadge status="completed" />
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg border shadow-sm bg-gradient-to-r from-emerald-50 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="bg-emerald-100 text-emerald-700 p-3 rounded-full">
-                  <Clock className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-medium">Data Structures</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>11:30 - 13:30</span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground inline-block"></span>
-                    <span>Room 203</span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground inline-block"></span>
-                    <Users className="h-3.5 w-3.5" />
-                    <span>25/25</span>
-                  </div>
-                </div>
-              </div>
-              <ClassBadge status="active" />
-            </div>
-            <div className="flex justify-between items-center p-3 rounded-lg border shadow-sm bg-gradient-to-r from-blue-50 to-transparent">
-              <div className="flex items-center gap-3">
-                <div className="bg-blue-100 text-blue-700 p-3 rounded-full">
-                  <Clock className="h-5 w-5" />
-                </div>
-                <div>
-                  <p className="font-medium">Database Systems</p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>14:00 - 16:00</span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground inline-block"></span>
-                    <span>Room 102</span>
-                    <span className="w-1 h-1 rounded-full bg-muted-foreground inline-block"></span>
-                    <Users className="h-3.5 w-3.5" />
-                    <span>22/25</span>
-                  </div>
-                </div>
-              </div>
-              <ClassBadge status="upcoming" />
-            </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground">No classes scheduled for today for this track.</p>
+            )}
           </div>
         </CardContent>
       </Card>
 
-      <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/30">
+      {/* <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/30">
         <CardContent className="pt-6">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2">
@@ -262,29 +507,98 @@ const SupervisorDashboard = () => {
             ))}
           </div>
         </CardContent>
-      </Card>
+      </Card> */}
 
       <Card>
         <CardContent className="pt-6">
-          <CardTitle className="text-lg mb-4">Weekly Attendance Report</CardTitle>
+          <div className="flex items-center gap-4">
+            <CardTitle className="text-lg mb-4">Weekly Attendance Report</CardTitle>
+            <div className="flex justify-between items-center mb-4">
+              <Select
+                value={weeklyBreakdownTrack}
+                onValueChange={setWeeklyBreakdownTrack}
+              >
+                <SelectTrigger className="w-[200px]">
+                  <SelectValue placeholder="Select Track" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All tracks">All Tracks</SelectItem>
+                  {tracksData?.map((track) => (
+                    <SelectItem key={track.id} value={track.name}>
+                      {track.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={attendanceData}>
+              <BarChart data={weeklyBreakdown}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" />
-                <YAxis />
-                <Tooltip formatter={(value) => [`${value}%`]} />
+                <YAxis domain={[0, 100]} />
+                <Tooltip
+                  formatter={(value, name, props) => {
+                    if (props?.payload?.isFreeDay) {
+                      return ['Free Day', 'Status'];
+                    }
+                    if (name === 'Present') {
+                      return [`${value}%`, 'Present'];
+                    }
+                    return [`${value}%`, 'Absent'];
+                  }}
+                />
                 <Legend />
-                <Bar dataKey="attendance" name="Present %" fill="#10b981" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="absence" name="Absent %" fill="#f87171" radius={[4, 4, 0, 0]} />
+                <Bar
+                  dataKey="attendance"
+                  name="Present"
+                  fill="#10b981"
+                  radius={[4, 4, 0, 0]}
+                  label={({ x, y, width, height, value, payload }) => {
+                    if (!payload) return null;
+                    if (payload.isFreeDay) {
+                      return (
+                        <text
+                          x={x + width / 2}
+                          y={y + height / 2}
+                          fill="#6b7280"
+                          textAnchor="middle"
+                          dominantBaseline="middle"
+                        >
+                          Free Day
+                        </text>
+                      );
+                    }
+                    if (value) {
+                      return (
+                        <text
+                          x={x + width / 2}
+                          y={y - 5}
+                          fill="#374151"
+                          textAnchor="middle"
+                        >
+                          {`${value}%`}
+                        </text>
+                      );
+                    }
+                    return null;
+                  }}
+                />
+                <Bar
+                  dataKey="absent"
+                  name="Absent"
+                  fill="#ef4444"
+                  radius={[4, 4, 0, 0]}
+                />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
+      <div>
+        {/* <Card>
           <CardContent className="pt-6">
             <CardTitle className="text-lg mb-4">Insights</CardTitle>
             <div className="space-y-4">
@@ -320,45 +634,15 @@ const SupervisorDashboard = () => {
               </Link>
             </div>
           </CardContent>
-        </Card>
-              {/* Attendance Insights and Recent Absences */}
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <RecentAbsences 
-                  absences={recentAbsences}
-                  onViewAll={() => navigate("/attendance-reports")}
-                />
-              </div>
-        <Card>
-          <CardContent className="pt-6">
-            <CardTitle className="text-lg mb-4">Quick Actions</CardTitle>
-            <div className="grid grid-cols-2 gap-3">
-              <Link to="/schedule">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-blue-50 to-blue-100/30 hover:bg-blue-100/50 border-blue-200">
-                  <Calendar className="h-6 w-6 text-blue-600" />
-                  <span>View Schedule</span>
-                </Button>
-              </Link>
-              <Link to="/attendance-insights">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-emerald-50 to-emerald-100/30 hover:bg-emerald-100/50 border-emerald-200">
-                  <BarChart3 className="h-6 w-6 text-emerald-600" />
-                  <span>Attendance Analytics</span>
-                </Button>
-              </Link>
-              <Link to="/student-verification">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-amber-50 to-amber-100/30 hover:bg-amber-100/50 border-amber-200">
-                  <AlertTriangle className="h-6 w-6 text-amber-600" />
-                  <span>Verification Requests</span>
-                </Button>
-              </Link>
-              <Link to="/announcements">
-                <Button variant="outline" className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-gradient-to-br from-purple-50 to-purple-100/30 hover:bg-purple-100/50 border-purple-200">
-                  <BellRing className="h-6 w-6 text-purple-600" />
-                  <span>Create Announcement</span>
-                </Button>
-              </Link>
-            </div>
-          </CardContent>
-        </Card>
+        </Card> */}
+        {/* Attendance Insights and Recent Absences */}
+        <div>
+          <RecentAbsences
+            absences={recentAbsences}
+            onViewAll={() => navigate("/attendance-reports")}
+          />
+        </div>
+
       </div>
     </div>
   );
@@ -373,7 +657,7 @@ const ClassBadge = ({ status }) => {
       </div>
     );
   }
-  
+
   if (status === "upcoming") {
     return (
       <div className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
@@ -381,7 +665,7 @@ const ClassBadge = ({ status }) => {
       </div>
     );
   }
-  
+
   return (
     <div className="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600">
       <Check className="h-3 w-3 mr-1" />
@@ -390,29 +674,29 @@ const ClassBadge = ({ status }) => {
   );
 };
 
-const RequestBadge = ({ status }) => {
-  if (status === "pending") {
-    return (
-      <div className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-        Pending
-      </div>
-    );
-  }
-  
-  if (status === "approved") {
-    return (
-      <div className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-        <Check className="h-3 w-3 mr-1" />
-        Approved
-      </div>
-    );
-  }
-  
-  return (
-    <div className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
-        Declined
-    </div>
-  );
-};
+// const RequestBadge = ({ status }) => {
+//   if (status === "pending") {
+//     return (
+//       <div className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+//         Pending
+//       </div>
+//     );
+//   }
+
+//   if (status === "approved") {
+//     return (
+//       <div className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
+//         <Check className="h-3 w-3 mr-1" />
+//         Approved
+//       </div>
+//     );
+//   }
+
+//   return (
+//     <div className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
+//       Declined
+//     </div>
+//   );
+// };
 
 export default SupervisorDashboard;

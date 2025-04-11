@@ -107,22 +107,22 @@ function AttendanceStatusTable({schedules, selectedTrackId}) {
           </tr>
         </thead>
         <tbody>
-          {schedules.length > 0 ? (
-            schedules.map((schedule, index) => (
+          {schedules.data.length > 0 ? (
+            schedules.data.map((schedule, index) => (
               <Fragment key={index}>
                 <tr className='border-b'>
                   <td className="py-3 px-4">
                     <div className='flex items-center gap-2'>
                       <Calendar className='text-muted-foreground' />
-                      <div><p className='font-medium'>{schedule.created_at}</p></div>
+                      <div><p className='font-medium'>{schedule?.created_at}</p></div>
                     </div>
                   </td>
                   <td className="py-3 px-4">
                     {formatTime(schedule.start_time)} / {formatTime(schedule.end_time)}
                   </td>
-                  <td className="py-3 px-4">{schedule.track.name}</td>
-                  <td className="py-3 px-4">{schedule.sessions.join(" - ")}</td>
-                  <td className="py-3 px-4">{schedule.attended_out_of_total.attended} / {schedule.attended_out_of_total.total}</td>
+                  <td className="py-3 px-4">{schedule?.track.name}</td>
+                  <td className="py-3 px-4">{schedule?.sessions.join(" - ")}</td>
+                  <td className="py-3 px-4">{schedule?.attended_out_of_total.attended} / {schedule.attended_out_of_total.total}</td>
                   <td className="py-3 px-4 text-right">
                     <Button
                       variant="ghost"
