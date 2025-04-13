@@ -23,7 +23,7 @@ export const getTodaysAttendancePercentage = async (): Promise<{
 }> => {
   try {
     const response = await axiosBackendInstance.get('attendance/attendance-percentage/today');
-    console.log("today",response.data);
+    // console.log("today",response.data);
     
     return response.data;
   } catch (error) {
@@ -42,7 +42,7 @@ export const getWeeklyAttendancePercentage = async (): Promise<{
 }> => {
   try {
     const response = await axiosBackendInstance.get('attendance/attendance-percentage/weekly');
-    console.log("weekly",response.data);
+    // console.log("weekly",response.data);
     
     return response.data;
   } catch (error) {
@@ -62,7 +62,7 @@ export const getAttendanceTrends = async (trackId?: number): Promise<{
     if (trackId) params.track_id = trackId;
 
     const response = await axiosBackendInstance.get('attendance/attendance-trends', { params });
-    console.log('Attendance Trends Response:', response.data);
+    // console.log('Attendance Trends Response:', response.data);
     
     return {
       daily_trends: response.data.daily_trends || [],
@@ -98,3 +98,20 @@ export const get_weekly_attendance_by_track = async () => {
     throw error;
   }
 };
+export const getRecentAbsentees = async (trackId?: number) => {
+  try {
+    const params: any = {};
+    if (trackId) {
+      params.track_id = trackId;
+    } else {
+      console.log('Fetching recent absences for all tracks');
+    }
+    
+    const response = await axiosBackendInstance.get('attendance/recent-absences/', { params });
+    // console.log('Recent absences response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching recent absentees:', error);
+    throw error;
+  }
+}
