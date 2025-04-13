@@ -19,43 +19,15 @@ import {
   Cell
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
-import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends, getScheduledClasses, get_weekly_attendance_by_track } from '@/api/attendance';
+import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends, getScheduledClasses, get_weekly_attendance_by_track, getRecentAbsentees } from '@/api/attendance';
 import { usePermissions } from '@/context/PermissionsContext';
-import RecentAbsences from '../../components/dashboard/RecentAbsences';
+import RecentAbsences from '@/components/dashboard/RecentAbsences';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { axiosBackendInstance } from '@/api/config';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
 
 dayjs.extend(isToday);
-
-const attendanceData = [
-  { name: "Mon", attendance: 85, absence: 15 },
-  { name: "Tue", attendance: 88, absence: 12 },
-  { name: "Wed", attendance: 70, absence: 30 },
-  { name: "Thu", attendance: 95, absence: 5 },
-  { name: "Fri", attendance: 80, absence: 20 },
-];
-
-
-// const verificationRequests = [
-//   { id: 1, student: "Alex Morgan", type: "Medical Leave", submitted: "2 hours ago", status: "pending" },
-//   { id: 2, student: "Jamie Smith", type: "Attendance Correction", submitted: "1 day ago", status: "pending" },
-//   { id: 3, student: "Taylor Johnson", type: "Late Arrival", submitted: "3 days ago", status: "approved" },
-// ];
-
-// const trackAttendance = [
-//   { name: "Web Dev", value: 95 },
-//   { name: "Mobile", value: 88 },
-//   { name: "Data Science", value: 78 },
-// ];
-
-const recentAbsences = [
-  { id: 1, student: "Alice Johnson", date: "Jun 15, 2023", reason: "Sick leave", status: "excused" },
-  { id: 2, student: "Bob Smith", date: "Jun 14, 2023", reason: "Family event", status: "pending" },
-  { id: 3, student: "Charlie Brown", date: "Jun 12, 2023", reason: "N/A", status: "unexcused" },
-  { id: 4, student: "Diana Ross", date: "Jun 9, 2023", reason: "Medical appointment", status: "excused" },
-];
 
 const SupervisorDashboard = () => {
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b'];
@@ -64,17 +36,18 @@ const SupervisorDashboard = () => {
   const [selectedTrack, setSelectedTrack] = useState("1");
   const [selectedDailyTrendTrack, setSelectedDailyTrendTrack] = useState("all");
   const [selectedWeeklyTrendTrack, setSelectedWeeklyTrendTrack] = useState("all");
+  const [selectedRecentAbsencesTrack, setSelectedRecentAbsencesTrack] = useState("all");
   const { totalPendingPermissions, isLoading: permissionsLoading, error } = usePermissions();
   const [scheduledClasses, setScheduledClasses] = useState([]);
   const [weeklyBreakdown, setWeeklyBreakdown] = useState([]);
   const [weeklyBreakdownTrack, setWeeklyBreakdownTrack] = useState("All tracks");
+  const [recentAbsences, setRecentAbsences] = useState([]);
 
-  // Fetch tracks
   const { data: tracksData } = useQuery({
     queryKey: ['tracks'],
     queryFn: async () => {
       const response = await axiosBackendInstance.get('attendance/tracks/');
-      return response.data.results;
+      return response.data;
     },
     onSuccess: (data) => {
       if (data && data.length > 0) {
@@ -161,15 +134,24 @@ const SupervisorDashboard = () => {
     },
   });
 
+  const { data: recentAbsencesData, isLoading: recentAbsencesLoading, isError: recentAbsencesError } = useQuery({
+    queryKey: ['recentAbsences', selectedRecentAbsencesTrack],
+    queryFn: () => getRecentAbsentees(selectedRecentAbsencesTrack === "all" ? undefined : parseInt(selectedRecentAbsencesTrack)),
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    onSuccess: (data) => {
+      console.log('Recent Absences Data:', data);
+    },
+    onError: (error) => {
+      console.error("Error fetching recent absences:", error);
+    },
+  });
+
 
   useEffect(() => {
     if (weeklyAttendanceBreakdown) {
-      console.log('Weekly Attendance Breakdown Data:', weeklyAttendanceBreakdown);
-
-      // Create an array of all days from Saturday to Friday
+      // console.log('Weekly Attendance Breakdown Data:', weeklyAttendanceBreakdown);
       const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-
-      // Transform the data to include all days
       const transformedData = days.map(day => {
         const dayData = weeklyAttendanceBreakdown[day] || {};
         const trackData = dayData[weeklyBreakdownTrack] || dayData['All tracks'] || {};
@@ -183,25 +165,45 @@ const SupervisorDashboard = () => {
         };
       });
 
-      console.log('Transformed Data:', transformedData);
+      // console.log('Transformed Data:', transformedData);
       setWeeklyBreakdown(transformedData);
     }
   }, [weeklyAttendanceBreakdown, weeklyBreakdownTrack]);
 
   useEffect(() => {
+    if (recentAbsencesData) {
+      // console.log('Recent Absences Data:', recentAbsencesData);
+            const formattedAbsences = recentAbsencesData.map(absence => ({
+        id: Math.random().toString(36).substring(2, 9), 
+        student: absence.student_name,
+        date: new Date(absence.date).toLocaleDateString('en-US', { 
+          month: 'short', 
+          day: 'numeric', 
+          year: 'numeric' 
+        }),
+        reason: absence.reason || 'N/A',
+        status: absence.status
+      }));
+      
+      // console.log('Formatted Absences:', formattedAbsences);
+      setRecentAbsences(formattedAbsences);
+    }
+  }, [recentAbsencesData]);
+  
+
+  useEffect(() => {
     if (dailyTrendsData) {
-      console.log('Raw Daily Trends Data in useEffect:', dailyTrendsData);
+      // console.log('Raw Daily Trends Data in useEffect:', dailyTrendsData);
 
       const currentDate = new Date();
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(currentDate.getDate() - 7);
 
-      console.log('Date Range:', {
-        currentDate,
-        sevenDaysAgo
-      });
+      // console.log('Date Range:', {
+      //   currentDate,
+      //   sevenDaysAgo
+      // });
 
-      // Get total students for percentage calculation
       const totalStudents = todayAttendance?.total_students || 0;
 
       // Transform daily trends into percentages
@@ -215,7 +217,7 @@ const SupervisorDashboard = () => {
           attendance_percentage: totalStudents > 0 ? Math.round((dayData.attended / totalStudents) * 100) : 0
         }));
 
-      console.log('Transformed Daily Data:', dailyFiltered);
+      // console.log('Transformed Daily Data:', dailyFiltered);
       setDailyTrends(dailyFiltered);
     }
   }, [dailyTrendsData, todayAttendance]);
@@ -225,8 +227,6 @@ const SupervisorDashboard = () => {
       const currentDate = new Date();
       const fourWeeksAgo = new Date();
       fourWeeksAgo.setDate(currentDate.getDate() - 28);
-
-      // Get total students for percentage calculation
       const totalStudents = todayAttendance?.total_students || 0;
 
       // Transform weekly trends into percentages
@@ -240,7 +240,7 @@ const SupervisorDashboard = () => {
           attendance_percentage: totalStudents > 0 ? Math.round((weekData.attended / (totalStudents * 5)) * 100) : 0
         }));
 
-      console.log('Transformed Weekly Data:', weeklyFiltered);
+      // console.log('Transformed Weekly Data:', weeklyFiltered);
       setFilteredData(weeklyFiltered);
     }
   }, [weeklyTrendsData, todayAttendance]);
@@ -251,11 +251,11 @@ const SupervisorDashboard = () => {
       return;
     }
     if (scheduledClassesData) {
-      console.log('Raw Scheduled Classes Data:', scheduledClassesData);
+      // console.log('Raw Scheduled Classes Data:', scheduledClassesData);
       const todayClasses = scheduledClassesData.filter(cls =>
         cls.start && dayjs(cls.start).isToday()
       );
-      console.log('Filtered Today\'s Classes:', todayClasses);
+      // console.log('Filtered Today\'s Classes:', todayClasses);
       setScheduledClasses(todayClasses);
     } else {
       setScheduledClasses([]);
@@ -597,53 +597,58 @@ const SupervisorDashboard = () => {
         </CardContent>
       </Card>
 
-      <div>
-        {/* <Card>
-          <CardContent className="pt-6">
-            <CardTitle className="text-lg mb-4">Insights</CardTitle>
-            <div className="space-y-4">
-              <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 shadow-sm">
-                <div className="flex items-center gap-2 text-blue-700 font-medium mb-1">
-                  <BarChart3 className="h-4 w-4" />
-                  Attendance Insight
-                </div>
-                <p className="text-sm text-blue-600">
-                  Wednesday shows a significant drop in attendance. Consider investigating potential scheduling conflicts.
-                </p>
+      {/* <Card>
+        <CardContent className="pt-6">
+          <CardTitle className="text-lg mb-4">Insights</CardTitle>
+          <div className="space-y-4">
+            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 shadow-sm">
+              <div className="flex items-center gap-2 text-blue-700 font-medium mb-1">
+                <BarChart3 className="h-4 w-4" />
+                Attendance Insight
               </div>
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 shadow-sm">
-                <div className="flex items-center gap-2 text-amber-700 font-medium mb-1">
-                  <BarChart3 className="h-4 w-4" />
-                  Recommendation
-                </div>
-                <p className="text-sm text-amber-600">
-                  Five students have missed multiple classes this week. Consider reaching out to them directly.
-                </p>
-              </div>
-              <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 shadow-sm">
-                <div className="flex items-center gap-2 text-emerald-700 font-medium mb-1">
-                  <BellRing className="h-4 w-4" />
-                  Improvement
-                </div>
-                <p className="text-sm text-emerald-600">
-                  Overall attendance has improved by 7% compared to last month. Keep up the good work!
-                </p>
-              </div>
-              <Link to="/attendance-insights" className="text-sm text-primary flex items-center">
-                View More Insights <ArrowRight className="h-4 w-4 ml-1" />
-              </Link>
+              <p className="text-sm text-blue-600">
+                Wednesday shows a significant drop in attendance. Consider investigating potential scheduling conflicts.
+              </p>
             </div>
-          </CardContent>
-        </Card> */}
-        {/* Attendance Insights and Recent Absences */}
-        <div>
-          <RecentAbsences
-            absences={recentAbsences}
-            onViewAll={() => navigate("/attendance-reports")}
-          />
-        </div>
+            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 shadow-sm">
+              <div className="flex items-center gap-2 text-amber-700 font-medium mb-1">
+                <BarChart3 className="h-4 w-4" />
+                Recommendation
+              </div>
+              <p className="text-sm text-amber-600">
+                Five students have missed multiple classes this week. Consider reaching out to them directly.
+              </p>
+            </div>
+            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 shadow-sm">
+              <div className="flex items-center gap-2 text-emerald-700 font-medium mb-1">
+                <BellRing className="h-4 w-4" />
+                Improvement
+              </div>
+              <p className="text-sm text-emerald-600">
+                Overall attendance has improved by 7% compared to last month. Keep up the good work!
+              </p>
+            </div>
+            <Link to="/attendance-insights" className="text-sm text-primary flex items-center">
+              View More Insights <ArrowRight className="h-4 w-4 ml-1" />
+            </Link>
+          </div>
+        </CardContent>
+      </Card> */}
+      
+      {/* Attendance Insights and Recent Absences */}
+      {recentAbsencesLoading ? (
+        <div className="text-center py-4">Loading recent absences...</div>
+      ) : recentAbsencesError ? (
+        <div className="text-center py-4 text-red-500">Error loading recent absences</div>
+      ) : (
+        <RecentAbsences
+          absences={recentAbsences}
+          selectedTrack={selectedRecentAbsencesTrack}
+          onTrackChange={setSelectedRecentAbsencesTrack}
+          tracks={tracksData}
+        />
+      )}
 
-      </div>
     </div>
   );
 };
