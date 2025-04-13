@@ -163,7 +163,6 @@ const ReportLostFound = () => {
         subtitle="Report a lost item or an item you found"
         icon={<Flag />}
       />
-
       <div className="max-w-3xl mx-auto">
         <Card className="p-6">
           <form onSubmit={handleSubmit} className="space-y-6">
