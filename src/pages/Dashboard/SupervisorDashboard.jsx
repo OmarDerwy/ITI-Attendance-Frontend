@@ -74,7 +74,7 @@ const SupervisorDashboard = () => {
     queryKey: ['tracks'],
     queryFn: async () => {
       const response = await axiosBackendInstance.get('attendance/tracks/');
-      return response.data.results;
+      return response.data;
     },
     onSuccess: (data) => {
       if (data && data.length > 0) {
