@@ -62,7 +62,7 @@ const LostFound = () => {
 
   // Add default image URL constant
   const DEFAULT_IMAGE_URL =
-    "https://media.discordapp.net/attachments/1347736304397582456/1358295324820770836/ChatGPT_Image_Apr_6_2025_06_18_28_AM.png?ex=67f35299&is=67f20119&hm=1b43ebbc3ccf0a978e90e97c8b3eb275ec2614aeffeb6364a3fc3763692788d4&=&format=webp&quality=lossless&width=960&height=960";
+    "https://res.cloudinary.com/dha2yp5tj/image/upload/v1743913360/annonymous_photo_ny7plk.png";
 
   // Pagination states
   const [lostItemsPage, setLostItemsPage] = useState(1);
@@ -133,7 +133,7 @@ const LostFound = () => {
     queryKey: ["lostItems", lostItemsPage, debouncedSearch],
     queryFn: () => fetchLostItems(lostItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "lost" || lostItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 1 * 60 * 1000, // 15 minutes
   });
 
   const {
@@ -144,7 +144,7 @@ const LostFound = () => {
     queryKey: ["foundItems", foundItemsPage, debouncedSearch],
     queryFn: () => fetchFoundItems(foundItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "found" || foundItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 1 * 60 * 1000, // 15 minutes
   });
 
   const {
@@ -155,7 +155,7 @@ const LostFound = () => {
     queryKey: ["matchedItems", matchedItemsPage, debouncedSearch],
     queryFn: () => fetchMatchedItems(matchedItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "matched" || matchedItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 1 * 60 * 1000, // 15 minutes
   });
 
   // Combined loading and error states

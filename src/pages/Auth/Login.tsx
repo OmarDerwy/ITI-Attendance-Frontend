@@ -64,7 +64,11 @@ const Login = () => {
       user.setUserId(userResponse.data.id);
       localStorage.setItem("userId", userData.id.toString());
       console.log("User ID stored in localStorage:", userData.id);
-      navigate("/");
+      if (userRole === "student") {
+        navigate("/student-dashboard");
+      } else {
+        navigate("/");
+      }
     } catch (error) {
       console.error("Login failed:", error);
       // Handle login errors here - show error message to user

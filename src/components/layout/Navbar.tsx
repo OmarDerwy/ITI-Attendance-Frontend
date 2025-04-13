@@ -69,14 +69,14 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
       // Always sort immediately after fetching
       const sortedData = sortNotificationsByDate(data);
       setNotifications(sortedData);
-      console.log("Fetched and sorted notifications:", sortedData);
+      // console.log("Fetched and sorted notifications:", sortedData);
     } catch (error) {
-      console.error("Failed to fetch notifications:", error);
+      // console.error("Failed to fetch notifications:", error);
     }
   };
 
   useEffect(() => {
-    fetchNotifications();
+      fetchNotifications();
   }, []);
 
   // Handle WebSocket messages
@@ -84,7 +84,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     if (lastMessage !== null) {
       try {
         const data = JSON.parse(lastMessage.data);
-        console.log("WebSocket message received:", data.body);
+        // console.log("WebSocket message received:", data.body);
 
         const newNotification = {
           id: Date.now(),
@@ -137,7 +137,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
         return notification;
       })
     } catch (error) {
-      console.error("Failed to mark notification as read:", error);
+      // console.error("Failed to mark notification as read:", error);
     }
   };
 

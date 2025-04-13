@@ -120,7 +120,20 @@ const Sidebar = () => {
     roles: Array<"student" | "supervisor" | "admin">;
   }> = [
     // Student, Supervisor, Admin
-    { icon: Home, label: "Dashboard", to: "/", roles: ["student", "supervisor", "admin"] },
+    // { icon: Home, label: "Dashboard", to: "/", roles: ["student", "supervisor", "admin"] },
+    {
+      icon: Home,
+      label: "Dashboard",
+      to: "/student-dashboard",
+      roles: ["student"],
+    },
+    // {
+    //   icon: CheckSquare,
+    //   label: "Attendance history",
+    //   to: "/previous-courses",
+    //   roles: ["student"],
+    // },
+    { icon: Home, label: "Dashboard", to: "/", roles: [ "supervisor", "admin"] },
 
     {
       icon: CheckSquare,
