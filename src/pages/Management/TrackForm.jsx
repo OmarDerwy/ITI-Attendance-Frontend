@@ -143,9 +143,9 @@ const TrackFormPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!name || !intake || !supervisor || !branchId || !startDate) {
+    if (!name || !intake || !supervisor || !branchId || !startDate || !description) {
       toast({
-        title: "Validation Error",
+        title: "Missing Fields",
         description: "All fields are required.",
         variant: "destructive",
       });
@@ -186,11 +186,11 @@ const TrackFormPage = () => {
       navigate("/tracks");
     } catch (error) {
       console.error("Error saving track:", error);
-      toast({
-        title: "Error",
-        description: "Failed to save track. Please try again later.",
-        variant: "destructive",
-      });
+        toast({
+          title: "Error",
+          description: "Failed to save track. Please try again later.",
+          variant: "destructive",
+        });
     }
   };
 
