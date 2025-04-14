@@ -539,7 +539,7 @@ const Schedule = () => {
       >
         {currentView !== "dayGridMonth" && (
           <div
-            className={`flex space-x-1 absolute right-1 top-1 items-center text-xs italic font-bold ${branchColor}`}
+            className={`flex space-x-1 absolute right-1 bottom-1 items-center text-xs italic font-bold ${branchColor}`}
           >
             {isOnline ? (
               <>
@@ -561,7 +561,7 @@ const Schedule = () => {
           </div>
         </div>
         {!isPastEvent && (
-          <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
+          <div className="flex space-x-1 absolute right-1 top-1 items-center">
             <button
               onClick={(e) => {
                 e.preventDefault(); // Ensure event doesn't bubble
@@ -585,7 +585,7 @@ const Schedule = () => {
               className={`${textColor} hover:opacity-80`}
               title="Delete"
             >
-              <X size={13} />
+              <X size={16} />
             </button>
           </div>
         )}
