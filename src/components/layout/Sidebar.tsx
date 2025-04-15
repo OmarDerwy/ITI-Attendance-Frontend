@@ -222,7 +222,7 @@ const Sidebar = () => {
           {expanded && (
             <Link to="/" className="flex items-center gap-x-2">
               <div className="mb-2 flex items-center justify-center w-8 h-9 rounded-md  text-primary-foreground font-bold">
-                <img src="/public/images/iti-logo.png" alt="logo" />
+                <img src="/images/iti-logo.png" alt="logo" />
               </div>
               <span className="text-lg font-semibold">TrackIt</span>
             </Link>
