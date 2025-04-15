@@ -20,6 +20,7 @@ const StudentVerification = () => {
   const { userRole } = useUser();
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedTrack, setSelectedTrack] = useState<string>("");
   const [selectedStudent, setSelectedStudent] = useState<number | null>(null);
   const [isAddStudentModalOpen, setIsAddStudentModalOpen] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -30,19 +31,31 @@ const StudentVerification = () => {
   // Real student data from the server using tanstack query
   const fetchStudents = async () => {
     const response = await axiosBackendInstance.get('/accounts/students/', {
-      params: { search: searchQuery }
+      params: { search: searchQuery, track: selectedTrack }
     });
     return response.data as ApiResponse;
   };
 
+  const fetchTracks = async () => {
+    const response = await axiosBackendInstance.get('/attendance/tracks/');
+    return response.data;
+  }
+
+  // Load supervisor tracks as soon as page loads
+  const { data: tracksData } = useQuery({
+    queryKey: ["tracks"],
+    queryFn: fetchTracks,
+    refetchOnWindowFocus: false,
+  });
+
   const { data: studentsData, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["students", searchQuery],
+    queryKey: ["students", searchQuery, selectedTrack],
     queryFn: fetchStudents,
     refetchOnWindowFocus: false,
   });
 
-  // Initialize pagination data when studentsData is loaded
-  useEffect(() => {
+  
+  useEffect(() => { // Initialize pagination data when studentsData is loaded
     if (studentsData) {
       setStudentEntries(studentsData.results);
       setNextPageUrl(studentsData.next);
@@ -108,13 +121,13 @@ const StudentVerification = () => {
     return user.email;
   };
 
-  const handleVerify = (studentId: number) => {
-    toast({
-      title: "Student Verified",
-      description: "The student has been successfully verified.",
-    });
-    setSelectedStudent(null);
-  };
+  // const handleVerify = (studentId: number) => {
+  //   toast({
+  //     title: "Student Verified",
+  //     description: "The student has been successfully verified.",
+  //   });
+  //   setSelectedStudent(null);
+  // };
 
   const handleRevoke = async (studentId: number) => {
     try {
@@ -194,6 +207,9 @@ const StudentVerification = () => {
           <SearchToolbar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}
+            tracksData={tracksData}
+            onTrackChange={setSelectedTrack}
+            selectedTrack={selectedTrack}
             onAddStudent={() => setIsAddStudentModalOpen(true)}
             onRefresh={handleRefresh}
             isRefreshing={isRefreshing}
