@@ -87,7 +87,10 @@ const Schedule = () => {
 
   // Track if there are modified events
   const modifiedEvents = events.filter((event) => event.isModified);
-
+  let onlineForeground = "rgb(254, 230, 231)"; 
+  let offlineForeground = "hsl(var(--accent-foreground))";
+  let offlineTextClass = "text-primary-foreground";
+  let onlineTextClass = "text-accent-foreground";
   // Effect to set hasUnsavedChanges based on modified events
   useEffect(() => {
     setHasUnsavedChanges(modifiedEvents.length > 0);
@@ -105,19 +108,6 @@ const Schedule = () => {
       },
       [hasUnsavedChanges]
     )
-  );
-
-  // Handle navigation attempts
-  const handleNavigation = useCallback(
-    (path) => {
-      if (hasUnsavedChanges) {
-        setNavigationPath(path);
-        setIsLeaveConfirmOpen(true);
-      } else {
-        navigate(path);
-      }
-    },
-    [hasUnsavedChanges, navigate]
   );
 
   // Override the history's push method
@@ -177,15 +167,9 @@ const Schedule = () => {
         schedule_date: event.schedule_date,
         schedule_id: event.schedule_id,
         branch: event.branch,
-        backgroundColor: event.is_online
-          ? "hsl(var(--accent))"
-          : "hsl(var(--primary))",
-        borderColor: event.is_online
-          ? "hsl(var(--accent))"
-          : "hsl(var(--primary))",
-        textColor: event.is_online
-          ? "hsl(var(--accent-foreground))"
-          : "hsl(var(--primary-foreground))",
+        backgroundColor: event.is_online ? onlineForeground : offlineForeground,
+        borderColor: event.is_online ? onlineForeground : offlineForeground,
+        textColor: event.is_online ? onlineForeground : offlineForeground,
       }));
       setEvents(fetchedEvents);
     } catch (error) {
@@ -196,21 +180,16 @@ const Schedule = () => {
   // Modify handleTrackChange to check for unsaved changes
   const handleTrackChange = (trackId) => {
     if (hasUnsavedChanges) {
-      // Store the track ID that the user wants to switch to
       setPendingTrackId(trackId);
-      // Show confirmation dialog
       setIsLeaveConfirmOpen(true);
     } else {
-      // No unsaved changes, proceed with track change
       applyTrackChange(trackId);
     }
   };
 
-  // New function to actually apply track change
   const applyTrackChange = (trackId) => {
     updateTrackAndBranch(trackId, tracks);
     fetchEvents(trackId);
-    // Reset pending track ID
     setPendingTrackId(null);
   };
 
@@ -254,9 +233,11 @@ const Schedule = () => {
   }, []);
 
   const handleEventSubmit = () => {
-    const startDate = new Date(selectedEvent ? selectedEvent.start : newEvent.start);
+    const startDate = new Date(
+      selectedEvent ? selectedEvent.start : newEvent.start
+    );
     const endDate = new Date(selectedEvent ? selectedEvent.end : newEvent.end);
-  
+
     // Validate that start date equals end date
     if (startDate.toDateString() !== endDate.toDateString()) {
       toast.error("Session duration must be on the same day.");
@@ -271,7 +252,7 @@ const Schedule = () => {
       toast.error("Cannot add sessions to past dates");
       return;
     }
-  
+
     // Validate that the event does not overlap with existing events
     const isOverlapping = events.some((event) => {
       if (selectedEvent && event.id === selectedEvent.id) return false; // Skip the current event in edit mode
@@ -283,12 +264,12 @@ const Schedule = () => {
         (startDate <= eventStart && endDate >= eventEnd) // Fully overlaps
       );
     });
-  
+
     if (isOverlapping) {
       toast.error("This event overlaps with an existing event.");
       return;
     }
-  
+
     // Proceed with adding or updating the event
     if (!selectedEvent) {
       // Add mode
@@ -305,15 +286,9 @@ const Schedule = () => {
         isOnline: newEvent.isOnline,
         trackId: selectedTrack,
         branch: newEvent.branch,
-        backgroundColor: newEvent.isOnline
-          ? "hsl(var(--accent))"
-          : "hsl(var(--primary))",
-        borderColor: newEvent.isOnline
-          ? "hsl(var(--accent))"
-          : "hsl(var(--primary))",
-        textColor: newEvent.isOnline
-          ? "hsl(var(--accent-foreground))"
-          : "hsl(var(--primary-foreground))",
+        backgroundColor: newEvent.isOnline ? onlineForeground : offlineForeground,
+        borderColor: newEvent.isOnline ? onlineForeground : offlineForeground,
+        textColor: newEvent.isOnline ? onlineForeground : offlineForeground,
         isModified: true, // Mark as modified
       };
       setEvents((prev) => [...prev, newEventData]); // Update events state
@@ -336,7 +311,7 @@ const Schedule = () => {
   const handleDeleteEvent = async () => {
     if (eventToDelete) {
       const event = events.find((e) => String(e.id) === String(eventToDelete));
-      
+
       // Check if event is in the past
       if (event && isDateInPast(event.start)) {
         toast.error("Cannot delete sessions from past dates");
@@ -344,7 +319,7 @@ const Schedule = () => {
         setIsDeleteConfirmOpen(false);
         return;
       }
-      
+
       // Continue with the existing delete logic
       if (!event || !event.schedule_id) {
         // If the event is not saved (no schedule_id), remove it locally
@@ -400,27 +375,23 @@ const Schedule = () => {
       [field]: value,
       ...(field === "isOnline"
         ? {
-            backgroundColor: value
-              ? "hsl(var(--accent))"
-              : "hsl(var(--primary))",
-            borderColor: value ? "hsl(var(--accent))" : "hsl(var(--primary))",
-            textColor: value
-              ? "hsl(var(--accent-foreground))"
-              : "hsl(var(--primary-foreground))",
+            backgroundColor: value ? onlineForeground : offlineForeground,
+            borderColor: value ? onlineForeground : offlineForeground,
+            textColor: value ? onlineForeground : offlineForeground,
           }
         : {}),
     }));
   };
   const toggleEventType = (e, eventId) => {
     e.stopPropagation();
-    
+
     // First check if event is in the past
-    const event = events.find(e => String(e.id) === String(eventId));
+    const event = events.find((e) => String(e.id) === String(eventId));
     if (event && isDateInPast(event.start)) {
       toast.error("Cannot modify sessions from past dates");
       return;
     }
-    
+
     setEvents((prev) => {
       const updatedEvents = prev.map((event) => {
         if (String(event.id) === String(eventId)) {
@@ -429,15 +400,9 @@ const Schedule = () => {
           return {
             ...event,
             isOnline,
-            backgroundColor: isOnline
-              ? "hsl(var(--accent))"
-              : "hsl(var(--primary))",
-            borderColor: isOnline
-              ? "hsl(var(--accent))"
-              : "hsl(var(--primary))",
-            textColor: isOnline
-              ? "hsl(var(--accent-foreground))"
-              : "hsl(var(--primary-foreground))",
+            backgroundColor: isOnline ? onlineForeground : offlineForeground,
+            borderColor: isOnline ? onlineForeground : offlineForeground,
+            textColor: isOnline ? onlineForeground : offlineForeground,
             isModified: true,
           };
         }
@@ -516,40 +481,42 @@ const Schedule = () => {
       toast.info("Cannot change branch for past dates");
       return;
     }
-    
+
     setSelectedDay(day);
     setIsBranchModalOpen(true);
   };
   const renderEventContent = (eventInfo) => {
     // Directly use eventInfo's extendedProps to get accurate isOnline state
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
-    const bgColor = isOnline ? "bg-accent" : "bg-primary";
-    const textColor = isOnline
-      ? "text-accent-foreground"
-      : "text-primary-foreground";
+    const textColor = isOnline ? onlineTextClass : offlineTextClass;
     const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
-    const branchColor = isOnline ? "text-gray-700" : "text-gray-300";
-    
+    const branchColor = isOnline ? "text-gray-700" : "text-gray-100";
+
     // Check if event is in the past
     const isPastEvent = isDateInPast(eventInfo.event.start);
 
     return (
       <div
-        className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full ${isPastEvent ? 'opacity-75' : ''}`}
+        className={`flex items-center justify-between p-1 ${textColor} rounded w-full h-full ${
+          isPastEvent ? "opacity-75" : ""
+        }`}
+        style={{ 
+          backgroundColor: isOnline ? onlineForeground : offlineForeground 
+        }}
       >
         {currentView !== "dayGridMonth" && (
           <div
-            className={`flex space-x-1 absolute right-1 top-1 items-center text-xs italic font-bold ${branchColor}`}
+            className={`flex space-x-1 absolute left-1 bottom-1 items-center text-xs italic ${branchColor}`}
           >
             {isOnline ? (
               <>
                 <MapPin size={12} className="mr-1" />
-                <span>Home</span>
+                <span className="text-[12px]">Home</span>
               </>
             ) : (
               <>
                 <MapPin size={12} className="mr-1" />
-                <span>{eventInfo.event.extendedProps.branch?.name}</span>
+                <span className="text-[12px]">{eventInfo.event.extendedProps.branch?.name}</span>
               </>
             )}
           </div>
@@ -561,7 +528,7 @@ const Schedule = () => {
           </div>
         </div>
         {!isPastEvent && (
-          <div className="flex space-x-1 absolute right-1 bottom-1 items-center">
+          <div className="flex space-x-1 absolute right-1 top-1 items-center">
             <button
               onClick={(e) => {
                 e.preventDefault(); // Ensure event doesn't bubble
@@ -585,7 +552,7 @@ const Schedule = () => {
               className={`${textColor} hover:opacity-80`}
               title="Delete"
             >
-              <X size={13} />
+              <X size={16} />
             </button>
           </div>
         )}
@@ -594,17 +561,17 @@ const Schedule = () => {
   };
   const renderDayHeaderContent = (headerInfo) => {
     // Check if day is in the past
-    
+
     return (
       <div className="flex items-center justify-between">
         <span>{headerInfo.text}</span>
-          <button
-            onClick={() => handleDayHeaderClick(headerInfo.date)}
-            className="text-gray-500 hover:text-gray-800 m-3 "
-            title="Select a Custom branch"
-          >
-            <MapPinned size={16} />
-          </button>
+        <button
+          onClick={() => handleDayHeaderClick(headerInfo.date)}
+          className="text-gray-500 hover:text-gray-800 m-3 "
+          title="Select a Custom branch"
+        >
+          <MapPinned size={16} />
+        </button>
       </div>
     );
   };
@@ -642,10 +609,10 @@ const Schedule = () => {
   return (
     <Layout>
       {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading data...</p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading data...</p>
+        </div>
       ) : (
         <>
           <PageTitle
@@ -743,8 +710,8 @@ const Schedule = () => {
                   }
                   if (start.getHours() >= end.getHours()) {
                     return false;
-                  } 
-   
+                  }
+
                   return start.toDateString() === end.toDateString();
                 }}
               />

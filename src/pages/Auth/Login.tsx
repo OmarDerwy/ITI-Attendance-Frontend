@@ -89,7 +89,7 @@ const Login = () => {
         <div className="mb-8 text-center">
           <div className="flex items-center justify-center">
             <div className="flex items-center justify-center w-12 h-12 rounded-xl  text-primary-foreground">
-              <img src="/public/images/iti-logo.png" alt="logo" />
+              <img src="/images/iti-logo.png" alt="logo" />
             </div>
           </div>
           <h1 className="mt-6 text-3xl font-bold tracking-tight">
