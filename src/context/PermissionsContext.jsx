@@ -1,7 +1,6 @@
-import React, { createContext, useContext } from 'react';
+import React, { createContext, useContext, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { getAllPermissions } from '@/api/permissions';
-import { use } from 'react';
 
 const PermissionsContext = createContext(undefined);
 
