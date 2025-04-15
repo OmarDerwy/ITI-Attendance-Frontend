@@ -26,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { axiosBackendInstance } from '@/api/config';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
+import { permission } from 'process';
 
 dayjs.extend(isToday);
 
@@ -59,8 +60,10 @@ const SupervisorDashboard = () => {
   const { data: todayAttendance, isLoading, isError, errorr } = useQuery({
     queryKey: ['todayAttendancePercentage'],
     queryFn: getTodaysAttendancePercentage,
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    staleTime: 5 * 60 * 1000, //the amount of time after fetching during which the data is considered fresh.
+    cacheTime: 10 * 60 * 1000, //How long inactive (unused) data stays in the cache before it’s garbage collected.If the component unmounts, the data stays in memory for this time.
+    refetchInterval: 30000, // React Query will automatically refetch the data and it works regardles the data is stale or not
+    refetchIntervalInBackground: false,
     onError: (errorr) => {
       console.error("Error fetching today's attendance:", errorr);
     },
@@ -71,6 +74,8 @@ const SupervisorDashboard = () => {
     queryFn: getWeeklyAttendancePercentage,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     onSuccess: (data) => {
       console.log('Weekly Attendance Data:', data);
     },
@@ -98,6 +103,8 @@ const SupervisorDashboard = () => {
     queryFn: () => getAttendanceTrends(selectedWeeklyTrendTrack === "all" ? null : parseInt(selectedWeeklyTrendTrack)),
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     onSuccess: (data) => {
       console.log('Weekly Trends Data Success:', data);
       console.log('Weekly Trends:', data.weekly_trends);
@@ -112,6 +119,8 @@ const SupervisorDashboard = () => {
     queryFn: () => getScheduledClasses(parseInt(selectedTrack)),
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     enabled: Boolean(selectedTrack) && !isNaN(parseInt(selectedTrack)),
     onSuccess: (data) => {
       console.log('Fetched Scheduled Classes Data:', data);
@@ -126,6 +135,8 @@ const SupervisorDashboard = () => {
     queryFn: get_weekly_attendance_by_track,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     onSuccess: (data) => {
       console.log('Weekly Attendance Breakdown Data:', data);
     },
@@ -139,6 +150,8 @@ const SupervisorDashboard = () => {
     queryFn: () => getRecentAbsentees(selectedRecentAbsencesTrack === "all" ? undefined : parseInt(selectedRecentAbsencesTrack)),
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    refetchInterval: 60000,
+    refetchIntervalInBackground: false,
     onSuccess: (data) => {
       console.log('Recent Absences Data:', data);
     },
@@ -262,6 +275,7 @@ const SupervisorDashboard = () => {
     }
   }, [scheduledClassesData, selectedTrack]);
 
+
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -274,7 +288,9 @@ const SupervisorDashboard = () => {
               </div>
             </div>
             <div className="text-2xl font-bold text-emerald-700">
-              {isLoading || todayAttendance === null ? 'Loading...' : `${todayAttendance?.attendance_percentage}%`}
+            {isLoading || todayAttendance == null
+              ? 'Loading...'
+              : `${todayAttendance.attendance_percentage ?? 0}%`}
             </div>
             <CardDescription>Today's Attendance</CardDescription>
           </CardContent>
@@ -289,7 +305,7 @@ const SupervisorDashboard = () => {
               </div>
             </div>
             <div className="text-2xl font-bold text-blue-700">
-              {weeklyLoading || !weeklyAttendance ? 'Loading...' : `${weeklyAttendance?.attendance_percentage}%`}
+              {weeklyLoading || !weeklyAttendance ? 'Loading...' : `${weeklyAttendance?.attendance_percentage ?? 0}%`}
             </div>
             <CardDescription>Weekly Average</CardDescription>
           </CardContent>
