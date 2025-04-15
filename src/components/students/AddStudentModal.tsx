@@ -11,11 +11,13 @@ import AddStudentForm from "./AddStudentForm";
 interface AddStudentModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  refetchStudents?: () => void; // Optional refetch function
 }
 
-const AddStudentModal = ({ open, onOpenChange }: AddStudentModalProps) => {
+const AddStudentModal = ({ open, onOpenChange, refetchStudents }: AddStudentModalProps) => {
   const handleSuccess = () => {
     onOpenChange(false);
+    refetchStudents?.(); // Call refetch function if provided
   };
 
   return (

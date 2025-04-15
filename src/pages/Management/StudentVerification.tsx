@@ -259,6 +259,7 @@ const StudentVerification = () => {
       <AddStudentModal
         open={isAddStudentModalOpen}
         onOpenChange={setIsAddStudentModalOpen}
+        refetchStudents={refetch}
       />
     </Layout>
   );

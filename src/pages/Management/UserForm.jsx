@@ -68,7 +68,7 @@ const UserForm = () => {
   };
 
   const handleSubmit = async () => {
-    if (!firstName || !lastName || !email) {
+    if (!firstName || !email) {
       toast({
         title: "Validation Error",
         description: "All fields are required.",
