@@ -133,7 +133,7 @@ const LostFound = () => {
     queryKey: ["lostItems", lostItemsPage, debouncedSearch],
     queryFn: () => fetchLostItems(lostItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "lost" || lostItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 1 * 60 * 1000, // 15 minutes
   });
 
   const {
@@ -144,7 +144,7 @@ const LostFound = () => {
     queryKey: ["foundItems", foundItemsPage, debouncedSearch],
     queryFn: () => fetchFoundItems(foundItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "found" || foundItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 1 * 60 * 1000, // 15 minutes
   });
 
   const {
@@ -155,7 +155,7 @@ const LostFound = () => {
     queryKey: ["matchedItems", matchedItemsPage, debouncedSearch],
     queryFn: () => fetchMatchedItems(matchedItemsPage, debouncedSearch),
     enabled: !!token && (activeTab === "matched" || matchedItemsPage === 1),
-    staleTime: 15 * 60 * 1000, // 15 minutes
+    staleTime: 1 * 60 * 1000, // 15 minutes
   });
 
   // Combined loading and error states
