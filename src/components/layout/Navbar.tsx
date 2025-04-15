@@ -39,78 +39,80 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     setupAxiosInterceptors(() => navigate("/login"));
   }, [navigate]);
 
-  const SOCKET_URL = `ws://localhost:8000/ws/notifications/?token=${token}`;
-  const { lastMessage } = useWebSocket(SOCKET_URL, {
-    onOpen: () => console.log("WebSocket Connected"),
-    onClose: () => console.log("WebSocket Disconnected"),
-    // onError: (error) => console.error("WebSocket Error:", error),
-    shouldReconnect: () => true,
-  });
-
-  // Improved sort function that handles different date formats
-  const sortNotificationsByDate = (notifs: typeof notifications) => {
-    return [...notifs].sort((a, b) => {
-      // Convert dates to timestamps for reliable comparison
-      const dateA = new Date(a.created_at).getTime();
-      const dateB = new Date(b.created_at).getTime();
-
-      // If dates are invalid, move them to the end
-      if (isNaN(dateA)) return 1;
-      if (isNaN(dateB)) return -1;
-
-      return dateB - dateA; // Sort newest first
+  if (import.meta.env.VITE_ENABLE_NOTIFICATIONS === "true") {
+    const SOCKET_URL = `ws://localhost:8000/ws/notifications/?token=${token}`;
+    const { lastMessage } = useWebSocket(SOCKET_URL, {
+      onOpen: () => console.log("WebSocket Connected"),
+      onClose: () => console.log("WebSocket Disconnected"),
+      // onError: (error) => console.error("WebSocket Error:", error),
+      shouldReconnect: () => true,
     });
-  };
 
-  // Fetch notifications from the API
-  const fetchNotifications = async () => {
-    try {
-      const data = await getUserNotifications();
-      // Always sort immediately after fetching
-      const sortedData = sortNotificationsByDate(data);
-      setNotifications(sortedData);
-      // console.log("Fetched and sorted notifications:", sortedData);
-    } catch (error) {
-      // console.error("Failed to fetch notifications:", error);
-    }
-  };
+    // Improved sort function that handles different date formats
+    const sortNotificationsByDate = (notifs: typeof notifications) => {
+      return [...notifs].sort((a, b) => {
+        // Convert dates to timestamps for reliable comparison
+        const dateA = new Date(a.created_at).getTime();
+        const dateB = new Date(b.created_at).getTime();
 
-  useEffect(() => {
-      fetchNotifications();
-  }, []);
+        // If dates are invalid, move them to the end
+        if (isNaN(dateA)) return 1;
+        if (isNaN(dateB)) return -1;
 
-  // Handle WebSocket messages
-  useEffect(() => {
-    if (lastMessage !== null) {
+        return dateB - dateA; // Sort newest first
+      });
+    };
+
+    // Fetch notifications from the API
+    const fetchNotifications = async () => {
       try {
-        const data = JSON.parse(lastMessage.data);
-        // console.log("WebSocket message received:", data.body);
-
-        const newNotification = {
-          id: Date.now(),
-          message: data.body || "New notification",
-          created_at: new Date().toISOString(), // Use ISO format for consistent sorting
-          is_read: false,
-          matched_item: data.matched_item,
-        };
-
-        // Add the new notification and ensure the entire list is sorted
-        setNotifications((prev) => {
-          const updatedNotifications = [newNotification, ...prev];
-          return sortNotificationsByDate(updatedNotifications);
-        });
-
-        // Show toast notification using Sonner
-        toast("New Notification", {
-          description: newNotification.message,
-          position: "bottom-right",
-          duration: 5000,
-        });
-      } catch (err) {
-        console.error("Invalid message received:", lastMessage.data);
+        const data = await getUserNotifications();
+        // Always sort immediately after fetching
+        const sortedData = sortNotificationsByDate(data);
+        setNotifications(sortedData);
+        // console.log("Fetched and sorted notifications:", sortedData);
+      } catch (error) {
+        // console.error("Failed to fetch notifications:", error);
       }
-    }
-  }, [lastMessage]);
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    // Handle WebSocket messages
+    useEffect(() => {
+      if (lastMessage !== null) {
+        try {
+          const data = JSON.parse(lastMessage.data);
+          // console.log("WebSocket message received:", data.body);
+
+          const newNotification = {
+            id: Date.now(),
+            message: data.body || "New notification",
+            created_at: new Date().toISOString(), // Use ISO format for consistent sorting
+            is_read: false,
+            matched_item: data.matched_item,
+          };
+
+          // Add the new notification and ensure the entire list is sorted
+          setNotifications((prev) => {
+            const updatedNotifications = [newNotification, ...prev];
+            return sortNotificationsByDate(updatedNotifications);
+          });
+
+          // Show toast notification using Sonner
+          toast("New Notification", {
+            description: newNotification.message,
+            position: "bottom-right",
+            duration: 5000,
+          });
+        } catch (err) {
+          console.error("Invalid message received:", lastMessage.data);
+        }
+      }
+    }, [lastMessage]);
+  }
 
   // Calculate the number of unread notifications
   const unreadCount = notifications.filter((n) => !n.is_read).length;
