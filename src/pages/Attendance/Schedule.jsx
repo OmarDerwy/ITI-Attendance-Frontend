@@ -87,7 +87,7 @@ const Schedule = () => {
 
   // Track if there are modified events
   const modifiedEvents = events.filter((event) => event.isModified);
-  let onlineForeground = "hsl(var(--primary-foreground))";
+  let onlineForeground = "rgb(254, 230, 231)"; 
   let offlineForeground = "hsl(var(--accent-foreground))";
   let offlineTextClass = "text-primary-foreground";
   let onlineTextClass = "text-accent-foreground";
@@ -488,7 +488,6 @@ const Schedule = () => {
   const renderEventContent = (eventInfo) => {
     // Directly use eventInfo's extendedProps to get accurate isOnline state
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
-    const bgColor = isOnline ? "bg-accent" : "bg-primary";
     const textColor = isOnline ? onlineTextClass : offlineTextClass;
     const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
     const branchColor = isOnline ? "text-gray-700" : "text-gray-100";
@@ -498,9 +497,12 @@ const Schedule = () => {
 
     return (
       <div
-        className={`flex items-center justify-between p-1 ${bgColor} ${textColor} rounded w-full h-full ${
+        className={`flex items-center justify-between p-1 ${textColor} rounded w-full h-full ${
           isPastEvent ? "opacity-75" : ""
         }`}
+        style={{ 
+          backgroundColor: isOnline ? onlineForeground : offlineForeground 
+        }}
       >
         {currentView !== "dayGridMonth" && (
           <div
@@ -509,12 +511,12 @@ const Schedule = () => {
             {isOnline ? (
               <>
                 <MapPin size={12} className="mr-1" />
-                <span>Home</span>
+                <span className="text-[12px]">Home</span>
               </>
             ) : (
               <>
                 <MapPin size={12} className="mr-1" />
-                <span>{eventInfo.event.extendedProps.branch?.name}</span>
+                <span className="text-[12px]">{eventInfo.event.extendedProps.branch?.name}</span>
               </>
             )}
           </div>
