@@ -152,7 +152,7 @@ function LeaveRequestForm() {
       form.reset();
       refetch();
       // Redirect to a confirmation page or back to schedule
-      navigate('/schedule');
+      navigate('/student-schedule');
       
     } catch (error) {
       console.error('Error submitting leave request:', error);
