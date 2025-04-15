@@ -407,7 +407,6 @@ const Schedule = () => {
             textColor: value
               ? "hsl(var(--accent-foreground))"
               : "hsl(var(--primary-foreground))",
-            ...(value ? { branch: null } : {}), // Clear branch if online
           }
         : {}),
     }));
