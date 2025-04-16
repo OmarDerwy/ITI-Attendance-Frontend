@@ -112,7 +112,7 @@ const StudentVerification = () => {
 
   const handleRevoke = async (studentId: number) => {
     try {
-      await axiosBackendInstance.patch(`/accounts/students/${studentId}/`, { is_active: false });
+      await axiosBackendInstance.patch(`/accounts/students/${studentId}/make-inactive/`);
       toast({
         title: "Student Revoked",
         description: "The student verification has been revoked.",
