@@ -40,11 +40,11 @@ export function DatePickerWithRange({
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "dd-MM-y")} to{" "}
-                  {format(date.to, "dd-MM-y")}
+                  {format(date.from, "y-MM-dd")} to{" "}
+                  {format(date.to, "y-MM-dd")}
                 </>
               ) : (
-                format(date.from, "dd-MM-y")
+                format(date.from, "y-MM-dd")
               )
             ) : (
               <span>Pick a range</span>
