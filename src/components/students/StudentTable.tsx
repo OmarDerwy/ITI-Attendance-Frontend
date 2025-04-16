@@ -1,17 +1,29 @@
+import React from "react"; // Import React for Fragment
 import { User } from "@/types/student";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { User as UserIcon } from "lucide-react";
+import StudentDetail from "./StudentDetail"; // Import StudentDetail
 
 interface StudentTableProps {
   students: User[];
   getFullName: (user: User) => string;
   getStatus: (user: User) => string;
-  onViewDetails: (studentId: number) => void;
-  onViewDetailsValue?: number;
+  onViewDetails: (studentId: number | null) => void; // Allow null for closing
+  onViewDetailsValue?: number | null; // Allow null
+  onRevoke: (studentId: number) => void; // Add onRevoke prop
+  onResendActivation: (studentId: number) => void; // Add onResendActivation prop
 }
 
-const StudentTable = ({ students, getFullName, getStatus, onViewDetails, onViewDetailsValue }: StudentTableProps) => {
+const StudentTable = ({
+  students,
+  getFullName,
+  getStatus,
+  onViewDetails,
+  onViewDetailsValue,
+  onRevoke, // Destructure new props
+  onResendActivation, // Destructure new props
+}: StudentTableProps) => {
   return (
     <div className="overflow-auto rounded-md border">
       <table className="w-full text-sm">
@@ -33,47 +45,62 @@ const StudentTable = ({ students, getFullName, getStatus, onViewDetails, onViewD
             </tr>
           ) : (
             students.map((student) => (
-              <tr key={student.id} className="border-b hover:bg-muted/30">
-                <td className="py-3 px-4">
-                  <div className="flex items-center gap-2">
-                    <UserIcon className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <p className="font-medium">{getFullName(student)}</p>
+              <React.Fragment key={student.id}>
+                <tr className="border-b hover:bg-muted/30">
+                  <td className="py-3 px-4">
+                    <div className="flex items-center gap-2">
+                      <UserIcon className="h-5 w-5 text-muted-foreground" />
+                      <div>
+                        <p className="font-medium">{getFullName(student)}</p>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="py-3 px-4">{student.email}</td>
-                <td className="py-3 px-4">
-                  {student.tracks ? (
-                    <span className="capitalize">{student.tracks}</span>
-                  ) : (
-                    <span className="text-muted-foreground text-xs">Not assigned</span>
-                  )}
-                </td>
-                <td className="py-3 px-4">
-                  <Badge 
-                    variant={
-                      getStatus(student) === "verified" ? "default" : 
-                      getStatus(student) === "pending" ? "secondary" : 
-                      "outline"
-                    }
-                    className="capitalize"
-                  >
-                    {getStatus(student)}
-                  </Badge>
-                </td>
-                <td className="py-3 px-4 text-right">
-
-                    <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => onViewDetails(onViewDetailsValue === student.id ? null : student.id)}
+                  </td>
+                  <td className="py-3 px-4">{student.email}</td>
+                  <td className="py-3 px-4">
+                    {student.tracks ? (
+                      <span className="capitalize">{student.tracks}</span>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">Not assigned</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4">
+                    <Badge
+                      variant={
+                        getStatus(student) === "verified" ? "default" :
+                        getStatus(student) === "pending" ? "secondary" :
+                        "outline"
+                      }
+                      className="capitalize"
                     >
-                    {onViewDetailsValue === student.id ? "Close" : "Details"}
+                      {getStatus(student)}
+                    </Badge>
+                  </td>
+                  <td className="py-3 px-4 text-right">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => onViewDetails(onViewDetailsValue === student.id ? null : student.id)}
+                    >
+                      {onViewDetailsValue === student.id ? "Close" : "Details"}
                     </Button>
-
-                </td>
-              </tr>
+                  </td>
+                </tr>
+                {/* Conditionally render the details row */}
+                {onViewDetailsValue === student.id && (
+                  <tr className="border-b bg-muted/10">
+                    <td colSpan={5} className="p-0"> {/* Span all columns and remove padding */}
+                      <StudentDetail
+                        student={student}
+                        getFullName={getFullName}
+                        getStatus={getStatus}
+                        onClose={() => onViewDetails(null)} // Close handler
+                        onRevoke={onRevoke}
+                        onResendActivation={onResendActivation}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </React.Fragment>
             ))
           )}
         </tbody>
