@@ -1,7 +1,7 @@
 import { User } from "@/types/student";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle, LoaderCircle, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, LoaderCircle, AlertCircle, Clock, HelpCircle } from "lucide-react";
 import dayjs from "dayjs";
 import {
   Table,
@@ -34,13 +34,35 @@ interface Schedule {
   };
 }
 
+type AttendanceStatus =
+  | "excused"
+  | "pending"
+  | "no_sessions"
+  | "excused_late"
+  | "absent"
+  | "check-in"
+  | "late-check-in_active"
+  | "late-excused_active"
+  | "no-check-out"
+  | "late-check-in_no-check-out"
+  | "late-excused_no-check-out"
+  | "attended"
+  | "late-check-in"
+  | "late-excused"
+  | "check-in_early-check-out"
+  | "late-check-in_early-check-out"
+  | "late-excused_early-check-out"
+  | "check-in_early-excused"
+  | "late-check-in_early-excused"
+  | "late-excused_early-excused";
+
 interface AttendanceRecordDetail {
   id: number;
   schedule: Schedule;
   sessions: string[];
   check_in_time: string | null;
   check_out_time: string | null;
-  status: "pending" | "no-check-out" | "present" | "absent" | "excused";
+  status: AttendanceStatus;
   adjusted_time: string | null;
 }
 
@@ -87,17 +109,42 @@ const StudentDetail = ({
     refetchOnWindowFocus: false,
   });
 
-  const getDisplayStatus = (apiStatus: AttendanceRecordDetail['status']): { icon: JSX.Element, text: string } => {
+  const getDisplayStatus = (apiStatus: AttendanceStatus): { icon: JSX.Element, text: string } => {
     switch (apiStatus) {
-      case 'present':
-      case 'no-check-out':
-        return { icon: <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />, text: apiStatus.replace('-', ' ') };
+      case 'attended':
+      case 'check-in':
+        return { icon: <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />, text: "Attended" };
+      case 'late-excused':
+      case 'late-excused_active':
+        return { icon: <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />, text: "Attended (Late, Excused)" };
+      case 'check-in_early-excused':
+      case 'late-check-in_early-excused':
+      case 'late-excused_early-excused':
+        return { icon: <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />, text: "Attended (Left Early, Excused)" };
       case 'absent':
-        return { icon: <XCircle size={16} className="text-red-500 flex-shrink-0" />, text: apiStatus };
-      case 'pending':
+        return { icon: <XCircle size={16} className="text-red-500 flex-shrink-0" />, text: "Absent" };
+      case 'late-check-in':
+      case 'late-check-in_active':
+        return { icon: <Clock size={16} className="text-orange-500 flex-shrink-0" />, text: "Attended (Late)" };
+      case 'no-check-out':
+        return { icon: <AlertCircle size={16} className="text-orange-500 flex-shrink-0" />, text: "Attended (No Check-out)" };
+      case 'late-check-in_no-check-out':
+      case 'late-excused_no-check-out':
+        return { icon: <AlertCircle size={16} className="text-orange-500 flex-shrink-0" />, text: "Attended (Late/No Check-out)" };
+      case 'check-in_early-check-out':
+      case 'late-check-in_early-check-out':
+      case 'late-excused_early-check-out':
+        return { icon: <Clock size={16} className="text-orange-500 flex-shrink-0" />, text: "Attended (Left Early)" };
       case 'excused':
+        return { icon: <AlertCircle size={16} className="text-yellow-500 flex-shrink-0" />, text: "Excused (Absent)" };
+      case 'excused_late':
+        return { icon: <AlertCircle size={16} className="text-yellow-500 flex-shrink-0" />, text: "Excused (Late Arrival)" };
+      case 'pending':
+        return { icon: <LoaderCircle size={16} className="text-gray-500 flex-shrink-0 animate-spin" />, text: "Pending" };
+      case 'no_sessions':
+        return { icon: <HelpCircle size={16} className="text-blue-500 flex-shrink-0" />, text: "No Sessions Scheduled" };
       default:
-        return { icon: <AlertCircle size={16} className="text-yellow-500 flex-shrink-0" />, text: apiStatus };
+        return { icon: <HelpCircle size={16} className="text-gray-500 flex-shrink-0" />, text: (apiStatus as string).replace(/_/g, ' ').replace(/-/g, ' ') };
     }
   };
 
