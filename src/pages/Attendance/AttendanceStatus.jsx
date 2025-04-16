@@ -3,7 +3,7 @@ import Layout from "@/components/layout/Layout";
 import { axiosBackendInstance } from "@/api/config";
 import { useQuery } from "@tanstack/react-query";
 import PageTitle from "@/components/ui/page-title";
-import { Clock2, Filter, Loader, LoaderCircle } from "lucide-react";
+import { Calendar, Clock2, Filter, Loader, LoaderCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import AttendanceStatusTable from "@/components/AttendanceStatus/AttendanceStatusTable";
 import {
@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import axios from "axios";
+import { DatePickerWithRange } from './../../components/AttendanceStatus/DatePickerWithRange';
+import { format } from "date-fns"; // Import format function
 
 function AttendanceStatus() {
   const [selectedTrack, setSelectedTrack] = useState("All");
   const [selectedTrackId, setSelectedTrackId] = useState(null);
+  const [dateRange, setDateRange] = useState(undefined); // Add state for date range
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [scheduleEntries, setScheduleEntries] = useState([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -32,15 +35,21 @@ function AttendanceStatus() {
 
   //api for fetching schedules for the current supervisor
   const fetchSchedules = async () => {
-    // Add track_id as query parameter when not 'All'
+    // Add track_id and date range as query parameters
     const endpoint = "attendance/schedules";
-    const params = selectedTrack !== "All" ? { track: selectedTrackId } : {};
+    const params = {
+      ...(selectedTrack !== "All" && { track: selectedTrackId }),
+      ...(dateRange?.from && { from_date: format(dateRange.from, 'yyyy-MM-dd') }),
+      ...(dateRange?.to && { to_date: format(dateRange.to, 'yyyy-MM-dd') }),
+    };
     const response = await axiosBackendInstance.get(endpoint, { params });
     console.log(
       "Selected Track:",
       selectedTrack,
       "Selected Track ID:",
       selectedTrackId,
+      "Date Range:",
+      dateRange,
       "Response:",
       response.data
     );
@@ -75,9 +84,10 @@ function AttendanceStatus() {
     data: schedulesData,
     isLoading,
     isSuccess,
+    refetch, // Add refetch here
   } = useQuery({
-    // Include selectedTrack and selectedTrackId in the query key to refetch when track changes
-    queryKey: ["schedules", selectedTrack, selectedTrackId],
+    // Include selectedTrack, selectedTrackId, and dateRange in the query key
+    queryKey: ["schedules", selectedTrack, selectedTrackId, dateRange],
     queryFn: fetchSchedules,
     refetchOnWindowFocus: false,
   });
@@ -156,6 +166,10 @@ function AttendanceStatus() {
                 </SelectContent>
               </Select>
             </div>
+            <Calendar size={18} className="text-muted-foreground"/>
+            <span className="text-sm font-medium">Date:</span>
+            {/* Pass date state and setter to DatePickerWithRange */}
+            <DatePickerWithRange date={dateRange} setDate={setDateRange} />
           </div>
 
           {/* Use scheduleEntries instead of schedulesData.results */}
