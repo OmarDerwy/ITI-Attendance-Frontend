@@ -1,7 +1,7 @@
 import { User } from "@/types/student";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, XCircle } from "lucide-react";
+import { CheckCircle2, XCircle, LoaderCircle, AlertCircle } from "lucide-react";
 import dayjs from "dayjs";
 import {
   Table,
@@ -11,6 +11,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { axiosBackendInstance } from "@/api/config";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface StudentDetailProps {
   student: User;
@@ -21,11 +24,43 @@ interface StudentDetailProps {
   onResendActivation: (studentId: number) => void;
 }
 
-// Define a type for attendance history records if not already defined elsewhere
-interface AttendanceRecord {
-  date: string;
-  status: "present" | "absent";
+interface Schedule {
+  id: number;
+  name: string;
+  created_at: string;
+  track: {
+    id: number;
+    name: string;
+  };
 }
+
+interface AttendanceRecordDetail {
+  id: number;
+  schedule: Schedule;
+  sessions: string[];
+  check_in_time: string | null;
+  check_out_time: string | null;
+  status: "pending" | "no-check-out" | "present" | "absent" | "excused";
+  adjusted_time: string | null;
+}
+
+interface StudentInfo {
+  id: number;
+  name: string;
+  email: string;
+  track: string;
+  is_active: boolean;
+}
+
+interface StudentHistoryResponse {
+  student_info: StudentInfo;
+  attendance_records: AttendanceRecordDetail[];
+}
+
+const fetchStudentHistory = async (studentId: number): Promise<StudentHistoryResponse> => {
+  const response = await axiosBackendInstance.get(`/attendance/${studentId}/student-history/`);
+  return response.data;
+};
 
 const StudentDetail = ({
   student,
@@ -37,17 +72,34 @@ const StudentDetail = ({
 }: StudentDetailProps) => {
   const status = getStatus(student);
 
-  // --- Mock Data Augmentation ---
-  const attendanceRate = student.attendance_rate ?? 85; // Mock rate if undefined
-  const lastAttendanceDate = student.last_attendance_date ?? dayjs().subtract(1, 'day').format('YYYY-MM-DD'); // Mock date if undefined
-  const attendanceHistory: AttendanceRecord[] = student.attendance_history ?? [ // Mock history if undefined
-    { date: dayjs().subtract(1, 'day').format('YYYY-MM-DD'), status: 'present' },
-    { date: dayjs().subtract(2, 'day').format('YYYY-MM-DD'), status: 'present' },
-    { date: dayjs().subtract(3, 'day').format('YYYY-MM-DD'), status: 'absent' },
-    { date: dayjs().subtract(4, 'day').format('YYYY-MM-DD'), status: 'present' },
-    { date: dayjs().subtract(5, 'day').format('YYYY-MM-DD'), status: 'present' },
-  ];
-  // --- End Mock Data ---
+  const attendanceRate = student.attendance_rate ?? 85;
+  const lastAttendanceDate = student.last_attendance_date ?? dayjs().subtract(1, 'day').format('YYYY-MM-DD');
+
+  const {
+    data: historyData,
+    isLoading: isLoadingHistory,
+    isError: isErrorHistory,
+    error: historyError,
+  } = useQuery<StudentHistoryResponse, Error>({
+    queryKey: ['studentHistory', student.id],
+    queryFn: () => fetchStudentHistory(student.id),
+    enabled: !!student.id,
+    refetchOnWindowFocus: false,
+  });
+
+  const getDisplayStatus = (apiStatus: AttendanceRecordDetail['status']): { icon: JSX.Element, text: string } => {
+    switch (apiStatus) {
+      case 'present':
+      case 'no-check-out':
+        return { icon: <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />, text: apiStatus.replace('-', ' ') };
+      case 'absent':
+        return { icon: <XCircle size={16} className="text-red-500 flex-shrink-0" />, text: apiStatus };
+      case 'pending':
+      case 'excused':
+      default:
+        return { icon: <AlertCircle size={16} className="text-yellow-500 flex-shrink-0" />, text: apiStatus };
+    }
+  };
 
   return (
     <div className="p-6 bg-muted/30">
@@ -103,7 +155,6 @@ const StudentDetail = ({
                   {status}
                 </Badge>
               </div>
-              
 
               <Button
                 variant="outline"
@@ -130,19 +181,30 @@ const StudentDetail = ({
         <h4 className="text-sm font-medium text-muted-foreground mb-1">Attendance Information</h4>
         <div className="rounded-md border bg-background p-4 space-y-4 overflow-hidden flex flex-col">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            <div className="p-4 rounded-md border bg-background flex flex-col items-center">
               <p className="text-xs text-muted-foreground mb-1">Attendance Rate</p>
               <p>{attendanceRate}%</p>
             </div>
-            <div>
+            <div className="p-4 rounded-md border bg-background flex flex-col items-center">
               <p className="text-xs text-muted-foreground mb-1">Last Attendance Date</p>
               <p>{lastAttendanceDate === 'N/A' ? 'N/A' : dayjs(lastAttendanceDate).format('DD MMM YYYY')}</p>
             </div>
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Recent Attendance History</p>
-            {attendanceHistory.length > 0 ? (
-              <div className="max-h-80 overflow-y-auto border rounded-md">
+            {isLoadingHistory ? (
+              <div className="space-y-2 mt-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </div>
+            ) : isErrorHistory ? (
+              <div className="text-red-600 flex items-center gap-2 mt-2">
+                <AlertCircle size={16} />
+                <span>Error loading history: {historyError?.message || 'Unknown error'}</span>
+              </div>
+            ) : historyData && historyData.attendance_records.length > 0 ? (
+              <div className="max-h-80 overflow-y-auto border rounded-md mt-1">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -151,26 +213,25 @@ const StudentDetail = ({
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {attendanceHistory.map((record, index) => (
-                      <TableRow key={index}>
-                        <TableCell className="font-medium">{dayjs(record.date).format('DD MMM YYYY')}</TableCell>
-                        <TableCell>
-                          <span className="flex items-center gap-2">
-                            {record.status === "present" ? (
-                              <CheckCircle2 size={16} className="text-green-500 flex-shrink-0" />
-                            ) : (
-                              <XCircle size={16} className="text-red-500 flex-shrink-0" />
-                            )}
-                            <span className="capitalize">{record.status}</span>
-                          </span>
-                        </TableCell>
-                      </TableRow>
-                    ))}
+                    {historyData.attendance_records.map((record) => {
+                      const displayStatus = getDisplayStatus(record.status);
+                      return (
+                        <TableRow key={record.id}>
+                          <TableCell className="font-medium">{dayjs(record.schedule.created_at).format('DD MMM YYYY')}</TableCell>
+                          <TableCell>
+                            <span className="flex items-center gap-2">
+                              {displayStatus.icon}
+                              <span className="capitalize">{displayStatus.text}</span>
+                            </span>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
                   </TableBody>
                 </Table>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">No attendance history available.</p>
+              <p className="text-sm text-muted-foreground mt-2">No attendance history available.</p>
             )}
           </div>
         </div>
