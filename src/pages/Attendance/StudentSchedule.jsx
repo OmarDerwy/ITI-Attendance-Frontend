@@ -20,17 +20,23 @@ const StudentSchedule = () => {
   const calendarRef = useRef(null);
   const [currentView, setCurrentView] = useState("timeGridWeek");
   const { toast } = useToast();
+  
+  // Color variables to match Schedule.jsx
+  const onlineForeground = "rgb(254, 230, 231)";
+  const offlineForeground = "hsl(var(--accent-foreground))";
+  const offlineTextClass = "text-primary-foreground";
+  const onlineTextClass = "text-accent-foreground";
 
   useEffect(() => {
     if (studentTrack) {
       fetchEvents(studentTrack.track.id);
     } else {
       setIsLoading(false);
-      toast({
-        title: "No track found",
-        description: "You are not assigned to any track.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "No track found",
+      //   description: "You are not assigned to any track.",
+      //   variant: "destructive",
+      // });
     }
   }, [studentTrack, toast]);
 
@@ -49,15 +55,9 @@ const StudentSchedule = () => {
         isOnline: event.is_online,
         trackId: event.track_id,
         branch: event.branch,
-        backgroundColor: event.is_online
-          ? "hsl(var(--accent))"
-          : "hsl(var(--primary))",
-        borderColor: event.is_online
-          ? "hsl(var(--accent))"
-          : "hsl(var(--primary))",
-        textColor: event.is_online
-          ? "hsl(var(--accent-foreground))"
-          : "hsl(var(--primary-foreground))",
+        backgroundColor: event.is_online ? onlineForeground : offlineForeground,
+        borderColor: event.is_online ? onlineForeground : offlineForeground,
+        textColor: event.is_online ? onlineForeground : offlineForeground,
       }));
       
       setEvents(fetchedEvents);
@@ -75,32 +75,33 @@ const StudentSchedule = () => {
 
   const renderEventContent = (eventInfo) => {
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
-    const bgColor = isOnline ? "bg-accent" : "bg-primary";
-    const textColor = isOnline
-      ? "text-accent-foreground"
-      : "text-primary-foreground";
+    const textColor = isOnline ? onlineTextClass : offlineTextClass;
     const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
+    const branchColor = isOnline ? "text-gray-700" : "text-gray-100";
     
     // Check if we're in list view
     const isListView = ['listDay', 'listWeek', 'listMonth'].includes(currentView);
 
     return (
       <div
-        className={`flex items-center p-1 ${bgColor} ${textColor} rounded w-full h-full`}
+        className={`flex items-center p-1 ${textColor} rounded w-full h-full`}
+        style={{ 
+          backgroundColor: isOnline ? onlineForeground : offlineForeground 
+        }}
       >
         {!isListView && currentView !== "dayGridMonth" && (
           <div
-            className={`flex space-x-1 absolute right-1 top-1 items-center text-xs italic font-bold ${subtextColor}`}
+            className={`flex space-x-1 absolute left-1 bottom-1 items-center text-xs italic ${branchColor}`}
           >
             {isOnline ? (
               <>
                 <MapPin size={12} className="mr-1" />
-                <span>Online</span>
+                <span className="text-[12px]">Home</span>
               </>
             ) : (
               <>
                 <MapPin size={12} className="mr-1" />
-                <span>{eventInfo.event.extendedProps.branch?.name}</span>
+                <span className="text-[12px]">{eventInfo.event.extendedProps.branch?.name}</span>
               </>
             )}
           </div>
@@ -112,7 +113,7 @@ const StudentSchedule = () => {
             {isListView && (
               <span className="flex items-center ml-2">
                 <MapPin size={12} className="mr-1" />
-                {isOnline ? "Online" : eventInfo.event.extendedProps.branch?.name}
+                {isOnline ? "Home" : eventInfo.event.extendedProps.branch?.name}
               </span>
             )}
           </div>
@@ -173,11 +174,11 @@ const StudentSchedule = () => {
               </h2>
               <div className="space-y-2">
                 <div className="flex items-center">
-                  <div className="w-4 h-4 rounded-full bg-primary mr-2"></div>
+                  <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: offlineForeground }}></div>
                   <span>Offline Session</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 rounded-full bg-accent mr-2"></div>
+                  <div className="w-4 h-4 rounded-full mr-2" style={{ backgroundColor: onlineForeground }}></div>
                   <span>Online Session</span>
                 </div>
               </div>

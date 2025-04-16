@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar, Loader2 } from "lucide-react";
 import { cn } from '@/lib/utils';
@@ -11,31 +11,28 @@ const AttendanceCalendar = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { studentTrack } = useUser();
 
-  // Fetch attendance data from API
-  useEffect(() => {
-    const fetchAttendanceData = async () => {
-      try {
-        setIsLoading(true);
-        const response = await axiosBackendInstance.get('attendance/student-attendance/');
-        
-        // Process the data into the format needed for the calendar
-        const processedData = {};
-        response.data.forEach(item => {
-          const date = item.schedule.created_at;
-          const status = item.status;
-          processedData[date] = status;
-        });
-        
-        setAttendanceData(processedData);
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching attendance data:', error);
-        setIsLoading(false);
-      }
-    };
-
-    fetchAttendanceData();
+  // Memoize fetchAttendanceData
+  const fetchAttendanceData = useMemo(() => async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosBackendInstance.get('attendance/student-attendance-summary/');
+      // Process the data into the format needed for the calendar
+      const processedData = {};
+      response.data.forEach(item => {
+        processedData[item.date] = item.status;
+      });
+      
+      setAttendanceData(processedData);
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error fetching attendance data:', error);
+      setIsLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchAttendanceData();
+  }, [fetchAttendanceData]);
   
   // Get 6 months starting from join date
   const getMonthsFromJoinDate = () => {
@@ -45,9 +42,14 @@ const AttendanceCalendar = () => {
     const joinDate = studentTrack?.track?.start_date 
       ? new Date(studentTrack.track.start_date) 
       : new Date();
-    
-    // Always show 6 months starting from join date
-    for (let i = 0; i < 6; i++) {
+    let monthsToShow = 6;
+    if (studentTrack?.track?.program_type === 'intensive') {
+      monthsToShow = 6;
+    } else {
+      monthsToShow = 9;
+    }
+    // Always show monthsToShow starting from join date
+    for (let i = 0; i < monthsToShow; i++) {
       const date = new Date(joinDate);
       date.setMonth(joinDate.getMonth() + i);
       months.push({
@@ -64,14 +66,46 @@ const AttendanceCalendar = () => {
   
   // Returns the appropriate class based on attendance status
   const getStatusClass = (status) => {
-    if (['attended', 'check_in_active', 'check-in_early-excused'].includes(status)) {
+    // Attended statuses - Green
+    if ([
+      'attended', 
+      'check-in',
+      'check-in_early-check-out',
+      'late-check-in_early-excused',
+      'check-in_early-excused',
+    ].includes(status)) {
       return 'bg-green-500';
-    } else if (status === 'absent') {
+    } 
+    // Absent statuses - Red
+    else if (status === 'absent') {
       return 'bg-red-500';
-    } else if (status === 'excused') {
+    } 
+    else if ('late-check-in_early-check-out'
+      , 'late-check-in_no-check-out'
+      ,  'late-check-in'.includes(status)) {
+      return 'bg-pink-500';
+    }
+    // Excused statuses - Blue
+    else if ([
+      'excused', 
+      'excused_late', 
+     
+    ].includes(status)) {
       return 'bg-blue-500';
-    } else {
-      return 'bg-white border border-gray-200';
+    }
+    // No-check-out statuses - Orange
+    else if ([
+      'no-check-out',
+     
+    ].includes(status)) {
+      return 'bg-orange-500';
+    }
+    else if (status === 'check_in_active') {
+      
+    // Default - White/bordered
+    }
+    else {
+      return 'bg-green border border-green-200';
     }
   };
 
@@ -174,6 +208,10 @@ const AttendanceCalendar = () => {
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-[2px] bg-blue-500"></div>
             <span>Excused</span>
+          </div>
+          <div className="flex items-center gap-1">
+            <div className="w-2 h-2 rounded-[2px] bg-orange-500"></div>
+            <span>No Check-out</span>
           </div>
           <div className="flex items-center gap-1">
             <div className="w-2 h-2 rounded-[2px] bg-white border border-gray-200"></div>
