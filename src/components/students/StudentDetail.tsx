@@ -1,9 +1,8 @@
 import { User } from "@/types/student";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card } from "@/components/ui/card";
 import { CheckCircle2, XCircle } from "lucide-react";
-import dayjs from "dayjs"
+import dayjs from "dayjs";
 
 interface StudentDetailProps {
   student: User;
@@ -23,29 +22,19 @@ const StudentDetail = ({
   onResendActivation,
 }: StudentDetailProps) => {
   const status = getStatus(student);
-  
+
   return (
-    <Card className="p-6">
+    <div className="p-6 bg-muted/30">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-medium">Student Details</h3>
-        <Badge 
-          variant={
-            status === "verified" ? "default" : 
-            status === "rejected" ? "destructive" : 
-            "outline"
-          }
-          className="capitalize"
-        >
-          {status}
-        </Badge>
       </div>
-      
+
       <div className="space-y-6">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="flex-1 space-y-4">
             <div>
               <h4 className="text-sm font-medium text-muted-foreground mb-1">Personal Information</h4>
-              <div className="rounded-md border p-4 space-y-4">
+              <div className="rounded-md border bg-background p-4 space-y-4 overflow-hidden">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Full Name</p>
@@ -53,7 +42,7 @@ const StudentDetail = ({
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Email</p>
-                    <p>{student.email}</p>
+                    <p className="overflow-hidden">{student.email}</p>
                   </div>
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">Phone</p>
@@ -67,28 +56,28 @@ const StudentDetail = ({
               </div>
             </div>
           </div>
-          
+
           <div className="w-full md:w-72 space-y-1">
             <h4 className="text-sm font-medium text-muted-foreground">Account Information</h4>
-            <div className="rounded-md border p-4 grid grid-cols-2 gap-4">
+            <div className="rounded-md border bg-background p-4 grid grid-cols-2 gap-4">
               <div className="py-2">
                 <p className="text-xs text-muted-foreground ms-2 mb-1 font-medium">Status</p>
-                <Badge 
-                    variant={
-                      status === "verified" ? "default" : 
-                      status === "pending" ? "secondary" : 
-                      "outline"
-                    }
-                    className="capitalize"
-                  >
-                    {status}
+                <Badge
+                  variant={
+                    status === "verified" ? "default" :
+                    status === "pending" ? "secondary" :
+                    "outline"
+                  }
+                  className="capitalize"
+                >
+                  {status}
                 </Badge>
               </div>
               <div className="py-2">
                 <p className="text-xs text-muted-foreground mb-1 font-medium">Registeration Date</p>
                 <p className="text-sm">{dayjs(student.date_joined).format('DD/MM/YYYY hh:mma')}</p>
               </div>
-              
+
               <Button
                 variant="outline"
                 className="w-full text-wrap"
@@ -99,26 +88,18 @@ const StudentDetail = ({
               </Button>
 
               <Button
-                variant="destructive" 
+                variant="destructive"
                 className="w-full text-wrap"
                 onClick={() => {onRevoke(student.id)}}
                 disabled={status == "pending"}
               >
                 Revoke Verification
               </Button>
-              
-              <Button 
-                variant="ghost"
-                className="w-full col-span-2" 
-                onClick={onClose}
-              >
-                Close
-              </Button>
             </div>
           </div>
         </div>
       </div>
-    </Card>
+    </div>
   );
 };
 

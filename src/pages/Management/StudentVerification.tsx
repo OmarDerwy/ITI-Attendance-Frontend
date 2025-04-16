@@ -13,7 +13,6 @@ import { User, ApiResponse } from "@/types/student";
 // Import all the new smaller components
 import SearchToolbar from "@/components/students/SearchToolbar";
 import StudentTable from "@/components/students/StudentTable";
-import StudentDetail from "@/components/students/StudentDetail";
 import AddStudentModal from "@/components/students/AddStudentModal";
 
 const StudentVerification = () => {
@@ -97,16 +96,6 @@ const StudentVerification = () => {
     }
   };
 
-  // Filter students - using the actual API data structure
-  // const filteredStudents = studentEntries.filter(student =>
-  //   (student.email?.toLowerCase().includes(searchQuery.toLowerCase())) ||
-  //   (student.first_name && student.first_name.toLowerCase().includes(searchQuery.toLowerCase())) ||
-  //   (student.last_name && student.last_name.toLowerCase().includes(searchQuery.toLowerCase()))
-  // );
-
-  // // Filter students who are part of the student group
-  // const studentUsers = studentEntries.filter(user => user.groups.includes("student"));
-
   // Helper function to get status (you may need to adjust based on actual data structure)
   const getStatus = (user: User) => {
     if (user.is_active === undefined) return "pending";
@@ -121,42 +110,34 @@ const StudentVerification = () => {
     return user.email;
   };
 
-  // const handleVerify = (studentId: number) => {
-  //   toast({
-  //     title: "Student Verified",
-  //     description: "The student has been successfully verified.",
-  //   });
-  //   setSelectedStudent(null);
-  // };
-
   const handleRevoke = async (studentId: number) => {
     try {
-      const response = await axiosBackendInstance.get(`/accounts/students/${studentId}/make-inactive/`);
+      await axiosBackendInstance.patch(`/accounts/students/${studentId}/`, { is_active: false });
       toast({
         title: "Student Revoked",
         description: "The student verification has been revoked.",
         variant: "destructive",
       });
       setSelectedStudent(null);
+      refetch();
     } catch (error) {
       toast({
         title: "Error",
         description: "Failed to revoke student verification.",
         variant: "destructive",
       });
-      return;
+      console.error("Error revoking student:", error);
     }
   };
 
   const handleResendActivation = async (studentId: number) => {
     try{
-      const response  = await axiosBackendInstance.get(`/accounts/students/${studentId}/resend-activation/`);
+      await axiosBackendInstance.get(`/accounts/students/${studentId}/resend-activation/`);
       toast({
         title: "Activation Email Resent",
         description: "The activation email has been resent to the student.",
       });
-      console.log("Activation email resent successfully:", response.data);
-      setSelectedStudent(null);
+      console.log("Activation email resent successfully for student:", studentId);
     } catch (error) {
       toast({
         title: "Error",
@@ -164,7 +145,6 @@ const StudentVerification = () => {
         variant: "destructive",
       });
       console.error("Error resending activation email:", error);
-      return;
     }
   }
 
@@ -227,6 +207,8 @@ const StudentVerification = () => {
               getStatus={getStatus}
               onViewDetails={setSelectedStudent}
               onViewDetailsValue={selectedStudent}
+              onRevoke={handleRevoke}
+              onResendActivation={handleResendActivation}
             />)}
 
           {/* Pagination: View More Button */}
@@ -248,27 +230,6 @@ const StudentVerification = () => {
             </div>
           )}
         </Card>
-
-        {/* Student Detail View */}
-        {selectedStudent && (
-          <>
-            {(() => {
-              const student = studentEntries.find(s => s.id === selectedStudent);
-              if (!student) return null;
-
-              return (
-                <StudentDetail
-                  student={student}
-                  getFullName={getFullName}
-                  getStatus={getStatus}
-                  onClose={() => setSelectedStudent(null)}
-                  onRevoke={handleRevoke}
-                  onResendActivation={handleResendActivation}
-                />
-              );
-            })()}
-          </>
-        )}
       </div>
 
       {/* Add Student Modal */}
