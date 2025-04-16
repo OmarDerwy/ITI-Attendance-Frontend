@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react"; // Added useMemo
 import Layout from "@/components/layout/Layout";
 import { axiosBackendInstance } from "@/api/config";
 import { useQuery } from "@tanstack/react-query";
@@ -14,49 +14,54 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import axios from "axios";
 import { DatePickerWithRange } from './../../components/AttendanceStatus/DatePickerWithRange';
-import { format } from "date-fns"; // Import format function
+import { format, parseISO, isValid } from "date-fns"; // Import parseISO and isValid
+import { useNavigate, useSearchParams } from "react-router-dom"; // Import hooks
 
 function AttendanceStatus() {
-  const [selectedTrack, setSelectedTrack] = useState("All");
-  const [selectedTrackId, setSelectedTrackId] = useState(null);
-  const [dateRange, setDateRange] = useState(undefined); // Add state for date range
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // --- State Initialization from URL ---
+  const initialTrackId = searchParams.get("track") || null;
+  const initialFromDateStr = searchParams.get("from_date");
+  const initialToDateStr = searchParams.get("to_date");
+
+  const initialDateRange = useMemo(() => {
+    const fromDate = initialFromDateStr ? parseISO(initialFromDateStr) : undefined;
+    const toDate = initialToDateStr ? parseISO(initialToDateStr) : undefined;
+    if (isValid(fromDate) || isValid(toDate)) {
+      return { from: isValid(fromDate) ? fromDate : undefined, to: isValid(toDate) ? toDate : undefined };
+    }
+    return undefined;
+  }, [initialFromDateStr, initialToDateStr]);
+
+  const [selectedTrackId, setSelectedTrackId] = useState(initialTrackId ? Number(initialTrackId) : null);
+  const [dateRange, setDateRange] = useState(initialDateRange);
+  const [selectedTrack, setSelectedTrack] = useState("All"); 
+
   const [nextPageUrl, setNextPageUrl] = useState(null);
   const [scheduleEntries, setScheduleEntries] = useState([]);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   //-----------------------APIs-----------------------//
-  //api for fetching tracks for the current supervisor
   const fetchTracks = async () => {
     const response = await axiosBackendInstance.get("attendance/tracks");
     return response.data;
   };
 
-  //api for fetching schedules for the current supervisor
   const fetchSchedules = async () => {
-    // Add track_id and date range as query parameters
     const endpoint = "attendance/schedules";
     const params = {
-      ...(selectedTrack !== "All" && { track: selectedTrackId }),
-      ...(dateRange?.from && { from_date: format(dateRange.from, 'yyyy-MM-dd') }),
-      ...(dateRange?.to && { to_date: format(dateRange.to, 'yyyy-MM-dd') }),
+      ...(selectedTrackId && { track: selectedTrackId }), 
+      ...(dateRange?.from && isValid(dateRange.from) && { from_date: format(dateRange.from, 'yyyy-MM-dd') }),
+      ...(dateRange?.to && isValid(dateRange.to) && { to_date: format(dateRange.to, 'yyyy-MM-dd') }),
     };
+    console.log("Fetching schedules with params:", params); 
     const response = await axiosBackendInstance.get(endpoint, { params });
-    console.log(
-      "Selected Track:",
-      selectedTrack,
-      "Selected Track ID:",
-      selectedTrackId,
-      "Date Range:",
-      dateRange,
-      "Response:",
-      response.data
-    );
     return response.data;
   };
 
-  // Function to load more schedules
   const loadMoreSchedules = async () => {
     if (!nextPageUrl) return;
 
@@ -84,14 +89,42 @@ function AttendanceStatus() {
     data: schedulesData,
     isLoading,
     isSuccess,
-    refetch, // Add refetch here
+    refetch,
   } = useQuery({
-    // Include selectedTrack, selectedTrackId, and dateRange in the query key
-    queryKey: ["schedules", selectedTrack, selectedTrackId, dateRange],
+    queryKey: ["schedules", selectedTrackId, dateRange], 
     queryFn: fetchSchedules,
     refetchOnWindowFocus: false,
+    enabled: true, 
   });
   //-------------------------------------------------//
+
+  useEffect(() => {
+    if (tracksData && selectedTrackId) {
+      const track = tracksData.find(t => t.id === selectedTrackId);
+      if (track) {
+        setSelectedTrack(track.name);
+      } else {
+        setSelectedTrack("All");
+        setSelectedTrackId(null);
+      }
+    } else if (!selectedTrackId) {
+      setSelectedTrack("All");
+    }
+  }, [tracksData, selectedTrackId]);
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (selectedTrackId) {
+      params.set("track", selectedTrackId.toString());
+    }
+    if (dateRange?.from && isValid(dateRange.from)) {
+      params.set("from_date", format(dateRange.from, 'yyyy-MM-dd'));
+    }
+    if (dateRange?.to && isValid(dateRange.to)) {
+      params.set("to_date", format(dateRange.to, 'yyyy-MM-dd'));
+    }
+    navigate(`?${params.toString()}`, { replace: true }); 
+  }, [selectedTrackId, dateRange, navigate]);
 
   useEffect(() => {
     if (isSuccess && schedulesData) {
@@ -104,34 +137,20 @@ function AttendanceStatus() {
     refetch();
   };
 
-  //------------------Track Selection------------------//
-  // Handle track selection - update both name and ID
-  const handleTrackChange = (value, id = null) => {
-    setSelectedTrack(value);
-    setSelectedTrackId(id);
+  const handleTrackChange = (trackId) => {
+    setSelectedTrackId(trackId);
   };
 
-  // Process tracks data to include both name and ID
-  const tracksWithIds = tracksData
-    ? [
-        { name: "All", id: null },
-        ...tracksData.map((track) => ({ name: track.name, id: track.id })),
-      ]
-    : [
-        { name: "All", id: null },
-        { name: "Full Stack Python", id: 1 },
-        { name: "Full Stack JavaScript", id: 2 },
-        { name: "Data Science", id: 3 },
-      ];
-  //-------------------------------------------------//
+  const tracksForSelect = useMemo(() => (
+    tracksData
+      ? [
+          { name: "All", id: null },
+          ...tracksData.map((track) => ({ name: track.name, id: track.id })),
+        ]
+      : [{ name: "All", id: null }]
+  ), [tracksData]);
 
-  //------------------Loading Spinner------------------//
-  // Check if schedulesData is loading
-
-  //-------------------Schedules Data-------------------//
-  // Check if schedulesData is empty or undefined
   const isSchedulesDataEmpty = !scheduleEntries || scheduleEntries.length === 0;
-  console.log("Schedule Empty Indicator:", isSchedulesDataEmpty);
 
   return (
     <Layout>
@@ -142,24 +161,22 @@ function AttendanceStatus() {
       />
       <Card>
         <div className="container mx-auto py-4">
-          {/* Track filter dropdown */}
           <div className="mb-4 flex items-center gap-2">
             <Filter size={18} className="text-muted-foreground" />
             <span className="text-sm font-medium">Track:</span>
             <div className="w-64">
               <Select
-                value={selectedTrack}
+                value={selectedTrackId?.toString() ?? "All"} 
                 onValueChange={(value) => {
-                  const track = tracksWithIds.find((t) => t.name === value);
-                  handleTrackChange(value, track?.id);
+                  handleTrackChange(value === "All" ? null : Number(value)); 
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select Track" />
+                  <SelectValue placeholder="Select Track">{selectedTrack}</SelectValue> 
                 </SelectTrigger>
                 <SelectContent>
-                  {tracksWithIds.map((track) => (
-                    <SelectItem key={track.name} value={track.name}>
+                  {tracksForSelect.map((track) => (
+                    <SelectItem key={track.id ?? "All"} value={track.id?.toString() ?? "All"}>
                       {track.name}
                     </SelectItem>
                   ))}
@@ -168,16 +185,13 @@ function AttendanceStatus() {
             </div>
             <Calendar size={18} className="text-muted-foreground"/>
             <span className="text-sm font-medium">Date:</span>
-            {/* Pass date state and setter to DatePickerWithRange */}
             <DatePickerWithRange date={dateRange} setDate={setDateRange} />
           </div>
 
-          {/* Use scheduleEntries instead of schedulesData.results */}
           {!isLoading ? (
             <>
               <AttendanceStatusTable schedules={scheduleEntries} selectedTrackId={selectedTrackId} />
 
-              {/* View More button */}
               {nextPageUrl && (
                 <div className="mt-4 flex justify-center">
                   <Button
