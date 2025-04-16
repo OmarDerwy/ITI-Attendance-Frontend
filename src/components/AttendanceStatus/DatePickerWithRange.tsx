@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { addDays, format } from "date-fns"
-import { CalendarIcon } from "lucide-react"
+import { format } from "date-fns"
+import { XIcon } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
 import { cn } from "@/lib/utils"
@@ -24,9 +24,7 @@ export function DatePickerWithRange({
   className,
   date,
   setDate,
-}) {
-//   const [date, setDate] = React.useState<DateRange | undefined>()
-
+}: DatePickerWithRangeProps) {
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover>
@@ -35,22 +33,34 @@ export function DatePickerWithRange({
             id="date"
             variant={"outline"}
             className={cn(
-              "w-[300px] justify-start text-left font-normal",
+              "w-[300px] justify-start text-left font-normal relative",
               !date && "text-muted-foreground"
             )}
           >
-            <CalendarIcon />
             {date?.from ? (
               date.to ? (
                 <>
-                  {format(date.from, "LLL dd, y")} -{" "}
-                  {format(date.to, "LLL dd, y")}
+                  {format(date.from, "dd-MM-y")} to{" "}
+                  {format(date.to, "dd-MM-y")}
                 </>
               ) : (
-                format(date.from, "LLL dd, y")
+                format(date.from, "dd-MM-y")
               )
             ) : (
               <span>Pick a range</span>
+            )}
+            {date?.from && (
+              <Button
+                variant={"ghost"}
+                size="sm"
+                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0 opacity-60 hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setDate(undefined)
+                }}
+              >
+                <XIcon className="h-4 w-4" />
+              </Button>
             )}
           </Button>
         </PopoverTrigger>
