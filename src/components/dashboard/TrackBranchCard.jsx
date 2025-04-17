@@ -88,7 +88,7 @@ const TrackBranchCard = () => {
                         days left until graduation
                       </>
                     )
-                    : "Congratulations! You have completed your program."}
+                    : "Congratulations! You are almost graduated."}
                 </p>
               </div>
             </div>

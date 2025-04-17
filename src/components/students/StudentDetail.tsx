@@ -56,6 +56,7 @@ type AttendanceStatus =
   | "late-check-in_early-excused"
   | "late-excused_early-excused";
 
+
 interface AttendanceAggregate {
   num_of_attendance_records: number,
   num_of_times_attended: number,
@@ -63,7 +64,7 @@ interface AttendanceAggregate {
   attendance_percentage: number,
 }
 
-  interface AttendanceRecordDetail {
+interface AttendanceRecordDetail {
   id: number;
   schedule: Schedule;
   sessions: string[];
@@ -71,7 +72,6 @@ interface AttendanceAggregate {
   check_out_time: string | null;
   status: AttendanceStatus;
   adjusted_time: string | null;
-  
 }
 
 interface StudentInfo {
@@ -102,6 +102,10 @@ const StudentDetail = ({
   onResendActivation,
 }: StudentDetailProps) => {
   const status = getStatus(student);
+
+
+  const attendanceRate = student.attendance_rate ?? 85;
+  const lastAttendanceDate = student.last_attendance_date ?? dayjs().subtract(1, 'day').format('YYYY-MM-DD');
 
   const {
     data: historyData,
