@@ -193,6 +193,8 @@ function LeaveRequestCenter() {
 
   const handleReject = async (requestId) => {
     try {
+      const request = leaveRequests.find(req => req.id === requestId);
+      if (!request) return;
       // Add your API call here to update the request status
       await axiosBackendInstance.post(`attendance/permission-requests/${requestId}/reject/`);
       toast({
