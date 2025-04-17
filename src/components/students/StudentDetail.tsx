@@ -250,7 +250,7 @@ const StudentDetail = ({
               )}
             </div>
             <div className="p-4 rounded-md border bg-background flex flex-col items-center">
-              <p className="text-xs text-muted-foreground mb-1">Total Classes</p>
+              <p className="text-xs text-muted-foreground mb-1">Total Days</p>
               {isLoadingHistory ? (
                 <Skeleton className="h-8 w-full" />
               ) : isErrorHistory ? (
@@ -265,7 +265,7 @@ const StudentDetail = ({
               )}
             </div>
             <div className="p-4 rounded-md border bg-background flex flex-col items-center">
-              <p className="text-xs text-muted-foreground mb-1">Classes Attended</p>
+              <p className="text-xs text-muted-foreground mb-1">Days Attended</p>
               {isLoadingHistory ? (
                 <Skeleton className="h-8 w-full" />
               ) : isErrorHistory ? (
@@ -280,7 +280,7 @@ const StudentDetail = ({
               )}
             </div>
             <div className="p-4 rounded-md border bg-background flex flex-col items-center">
-              <p className="text-xs text-muted-foreground mb-1">Classes Missed</p>
+              <p className="text-xs text-muted-foreground mb-1">Days Missed</p>
               {isLoadingHistory ? (
                 <Skeleton className="h-8 w-full" />
               ) : isErrorHistory ? (
