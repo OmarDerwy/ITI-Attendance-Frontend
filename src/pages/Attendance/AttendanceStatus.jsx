@@ -154,73 +154,73 @@ function AttendanceStatus() {
 
   return (
     <Layout>
-      <PageTitle
-        title="Attendance Status"
-        subtitle="View attendance status for your students each day"
-        icon={<Clock2 />}
-      />
-      <Card>
-        <div className="container mx-auto py-4">
-          <div className="mb-4 flex items-center gap-2">
-            <Filter size={18} className="text-muted-foreground" />
-            <span className="text-sm font-medium">Track:</span>
-            <div className="w-64">
-              <Select
-                value={selectedTrackId?.toString() ?? "All"} 
-                onValueChange={(value) => {
-                  handleTrackChange(value === "All" ? null : Number(value)); 
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Track">{selectedTrack}</SelectValue> 
-                </SelectTrigger>
-                <SelectContent>
-                  {tracksForSelect.map((track) => (
-                    <SelectItem key={track.id ?? "All"} value={track.id?.toString() ?? "All"}>
-                      {track.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Calendar size={18} className="text-muted-foreground"/>
-            <span className="text-sm font-medium">Date:</span>
-            <DatePickerWithRange date={dateRange} setDate={setDateRange} />
-          </div>
-
-          {!isLoading ? (
-            <>
-              <AttendanceStatusTable schedules={scheduleEntries} selectedTrackId={selectedTrackId} />
-
-              {nextPageUrl && (
-                <div className="mt-4 flex justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={loadMoreSchedules}
-                    disabled={isLoadingMore}
-                    className="w-full max-w-xs"
-                  >
-                    {isLoadingMore ? (
-                      <span className="flex items-center gap-2">
-                        <LoaderCircle size={16} className="animate-spin" />
-                        Loading more...
-                      </span>
-                    ) : (
-                      "View More"
-                    )}
-                  </Button>
-                </div>
-              )}
-            </>
-          ) : (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-pulse flex h-20 w-20 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                <Clock2 size={48} />
+      <div className="container">
+        <PageTitle
+          title="Attendance Status"
+          subtitle="View attendance status for your students each day"
+          icon={<Clock2 />}
+        />
+        <Card className="p-6">
+          <div >
+            <div className="mb-4 flex items-center gap-2">
+              <Filter size={18} className="text-muted-foreground" />
+              <span className="text-sm font-medium">Track:</span>
+              <div className="w-64">
+                <Select
+                  value={selectedTrackId?.toString() ?? "All"}
+                  onValueChange={(value) => {
+                    handleTrackChange(value === "All" ? null : Number(value));
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Track">{selectedTrack}</SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {tracksForSelect.map((track) => (
+                      <SelectItem key={track.id ?? "All"} value={track.id?.toString() ?? "All"}>
+                        {track.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
+              <Calendar size={18} className="text-muted-foreground"/>
+              <span className="text-sm font-medium">Date:</span>
+              <DatePickerWithRange date={dateRange} setDate={setDateRange} />
             </div>
-          )}
-        </div>
-      </Card>
+            {!isLoading ? (
+              <>
+                <AttendanceStatusTable schedules={scheduleEntries} selectedTrackId={selectedTrackId} />
+                {nextPageUrl && (
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreSchedules}
+                      disabled={isLoadingMore}
+                      className="w-full max-w-xs"
+                    >
+                      {isLoadingMore ? (
+                        <span className="flex items-center gap-2">
+                          <LoaderCircle size={16} className="animate-spin" />
+                          Loading more...
+                        </span>
+                      ) : (
+                        "View More"
+                      )}
+                    </Button>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="flex items-center justify-center h-64">
+                <div className="animate-pulse flex h-20 w-20 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Clock2 size={48} />
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+      </div>
     </Layout>
   );
 }

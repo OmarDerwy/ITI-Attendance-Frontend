@@ -234,212 +234,211 @@ function LeaveRequestCenter() {
 
   return (
     <Layout>
-      <PageTitle
-        title="Leave Request Center"
-        subtitle="Manage leave requests from students"
-        icon={<HandHeart />}
-      />
-      <Card>
-        <div className="container mx-auto py-4">
-          {/* Table view */}
-          <div className="overflow-x-auto">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-64">
-                <div className="animate-pulse flex h-20 w-20 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                  <HandHeart size={48} />
+      <div className='container'>
+        <PageTitle
+          title="Leave Request Center"
+          subtitle="Manage leave requests from students"
+          icon={<HandHeart />}
+        />
+        <Card className="px-6">
+          <div className="py-6">
+            {/* Table view */}
+            <div className="overflow-x-auto">
+              {isLoading ? (
+                <div className="flex items-center justify-center h-64">
+                  <div className="animate-pulse flex h-20 w-20 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <HandHeart size={48} />
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50">
-                  <tr>
-                    <th className="px-4 py-3 text-left">Student</th>
-                    <th className="px-4 py-3 text-left">Date</th>
-                    <th className="px-4 py-3 text-left">Expected Time</th>
-                    <th className="px-4 py-3 text-left">Type</th>
-                    <th className="px-4 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
-                  {leaveRequests.length > 0 ? (
-                    leaveRequests.map((request) => (
-                      <React.Fragment key={request.id}>
-                        <tr className="hover:bg-muted/50">
-                          <td className="px-4 py-3 font-medium">{getStudentName(request)}</td>
-                          <td className="px-4 py-3">{formatDate(request.schedule.created_at)}</td>
-                          <td className="px-4 py-3">{formatDateTime(request.adjusted_time)}</td>
-                          <td className="px-4 py-3">
-                            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
-                              {getRequestTypeDisplay(request.request_type)}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-right">
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setSelectedRequest(selectedRequest === request.id ? null : request.id)}
-                            >
-                              {selectedRequest === request.id ? "Hide Details" : "Details"}
-                            </Button>
-                          </td>
-                        </tr>
-                        {selectedRequest === request.id && (
-                          <tr>
-                            <td colSpan={5} className="p-0 border-0">
-                              <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 shadow-sm m-2">
-                                <div className="gap-4 mb-4">
-                                  <div className="text-right">
-                                    <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
-                                      {getRequestTypeDisplay(request.request_type)}
-                                    </span>
-                                  </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
-                                  <div>
-                                    <h3 className="font-semibold">Phone Number:</h3>
-                                    <p className="text-sm text-gray-600">{request.student.phone_number ? request.student.phone_number : "N/A"}</p>
-                                  </div>
-                                  <div>
-                                    <h3 className="font-semibold">Track:</h3>
-                                    <p className="text-sm text-gray-600">{request.schedule.track.name}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">Date:</p>
-                                    <p>{request.schedule.created_at}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">Sessions:</p>
-                                    <p>{getSessions(request)}</p>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">Expected Time:</p>
-                                    <p>
-                                      {request.request_type === 'day_excuse' ?
-                                        'Not applicable for Day Excuse' :
-                                        formatDateTime(request.adjusted_time)}
-                                    </p>
-                                  </div>
-                                  <div>
-                                    <p className="font-medium">Reason:</p>
-                                    <p>{request.reason}</p>
-                                  </div>
-                                </div>
-
-                                <div className="flex flex-wrap items-center gap-3 mt-4">
-                                  {request.request_type !== 'day_excuse' && (
-                                    <div className="flex items-center space-x-2">
-                                      <div className="w-20">
-                                        <Select
-                                          value={adjustedTimes[request.id]?.hour || ''}
-                                          onValueChange={(value) => handleTimeChange(request.id, 'hour', value)}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Hour" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
-                                              <SelectItem key={hour} value={hour.toString()}>
-                                                {hour}
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <span>:</span>
-                                      <div className="w-20">
-                                        <Select
-                                          value={adjustedTimes[request.id]?.minute || ''}
-                                          onValueChange={(value) => handleTimeChange(request.id, 'minute', value)}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Min" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            {Array.from({ length: 60 }, (_, i) => i).map((minute) => (
-                                              <SelectItem key={minute} value={minute}>
-                                                {minute}
-                                              </SelectItem>
-                                            ))}
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                      <div className="w-20">
-                                        <Select
-                                          value={adjustedTimes[request.id]?.period || ''}
-                                          onValueChange={(value) => handleTimeChange(request.id, 'period', value)}
-                                        >
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="AM/PM" />
-                                          </SelectTrigger>
-                                          <SelectContent>
-                                            <SelectItem value="AM">AM</SelectItem>
-                                            <SelectItem value="PM">PM</SelectItem>
-                                          </SelectContent>
-                                        </Select>
-                                      </div>
-                                    </div>
-                                  )}
-                                  {request.request_type === 'day_excuse' && (
-                                    <div className="text-muted-foreground italic mr-auto">
-                                      Time adjustment not applicable for Day Excuse
-                                    </div>
-                                  )}
-                                  <Button
-                                    variant="default"
-                                    size="sm"
-                                    onClick={() => handleAccept(request.id)}
-                                    disabled={request.status !== 'pending'}
-                                  >
-                                    Accept
-                                  </Button>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleReject(request.id)}
-                                    disabled={request.status !== 'pending'}
-                                  >
-                                    Reject
-                                  </Button>
-                                </div>
-                              </div>
+              ) : (
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/50">
+                    <tr>
+                      <th className="px-4 py-3 text-left">Student</th>
+                      <th className="px-4 py-3 text-left">Date</th>
+                      <th className="px-4 py-3 text-left">Expected Time</th>
+                      <th className="px-4 py-3 text-left">Type</th>
+                      <th className="px-4 py-3 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y">
+                    {leaveRequests.length > 0 ? (
+                      leaveRequests.map((request) => (
+                        <React.Fragment key={request.id}>
+                          <tr className="hover:bg-muted/50">
+                            <td className="px-4 py-3 font-medium">{getStudentName(request)}</td>
+                            <td className="px-4 py-3">{formatDate(request.schedule.created_at)}</td>
+                            <td className="px-4 py-3">{formatDateTime(request.adjusted_time)}</td>
+                            <td className="px-4 py-3">
+                              <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">
+                                {getRequestTypeDisplay(request.request_type)}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setSelectedRequest(selectedRequest === request.id ? null : request.id)}
+                              >
+                                {selectedRequest === request.id ? "Hide Details" : "Details"}
+                              </Button>
                             </td>
                           </tr>
-                        )}
-                      </React.Fragment>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
-                        No leave requests pending
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                          {selectedRequest === request.id && (
+                            <tr>
+                              <td colSpan={5} className="p-0 border-0">
+                                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 shadow-sm m-2">
+                                  <div className="gap-4 mb-4">
+                                    <div className="text-right">
+                                      <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
+                                        {getRequestTypeDisplay(request.request_type)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="grid grid-cols-2 gap-4 mb-4 text-sm">
+                                    <div>
+                                      <h3 className="font-semibold">Phone Number:</h3>
+                                      <p className="text-sm text-gray-600">{request.student.phone_number ? request.student.phone_number : "N/A"}</p>
+                                    </div>
+                                    <div>
+                                      <h3 className="font-semibold">Track:</h3>
+                                      <p className="text-sm text-gray-600">{request.schedule.track.name}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">Date:</p>
+                                      <p>{request.schedule.created_at}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">Sessions:</p>
+                                      <p>{getSessions(request)}</p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">Expected Time:</p>
+                                      <p>
+                                        {request.request_type === 'day_excuse' ?
+                                          'Not applicable for Day Excuse' :
+                                          formatDateTime(request.adjusted_time)}
+                                      </p>
+                                    </div>
+                                    <div>
+                                      <p className="font-medium">Reason:</p>
+                                      <p>{request.reason}</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap items-center gap-3 mt-4">
+                                    {request.request_type !== 'day_excuse' && (
+                                      <div className="flex items-center space-x-2">
+                                        <div className="w-20">
+                                          <Select
+                                            value={adjustedTimes[request.id]?.hour || ''}
+                                            onValueChange={(value) => handleTimeChange(request.id, 'hour', value)}
+                                          >
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Hour" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
+                                                <SelectItem key={hour} value={hour.toString()}>
+                                                  {hour}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <span>:</span>
+                                        <div className="w-20">
+                                          <Select
+                                            value={adjustedTimes[request.id]?.minute || ''}
+                                            onValueChange={(value) => handleTimeChange(request.id, 'minute', value)}
+                                          >
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="Min" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              {Array.from({ length: 60 }, (_, i) => i).map((minute) => (
+                                                <SelectItem key={minute} value={minute}>
+                                                  {minute}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                        <div className="w-20">
+                                          <Select
+                                            value={adjustedTimes[request.id]?.period || ''}
+                                            onValueChange={(value) => handleTimeChange(request.id, 'period', value)}
+                                          >
+                                            <SelectTrigger>
+                                              <SelectValue placeholder="AM/PM" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                              <SelectItem value="AM">AM</SelectItem>
+                                              <SelectItem value="PM">PM</SelectItem>
+                                            </SelectContent>
+                                          </Select>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {request.request_type === 'day_excuse' && (
+                                      <div className="text-muted-foreground italic mr-auto">
+                                        Time adjustment not applicable for Day Excuse
+                                      </div>
+                                    )}
+                                    <Button
+                                      variant="default"
+                                      size="sm"
+                                      onClick={() => handleAccept(request.id)}
+                                      disabled={request.status !== 'pending'}
+                                    >
+                                      Accept
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleReject(request.id)}
+                                      disabled={request.status !== 'pending'}
+                                    >
+                                      Reject
+                                    </Button>
+                                  </div>
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      ))
+                    ) : (
+                      <tr>
+                        <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                          No leave requests pending
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              )}
+            </div>
+            {/* Pagination */}
+            {nextPageUrl && (
+              <div className="mt-4 flex justify-center">
+                <Button
+                  variant="outline"
+                  onClick={loadMoreRequests}
+                  disabled={isLoadingMore}
+                  className="w-full max-w-xs"
+                >
+                  {isLoadingMore ? (
+                    <span className="flex items-center gap-2">
+                      <LoaderCircle size={16} className="animate-spin" />
+                      Loading more...
+                    </span>
+                  ) : "View More"}
+                </Button>
+              </div>
             )}
           </div>
-
-          {/* Pagination */}
-          {nextPageUrl && (
-            <div className="mt-4 flex justify-center">
-              <Button
-                variant="outline"
-                onClick={loadMoreRequests}
-                disabled={isLoadingMore}
-                className="w-full max-w-xs"
-              >
-                {isLoadingMore ? (
-                  <span className="flex items-center gap-2">
-                    <LoaderCircle size={16} className="animate-spin" />
-                    Loading more...
-                  </span>
-                ) : "View More"}
-              </Button>
-            </div>
-          )}
-        </div>
-      </Card>
+        </Card>
+      </div>
     </Layout>
   );
 }
