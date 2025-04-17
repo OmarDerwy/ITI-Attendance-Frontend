@@ -176,60 +176,61 @@ const StudentVerification = () => {
 
   return (
     <Layout>
-      <PageTitle
-        title="Student Verification"
-        subtitle="Verify and manage student accounts"
-        icon={<UserCheck />}
-      />
-
-      <div className="space-y-6">
-        <Card className="p-6">
-          <SearchToolbar
-            searchQuery={searchQuery}
-            onSearchChange={setSearchQuery}
-            tracksData={tracksData}
-            onTrackChange={setSelectedTrack}
-            selectedTrack={selectedTrack}
-            onAddStudent={() => setIsAddStudentModalOpen(true)}
-            onRefresh={handleRefresh}
-            isRefreshing={isRefreshing}
-            pendingCount={studentsData?.inactive_users}
-            verifiedCount={studentsData?.active_users}
+      <div className="flex flex-col items-center min-h-screen py-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-start">
+          <PageTitle
+            title="Student Verification"
+            subtitle="Verify and manage student accounts"
+            icon={<UserCheck />}
           />
-
-          {isLoading ?
-            (<Card className="p-8 text-center">
-              <h2 className="text-xl font-semibold mb-4">Loading students...</h2>
+          <div className="space-y-6 max-w-4xl">
+            <Card className="p-6">
+              <SearchToolbar
+                searchQuery={searchQuery}
+                onSearchChange={setSearchQuery}
+                tracksData={tracksData}
+                onTrackChange={setSelectedTrack}
+                selectedTrack={selectedTrack}
+                onAddStudent={() => setIsAddStudentModalOpen(true)}
+                onRefresh={handleRefresh}
+                isRefreshing={isRefreshing}
+                pendingCount={studentsData?.inactive_users}
+                verifiedCount={studentsData?.active_users}
+              />
+              {isLoading ?
+                (<Card className="p-8 text-center">
+                  <h2 className="text-xl font-semibold mb-4">Loading students...</h2>
+                </Card>
+                ) : (<StudentTable
+                  students={studentEntries}
+                  getFullName={getFullName}
+                  getStatus={getStatus}
+                  onViewDetails={setSelectedStudent}
+                  onViewDetailsValue={selectedStudent}
+                  onRevoke={handleRevoke}
+                  onResendActivation={handleResendActivation}
+                />)}
+              {/* Pagination: View More Button */}
+              { isLoading || nextPageUrl && (
+                <div className="mt-4 flex justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={loadMoreStudents}
+                    disabled={isLoadingMore}
+                    className="w-full max-w-xs"
+                  >
+                    {isLoadingMore ? (
+                      <span className="flex items-center gap-2">
+                        <LoaderCircle size={16} className="animate-spin" />
+                        Loading more...
+                      </span>
+                    ) : "View More"}
+                  </Button>
+                </div>
+              )}
             </Card>
-            ) : (<StudentTable
-              students={studentEntries}
-              getFullName={getFullName}
-              getStatus={getStatus}
-              onViewDetails={setSelectedStudent}
-              onViewDetailsValue={selectedStudent}
-              onRevoke={handleRevoke}
-              onResendActivation={handleResendActivation}
-            />)}
-
-          {/* Pagination: View More Button */}
-          { isLoading || nextPageUrl && (
-            <div className="mt-4 flex justify-center">
-              <Button
-                variant="outline"
-                onClick={loadMoreStudents}
-                disabled={isLoadingMore}
-                className="w-full max-w-xs"
-              >
-                {isLoadingMore ? (
-                  <span className="flex items-center gap-2">
-                    <LoaderCircle size={16} className="animate-spin" />
-                    Loading more...
-                  </span>
-                ) : "View More"}
-              </Button>
-            </div>
-          )}
-        </Card>
+          </div>
+        </div>
       </div>
 
       {/* Add Student Modal */}
