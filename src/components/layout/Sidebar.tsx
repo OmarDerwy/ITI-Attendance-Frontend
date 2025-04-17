@@ -25,6 +25,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
+import SettingsPopup from "@/components/settings/SettingsPopup";
+import axiosBackendInstance from "@/api/config";
 
 interface NavItemProps {
   icon: React.ElementType;
@@ -33,6 +35,7 @@ interface NavItemProps {
   active?: boolean;
   expanded: boolean;
   roles?: Array<"student" | "supervisor" | "admin">;
+  onClick?: () => void;
 }
 
 const NavItem = ({
@@ -42,6 +45,7 @@ const NavItem = ({
   active,
   expanded,
   roles = [],
+  onClick,
 }: NavItemProps) => {
   const { userRole } = useUser();
 
@@ -52,9 +56,17 @@ const NavItem = ({
   )
     return null;
 
+  const handleClick = (e: React.MouseEvent) => {
+    if (onClick) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <Link
       to={to}
+      onClick={handleClick}
       className={cn(
         "flex items-center gap-x-2.5 h-10 text-sm px-3 rounded-lg transition-all duration-200 ease-in-out",
         active
@@ -78,6 +90,7 @@ const Sidebar = () => {
   const [expanded, setExpanded] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const location = useLocation();
   const { userRole } = useUser();
 
@@ -113,11 +126,33 @@ const Sidebar = () => {
     }
   };
 
+  const handleSettingsSave = async (settings: { unexcusedThreshold: number; excusedThreshold: number; programType: string }) => {
+    try {
+      console.log("Saving settings:", settings);
+      const response = await axiosBackendInstance.post("attendance/settings/absence-thresholds/update/", 
+
+        {
+          program_type: settings.programType,
+          unexcused_threshold: settings.unexcusedThreshold,
+          excused_threshold: settings.excusedThreshold,
+        },
+      );
+
+
+
+      return response.data;
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      throw error;
+    }
+  };
+
   const navItems: Array<{
     icon: React.ElementType;
     label: string;
     to: string;
     roles: Array<"student" | "supervisor" | "admin">;
+    onClick?: () => void;
   }> = [
     // Student, Supervisor, Admin
     // { icon: Home, label: "Dashboard", to: "/", roles: ["student", "supervisor", "admin"] },
@@ -170,7 +205,13 @@ const Sidebar = () => {
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: MapPin, label: "Tracks", to: "/tracks", roles: ["admin"] },
     { icon: Users, label: "Users", to: "/users", roles: ["admin"] },
-
+    { 
+      icon: Settings, 
+      label: "Settings", 
+      to: "#", 
+      roles: ["admin"],
+      onClick: () => setIsSettingsOpen(true)
+    },
     {
       icon: Flag,
       label: "Report Item",
@@ -250,6 +291,7 @@ const Sidebar = () => {
                 active={location.pathname === item.to}
                 expanded={expanded}
                 roles={item.roles}
+                onClick={item.onClick}
               />
             ))}
           </nav>
@@ -264,6 +306,11 @@ const Sidebar = () => {
           />
         </div>
       </aside>
+      <SettingsPopup
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+        onSave={handleSettingsSave}
+      />
     </>
   );
 };
