@@ -1,15 +1,21 @@
-import axiosBackendInstance from './config';
+import axiosBackendInstance from "./config";
 
-export const getSupervisorAttendanceData = async (date?: string, trackId?: number) => {
+export const getSupervisorAttendanceData = async (
+  date?: string,
+  trackId?: number
+) => {
   try {
     const params: any = {};
     if (date) params.date = date;
     if (trackId) params.track_id = trackId;
 
-    const response = await axiosBackendInstance.get('attendance/supervisor-attendance/', { params });
+    const response = await axiosBackendInstance.get(
+      "attendance/supervisor-attendance/",
+      { params }
+    );
     return response.data;
   } catch (error) {
-    console.error('Error fetching supervisor attendance data:', error);
+    console.error("Error fetching supervisor attendance data:", error);
     throw error;
   }
 };
@@ -22,12 +28,14 @@ export const getTodaysAttendancePercentage = async (): Promise<{
   attendance_percentage: number;
 }> => {
   try {
-    const response = await axiosBackendInstance.get('attendance/attendance-percentage/today');
-    // console.log("today",response.data);
-    
+    const response = await axiosBackendInstance.get(
+      "attendance/attendance-percentage/today"
+    );
+    console.log("today", response.data);
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching today\'s attendance percentage:', error);
+    console.error("Error fetching today's attendance percentage:", error);
     throw error;
   }
 };
@@ -41,18 +49,23 @@ export const getWeeklyAttendancePercentage = async (): Promise<{
   attendance_percentage: number;
 }> => {
   try {
-    const response = await axiosBackendInstance.get('attendance/attendance-percentage/weekly');
-    // console.log("weekly",response.data);
-    
+    const response = await axiosBackendInstance.get(
+      "attendance/attendance-percentage/weekly"
+    );
+    console.log("weekly", response.data);
+
     return response.data;
   } catch (error) {
-    console.error('Error fetching weekly attendance percentage:', error);
+    console.error("Error fetching weekly attendance percentage:", error);
     throw error;
   }
 };
 
-// Fetch attendance trends (daily, weekly, monthly) with optional track filter
-export const getAttendanceTrends = async (trackId?: number): Promise<{
+// Fetch attendance trends (daily, weekly, monthly) with optional track and branch filters
+export const getAttendanceTrends = async (
+  trackId?: number,
+  branchId?: number
+): Promise<{
   daily_trends: { date: string; attended: number }[];
   weekly_trends: { week: string; attended: number }[];
   monthly_trends: { month: string; attended: number }[];
@@ -60,58 +73,85 @@ export const getAttendanceTrends = async (trackId?: number): Promise<{
   try {
     const params: any = {};
     if (trackId) params.track_id = trackId;
+    if (branchId) params.branch_id = branchId;
+    console.log("params", params);
 
-    const response = await axiosBackendInstance.get('attendance/attendance-trends', { params });
-    // console.log('Attendance Trends Response:', response.data);
-    
+    const response = await axiosBackendInstance.get(
+      "attendance/attendance-trends",
+      { params }
+    );
+    console.log("Attendance Trends Response:", response.data);
+
     return {
       daily_trends: response.data.daily_trends || [],
       weekly_trends: response.data.weekly_trends || [],
-      monthly_trends: response.data.monthly_trends || []
+      monthly_trends: response.data.monthly_trends || [],
     };
   } catch (error) {
-    console.error('Error fetching attendance trends:', error);
+    console.error("Error fetching attendance trends:", error);
     return {
       daily_trends: [],
       weekly_trends: [],
-      monthly_trends: []
+      monthly_trends: [],
     };
   }
 };
 
 export const getScheduledClasses = async (trackId?: number) => {
   try {
-    const response = await axiosBackendInstance.get(`attendance/sessions/calendar-data/?track_id=${trackId}`);
+    const response = await axiosBackendInstance.get(
+      `attendance/sessions/calendar-data/?track_id=${trackId}`
+    );
     return response.data;
   } catch (error) {
-    console.error('Error fetching scheduled classes:', error);
+    console.error("Error fetching scheduled classes:", error);
     throw error;
   }
 };
 
 export const get_weekly_attendance_by_track = async () => {
   try {
-    const response = await axiosBackendInstance.get(`attendance/weekly-breakdown/`);
+    const response = await axiosBackendInstance.get(
+      `attendance/weekly-breakdown/`
+    );
     return response.data;
   } catch (error) {
-    console.error('Error fetching weekly attendance breakdown by track:', error);
+    console.error(
+      "Error fetching weekly attendance breakdown by track:",
+      error
+    );
     throw error;
   }
 };
-export const getRecentAbsentees = async (trackId?: number) => {
+
+export const getBranchAttendanceTrends = async (
+  branchId?: number
+): Promise<{
+  daily_trends: { date: string; attended: number }[];
+  weekly_trends: { week: string; attended: number }[];
+  monthly_trends: { month: string; attended: number }[];
+}> => {
   try {
     const params: any = {};
-    if (trackId) {
-      params.track_id = trackId;
-    } else {
-      console.log('Fetching recent absences for all tracks');
-    }
-    
-    const response = await axiosBackendInstance.get('attendance/recent-absences/', { params });
-    // console.log('Recent absences response:', response.data);
-    return response.data;
+    if (branchId) params.track_id = branchId;
+
+    const response = await axiosBackendInstance.get(
+      "attendance/branch-attendance-trends",
+      { params }
+    );
+    console.log("Attendance Trends Response:", response.data);
+
+    return {
+      daily_trends: response.data.daily_trends || [],
+      weekly_trends: response.data.weekly_trends || [],
+      monthly_trends: response.data.monthly_trends || [],
+    };
   } catch (error) {
-    console.error('Error fetching recent absentees:', error);
-    throw error;
+    console.error("Error fetching attendance trends:", error);
+    return {
+      daily_trends: [],
+      weekly_trends: [],
+      monthly_trends: [],
+    };
   }
-}
+};
