@@ -56,6 +56,14 @@ type AttendanceStatus =
   | "late-check-in_early-excused"
   | "late-excused_early-excused";
 
+
+interface AttendanceAggregate {
+  num_of_attendance_records: number,
+  num_of_times_attended: number,
+  num_of_times_absent: number,
+  attendance_percentage: number,
+}
+
 interface AttendanceRecordDetail {
   id: number;
   schedule: Schedule;
@@ -77,6 +85,7 @@ interface StudentInfo {
 interface StudentHistoryResponse {
   student_info: StudentInfo;
   attendance_records: AttendanceRecordDetail[];
+  attendance_aggregate: AttendanceAggregate;
 }
 
 const fetchStudentHistory = async (studentId: number): Promise<StudentHistoryResponse> => {
@@ -93,6 +102,7 @@ const StudentDetail = ({
   onResendActivation,
 }: StudentDetailProps) => {
   const status = getStatus(student);
+
 
   const attendanceRate = student.attendance_rate ?? 85;
   const lastAttendanceDate = student.last_attendance_date ?? dayjs().subtract(1, 'day').format('YYYY-MM-DD');
@@ -227,15 +237,71 @@ const StudentDetail = ({
       <div className="w-full mt-6">
         <h4 className="text-sm font-medium text-muted-foreground mb-1">Attendance Information</h4>
         <div className="rounded-md border bg-background p-4 space-y-4 overflow-hidden flex flex-col">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="p-4 rounded-md border bg-background flex flex-col items-center">
               <p className="text-xs text-muted-foreground mb-1">Attendance Rate</p>
-              <p>{attendanceRate}%</p>
+              {isLoadingHistory ? (
+                <Skeleton className="h-8 w-full" />
+              ) : isErrorHistory ? (
+                <div className="text-red-600 flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>Error</span>
+                </div>
+              ) : historyData && historyData.attendance_aggregate.num_of_attendance_records > 0 ? (
+                <p>{historyData.attendance_aggregate.attendance_percentage}%</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">N/A</p>
+              )}
             </div>
             <div className="p-4 rounded-md border bg-background flex flex-col items-center">
+              <p className="text-xs text-muted-foreground mb-1">Total Classes</p>
+              {isLoadingHistory ? (
+                <Skeleton className="h-8 w-full" />
+              ) : isErrorHistory ? (
+                <div className="text-red-600 flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>Error</span>
+                </div>
+              ) : historyData && historyData.attendance_aggregate.num_of_attendance_records > 0 ? (
+                <p>{historyData.attendance_aggregate.num_of_attendance_records}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">N/A</p>
+              )}
+            </div>
+            <div className="p-4 rounded-md border bg-background flex flex-col items-center">
+              <p className="text-xs text-muted-foreground mb-1">Classes Attended</p>
+              {isLoadingHistory ? (
+                <Skeleton className="h-8 w-full" />
+              ) : isErrorHistory ? (
+                <div className="text-red-600 flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>Error</span>
+                </div>
+              ) : historyData && historyData.attendance_aggregate.num_of_times_attended > 0 ? (
+                <p>{historyData.attendance_aggregate.num_of_times_attended}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">N/A</p>
+              )}
+            </div>
+            <div className="p-4 rounded-md border bg-background flex flex-col items-center">
+              <p className="text-xs text-muted-foreground mb-1">Classes Missed</p>
+              {isLoadingHistory ? (
+                <Skeleton className="h-8 w-full" />
+              ) : isErrorHistory ? (
+                <div className="text-red-600 flex items-center gap-2">
+                  <AlertCircle size={16} />
+                  <span>Error</span>
+                </div>
+              ) : historyData && historyData.attendance_aggregate.num_of_times_absent > 0 ? (
+                <p>{historyData.attendance_aggregate.num_of_times_absent}</p>
+              ) : (
+                <p className="text-sm text-muted-foreground">N/A</p>
+              )}
+            </div>
+            {/* <div className="p-4 rounded-md border bg-background flex flex-col items-center">
               <p className="text-xs text-muted-foreground mb-1">Last Attendance Date</p>
               <p>{lastAttendanceDate === 'N/A' ? 'N/A' : dayjs(lastAttendanceDate).format('DD MMM YYYY')}</p>
-            </div>
+            </div> */}
           </div>
           <div>
             <p className="text-xs text-muted-foreground mb-1">Recent Attendance History</p>
