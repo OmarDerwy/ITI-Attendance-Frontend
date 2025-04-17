@@ -23,7 +23,7 @@ const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
     )}>
       <CardContent className="pt-4 h-full flex flex-col">
         <div className="flex items-center gap-2 mb-4">
-          <CardTitle className="text-xl">Absence Status</CardTitle>
+          <CardTitle className="text-2xl">Absence Status</CardTitle>
         </div>
 
         {/* Visual warning indicator */}
