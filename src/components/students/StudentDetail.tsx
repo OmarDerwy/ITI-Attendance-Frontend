@@ -103,10 +103,6 @@ const StudentDetail = ({
 }: StudentDetailProps) => {
   const status = getStatus(student);
 
-
-  const attendanceRate = student.attendance_rate ?? 85;
-  const lastAttendanceDate = student.last_attendance_date ?? dayjs().subtract(1, 'day').format('YYYY-MM-DD');
-
   const {
     data: historyData,
     isLoading: isLoadingHistory,
