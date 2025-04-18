@@ -70,7 +70,7 @@ const Login = () => {
       }
     } catch (error) {
       console.error("Login failed:", error);
-      toast.error("Login failed. Please check your credentials.");
+      toast.error("Login failed. Wrong credentials or inactive user.");
     } finally {
       setIsLoading(false);
     }
