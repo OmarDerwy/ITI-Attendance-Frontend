@@ -76,7 +76,7 @@ const SupervisorDashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     onSuccess: (data) => {
-      console.log('Weekly Attendance Data:', data);
+      // console.log('Weekly Attendance Data:', data);
     },
     onError: (error) => {
       console.error("Error fetching weekly attendance:", error);
@@ -89,8 +89,8 @@ const SupervisorDashboard = () => {
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
     onSuccess: (data) => {
-      console.log('Daily Trends Data Success:', data);
-      console.log('Daily Trends:', data.daily_trends);
+      // console.log('Daily Trends Data Success:', data);
+      // console.log('Daily Trends:', data.daily_trends);
     },
     onError: (error) => {
       console.error("Error fetching daily trends:", error);
@@ -105,8 +105,8 @@ const SupervisorDashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     onSuccess: (data) => {
-      console.log('Weekly Trends Data Success:', data);
-      console.log('Weekly Trends:', data.weekly_trends);
+      // console.log('Weekly Trends Data Success:', data);
+      // console.log('Weekly Trends:', data.weekly_trends);
     },
     onError: (error) => {
       console.error("Error fetching weekly trends:", error);
@@ -122,7 +122,7 @@ const SupervisorDashboard = () => {
     refetchIntervalInBackground: false,
     enabled: Boolean(selectedTrack) && !isNaN(parseInt(selectedTrack)),
     onSuccess: (data) => {
-      console.log('Fetched Scheduled Classes Data:', data);
+      // console.log('Fetched Scheduled Classes Data:', data);
     },
     onError: (error) => {
       console.error("Error fetching scheduled classes:", error);
@@ -137,7 +137,7 @@ const SupervisorDashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     onSuccess: (data) => {
-      console.log('Weekly Attendance Breakdown Data:', data);
+      // console.log('Weekly Attendance Breakdown Data:', data);
     },
     onError: (error) => {
       console.error("Error fetching weekly attendance breakdown:", error);
@@ -152,7 +152,7 @@ const SupervisorDashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     onSuccess: (data) => {
-      console.log('Recent Absences Data:', data);
+      // console.log('Recent Absences Data:', data);
     },
     onError: (error) => {
       console.error("Error fetching recent absences:", error);

@@ -133,3 +133,16 @@ export const getRecentAbsentees = async (trackId?: number) => {
     throw error;
   }
 }
+
+export const getAbsenceThresholds = async () => {
+  try {
+    const response = await axiosBackendInstance.get('attendance/settings/absence-thresholds/');
+    console.log('Absence thresholds response:', response.data);
+
+    return response.data;
+    
+  } catch (error) {
+    console.error('Error fetching absence thresholds:', error);
+    throw error;
+  }
+};
