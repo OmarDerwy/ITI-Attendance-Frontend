@@ -113,7 +113,7 @@ const App = () => (
               />
               <Route path="/student-schedule" element={<StudentSchedule />} />
               <Route path="/student-dashboard" element={<StudentDashboard />} />
-              <Route path="/attendance/students-with-warnings" element={<StudentsWithWarnings />} /> 
+              <Route path="/students-with-warnings" element={<StudentsWithWarnings />} /> 
               <Route path="*" element={<NotFound />} />
             </Routes>
           </ThemeProvider>
