@@ -408,7 +408,7 @@ const AdminDashboard = () => {
                     className="w-32 h-32 bg-red-200 rounded-full flex items-center justify-center"
                   >
                     <img
-                      src="/public/images/iti-logo.png"
+                      src="/images/iti-logo.png"
                       alt="logo"
                       className="h-28"
                     />

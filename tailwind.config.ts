@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -109,6 +108,19 @@ export default {
 				'spin-slow': {
 					'0%': { transform: 'rotate(0deg)' },
 					'100%': { transform: 'rotate(360deg)' }
+				},
+				// Add new keyframes
+				'fade-in-left': {
+					'from': { opacity: '0', transform: 'translateX(-20px)' },
+					'to': { opacity: '1', transform: 'translateX(0)' },
+				},
+				'fade-in-right': {
+					'from': { opacity: '0', transform: 'translateX(20px)' },
+					'to': { opacity: '1', transform: 'translateX(0)' },
+				},
+				'pulse-slow': {
+					'0%, 100%': { transform: 'scale(1)' },
+					'50%': { transform: 'scale(1.03)' },
 				}
 			},
 			animation: {
@@ -119,7 +131,11 @@ export default {
 				'slide-up': 'slide-up 0.3s ease-out',
 				'slide-down': 'slide-down 0.3s ease-out',
 				'scale-in': 'scale-in 0.2s ease-out',
-				'spin-slow': 'spin-slow 3s linear infinite'
+				'spin-slow': 'spin-slow 3s linear infinite',
+				// Add new animations
+				'fade-in-left': 'fade-in-left 0.7s ease-out forwards',
+				'fade-in-right': 'fade-in-right 0.7s ease-out forwards',
+				'pulse-slow': 'pulse-slow 3s infinite ease-in-out',
 			}
 		}
 	},

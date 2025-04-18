@@ -41,7 +41,7 @@ const SearchToolbar = ({
   return (
     <div className="flex flex-col md:flex-row gap-4 items-center justify-between mb-6">
       <div className="flex flex-col md:flex-row gap-2 w-full">
-        <div className="relative flex-1">
+        <div className="relative md:w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
             placeholder="Search by name or email..." 
@@ -50,7 +50,7 @@ const SearchToolbar = ({
             className="pl-9"
           />
         </div>
-        <div className="w-full md:w-48">
+        <div className="w-full min-w-20 flex-1">
           <Select value={selectedTrack} onValueChange={onTrackChange}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Select Track..." defaultValue=""/>
@@ -81,12 +81,12 @@ const SearchToolbar = ({
           </Button>
         </div>
       </div>
-      <div className="flex gap-2 self-start md:self-center">
-        <Badge variant="outline" className="gap-1">
+      <div className="flex gap-2 self-start md:self-center h-10">
+        <Badge variant="outline" className="gap-1 text-nowrap">
           <span className="h-2 w-2 rounded-full bg-red-500"></span>
           Pending: {pendingCount || 0}
         </Badge>
-        <Badge variant="outline" className="gap-1">
+        <Badge variant="outline" className="gap-1 text-nowrap">
           <span className="h-2 w-2 rounded-full bg-green-500"></span>
           Verified: {verifiedCount || 0}
         </Badge>

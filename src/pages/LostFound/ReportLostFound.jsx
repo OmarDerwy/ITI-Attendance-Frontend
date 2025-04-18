@@ -158,26 +158,28 @@ const ReportLostFound = () => {
 
   return (
     <Layout>
-      <PageTitle
-        title="Report Lost & Found"
-        subtitle="Report a lost item or an item you found"
-        icon={<Flag />}
-      />
       <div className="max-w-3xl mx-auto">
-        <Card className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <ReportTypeField form={form} />
-            <BasicInfoFields form={form} />
-            <DateLocationFields form={form} />
-            <DescriptionField form={form} />
-            <ImageUploadField
-              images={images}
-              setImages={setImages}
-              onImageUploaded={handleImageUploaded}
-            />
-            <FormActions isSubmitting={isSubmitting} />
-          </form>
-        </Card>
+        <PageTitle
+          title="Report Lost & Found"
+          subtitle="Report a lost item or an item you found"
+          icon={<Flag />}
+        />
+        <div >
+          <Card className="p-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <ReportTypeField form={form} />
+              <BasicInfoFields form={form} />
+              <DateLocationFields form={form} />
+              <DescriptionField form={form} />
+              <ImageUploadField
+                images={images}
+                setImages={setImages}
+                onImageUploaded={handleImageUploaded}
+              />
+              <FormActions isSubmitting={isSubmitting} />
+            </form>
+          </Card>
+        </div>
       </div>
     </Layout>
   );
