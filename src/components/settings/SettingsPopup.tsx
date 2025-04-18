@@ -51,7 +51,6 @@ const SettingsPopup = ({ isOpen, onClose, onSave }: SettingsPopupProps) => {
       try {
         const data = await getAbsenceThresholds();
         setThresholds(data);
-        // Set initial values based on the current program type
         if (data) {
           setUnexcusedThreshold(data[programType].unexcused);
           setExcusedThreshold(data[programType].excused);
@@ -67,14 +66,17 @@ const SettingsPopup = ({ isOpen, onClose, onSave }: SettingsPopupProps) => {
     }
   }, [isOpen]);
 
+  useEffect(() => {
+    if (thresholds) {
+      setUnexcusedThreshold(thresholds[programType as keyof Thresholds].unexcused);
+      setExcusedThreshold(thresholds[programType as keyof Thresholds].excused);
+    }
+  }, [programType, thresholds]);  
+
   const handleProgramTypeChange = (value: string) => {
     setProgramType(value);
-    if (thresholds) {
-      setUnexcusedThreshold(thresholds[value as keyof Thresholds].unexcused);
-      setExcusedThreshold(thresholds[value as keyof Thresholds].excused);
-    }
   };
-
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
