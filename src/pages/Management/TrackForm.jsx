@@ -143,7 +143,14 @@ const TrackFormPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!name || !intake || !supervisor || !branchId || !startDate || !description) {
+    if (
+      !name ||
+      !intake ||
+      !supervisor ||
+      !branchId ||
+      !startDate ||
+      !description
+    ) {
       toast({
         title: "Missing Fields",
         description: "All fields are required.",
@@ -186,21 +193,21 @@ const TrackFormPage = () => {
       navigate("/tracks");
     } catch (error) {
       console.error("Error saving track:", error);
-        toast({
-          title: "Error",
-          description: "Failed to save track. Please try again later.",
-          variant: "destructive",
-        });
+      toast({
+        title: "Error",
+        description: "Failed to save track. Please try again later.",
+        variant: "destructive",
+      });
     }
   };
 
   if (isLoading) {
     return (
       <Layout>
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading data...</p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading data...</p>
+        </div>
       </Layout>
     );
   }
@@ -208,7 +215,7 @@ const TrackFormPage = () => {
   return (
     <Layout>
       <div className="space-y-6 p-6 min-h-screen">
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-3xl mx-auto">
           <PageTitle
             title={
               trackId && trackId !== "add" ? "Edit Track" : "Add New Track"
