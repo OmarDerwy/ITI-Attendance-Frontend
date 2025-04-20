@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Link } from 'react-router-dom';
-import { ArrowRight, BarChart3, Calendar, Clock, Check, Users, AlertTriangle, BellRing } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { ArrowRight, BarChart3, Clock, Check, HandHeart, AlertTriangle } from 'lucide-react';
+import { Calendar } from '@/components/ui/calendar';
+import { Card, CardContent, CardDescription, CardTitle, CardHeader } from '@/components/ui/card';
 import {
   ResponsiveContainer,
   BarChart,
@@ -14,9 +15,6 @@ import {
   Legend,
   LineChart,
   Line,
-  PieChart,
-  Pie,
-  Cell
 } from 'recharts';
 import { useQuery } from '@tanstack/react-query';
 import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends, getScheduledClasses, get_weekly_attendance_by_track, getRecentAbsentees } from '@/api/attendance';
@@ -26,8 +24,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { axiosBackendInstance } from '@/api/config';
 import dayjs from 'dayjs';
 import isToday from 'dayjs/plugin/isToday';
+import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 
 dayjs.extend(isToday);
+dayjs.extend(isSameOrBefore);
 
 const SupervisorDashboard = () => {
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b'];
@@ -42,6 +42,7 @@ const SupervisorDashboard = () => {
   const [weeklyBreakdown, setWeeklyBreakdown] = useState([]);
   const [weeklyBreakdownTrack, setWeeklyBreakdownTrack] = useState("All tracks");
   const [recentAbsences, setRecentAbsences] = useState([]);
+  const navigate = useNavigate();
 
   const { data: tracksData } = useQuery({
     queryKey: ['tracks'],
@@ -97,20 +98,43 @@ const SupervisorDashboard = () => {
     },
   });
 
-  const { data: weeklyTrendsData, isLoading: weeklyTrendsLoading, isError: weeklyTrendsError } = useQuery({
+  const { data: weeklyTrendsQueryData, isLoading: weeklyTrendsLoading } = useQuery({
     queryKey: ['weeklyAttendanceTrends', selectedWeeklyTrendTrack],
     queryFn: () => getAttendanceTrends(selectedWeeklyTrendTrack === "all" ? null : parseInt(selectedWeeklyTrendTrack)),
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
-    refetchInterval: 60000,
-    refetchIntervalInBackground: false,
-    onSuccess: (data) => {
-      // console.log('Weekly Trends Data Success:', data);
-      // console.log('Weekly Trends:', data.weekly_trends);
-    },
+    staleTime: 5 * 60 * 1000, 
     onError: (error) => {
       console.error("Error fetching weekly trends:", error);
     },
+    onSuccess: (data) => {
+      // console.log('Weekly Trends Data Success:', data);
+      // console.log('Weekly Trends:', data.weekly_trends);
+    }
+  });
+
+  useEffect(() => {
+    if (weeklyTrendsQueryData && weeklyTrendsQueryData.weekly_trends) { 
+      const today = dayjs(); 
+
+      const processedData = weeklyTrendsQueryData.weekly_trends.filter(item => {
+        const itemDate = dayjs(item.week); 
+        return itemDate.isValid() && itemDate.isSameOrBefore(today, 'day');
+      });
+
+      setFilteredData(processedData);
+    } else {
+      setFilteredData([]); 
+    }
+  }, [weeklyTrendsQueryData]); 
+
+  const { data: warningsCount, isLoading: warningsLoading, isError: warningsError, error: warningsErrorData } = useQuery({
+    queryKey: ["studentsWithWarnings"],
+    queryFn: async () => {
+      const response = await axiosBackendInstance.get(
+        "/attendance/students/with-warnings/"
+      );
+      return (response.data).length;
+    },
+    refetchOnWindowFocus: false,
   });
 
   const { data: scheduledClassesData, isLoading: scheduledClassesLoading, isError: scheduledClassesError, error: scheduledClassesErrorData } = useQuery({
@@ -159,10 +183,30 @@ const SupervisorDashboard = () => {
     },
   });
 
+  const handleSelect = (date) => {
+    if (date) {
+      const formattedDate = dayjs(date).format('YYYY-MM-DD');
+      navigate(`/attendance-status?from_date=${formattedDate}`);
+    }
+  };
+
+  useEffect(() => {
+    if (weeklyTrendsQueryData && weeklyTrendsQueryData.weekly_trends) { 
+      const today = dayjs(); 
+
+      const processedData = weeklyTrendsQueryData.weekly_trends.filter(item => {
+        const itemDate = dayjs(item.week); 
+        return itemDate.isValid() && itemDate.isSameOrBefore(today, 'day');
+      });
+
+      setFilteredData(processedData);
+    } else {
+      setFilteredData([]); 
+    }
+  }, [weeklyTrendsQueryData]); 
 
   useEffect(() => {
     if (weeklyAttendanceBreakdown) {
-      // console.log('Weekly Attendance Breakdown Data:', weeklyAttendanceBreakdown);
       const days = ['Saturday', 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
       const transformedData = days.map(day => {
         const dayData = weeklyAttendanceBreakdown[day] || {};
@@ -177,48 +221,36 @@ const SupervisorDashboard = () => {
         };
       });
 
-      // console.log('Transformed Data:', transformedData);
       setWeeklyBreakdown(transformedData);
     }
   }, [weeklyAttendanceBreakdown, weeklyBreakdownTrack]);
 
   useEffect(() => {
     if (recentAbsencesData) {
-      // console.log('Recent Absences Data:', recentAbsencesData);
-            const formattedAbsences = recentAbsencesData.map(absence => ({
-        id: Math.random().toString(36).substring(2, 9), 
+      const formattedAbsences = recentAbsencesData.map(absence => ({
+        id: Math.random().toString(36).substring(2, 9),
         student: absence.student_name,
-        date: new Date(absence.date).toLocaleDateString('en-US', { 
-          month: 'short', 
-          day: 'numeric', 
-          year: 'numeric' 
+        date: new Date(absence.date).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric'
         }),
         reason: absence.reason || 'N/A',
         status: absence.status
       }));
-      
-      // console.log('Formatted Absences:', formattedAbsences);
+
       setRecentAbsences(formattedAbsences);
     }
   }, [recentAbsencesData]);
-  
 
   useEffect(() => {
     if (dailyTrendsData) {
-      // console.log('Raw Daily Trends Data in useEffect:', dailyTrendsData);
-
       const currentDate = new Date();
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(currentDate.getDate() - 7);
 
-      // console.log('Date Range:', {
-      //   currentDate,
-      //   sevenDaysAgo
-      // });
-
       const totalStudents = todayAttendance?.total_students || 0;
 
-      // Transform daily trends into percentages
       const dailyFiltered = dailyTrendsData.daily_trends
         .filter((dayData) => {
           const dayDate = new Date(dayData.date);
@@ -229,20 +261,18 @@ const SupervisorDashboard = () => {
           attendance_percentage: totalStudents > 0 ? Math.round((dayData.attended / totalStudents) * 100) : 0
         }));
 
-      // console.log('Transformed Daily Data:', dailyFiltered);
       setDailyTrends(dailyFiltered);
     }
   }, [dailyTrendsData, todayAttendance]);
 
   useEffect(() => {
-    if (weeklyTrendsData) {
+    if (weeklyTrendsQueryData) {
       const currentDate = new Date();
       const fourWeeksAgo = new Date();
       fourWeeksAgo.setDate(currentDate.getDate() - 28);
       const totalStudents = todayAttendance?.total_students || 0;
 
-      // Transform weekly trends into percentages
-      const weeklyFiltered = weeklyTrendsData.weekly_trends
+      const weeklyFiltered = weeklyTrendsQueryData.weekly_trends
         .filter((weekData) => {
           const weekDate = new Date(weekData.week);
           return weekDate >= fourWeeksAgo && weekDate <= currentDate;
@@ -252,10 +282,9 @@ const SupervisorDashboard = () => {
           attendance_percentage: totalStudents > 0 ? Math.round((weekData.attended / (totalStudents * 5)) * 100) : 0
         }));
 
-      // console.log('Transformed Weekly Data:', weeklyFiltered);
       setFilteredData(weeklyFiltered);
     }
-  }, [weeklyTrendsData, todayAttendance]);
+  }, [weeklyTrendsQueryData, todayAttendance]);
 
   useEffect(() => {
     if (selectedTrack === "all") {
@@ -263,22 +292,27 @@ const SupervisorDashboard = () => {
       return;
     }
     if (scheduledClassesData) {
-      // console.log('Raw Scheduled Classes Data:', scheduledClassesData);
       const todayClasses = scheduledClassesData.filter(cls =>
         cls.start && dayjs(cls.start).isToday()
       );
-      // console.log('Filtered Today\'s Classes:', todayClasses);
+
       setScheduledClasses(todayClasses);
     } else {
       setScheduledClasses([]);
     }
   }, [scheduledClassesData, selectedTrack]);
 
+  const todayIndex = dayjs().day(); // 0 (Sunday) - 6 (Saturday)
+  const displayWeeklyBreakdown = weeklyBreakdown.map((item, idx) => {
+    if (idx > todayIndex) {
+      return { ...item, attendance: null, absent: null };
+    }
+    return item;
+  });
 
   return (
     <div className="space-y-6">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Today's Attendance */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 text-center border border-emerald-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -287,15 +321,14 @@ const SupervisorDashboard = () => {
               </div>
             </div>
             <div className="text-2xl font-bold text-emerald-700">
-            {isLoading || todayAttendance == null
-              ? 'Loading...'
-              : `${todayAttendance.attendance_percentage ?? 0}%`}
+              {isLoading || todayAttendance == null
+                ? 'Loading...'
+                : `${todayAttendance.attendance_percentage ?? 0}%`}
             </div>
             <CardDescription>Today's Attendance</CardDescription>
           </CardContent>
         </Card>
 
-        {/* Weekly Attendance */}
         <Card className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
@@ -310,61 +343,67 @@ const SupervisorDashboard = () => {
           </CardContent>
         </Card>
 
-        {/* permissions Requests */}
         <Card className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 text-center border border-amber-200">
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
               <div className="h-8 w-8 rounded-full bg-amber-700 flex items-center justify-center text-white">
-                <AlertTriangle className="h-5 w-5" />
+                <HandHeart className="h-5 w-5" />
               </div>
             </div>
             <div className="text-2xl font-bold text-amber-700">{permissionsLoading || totalPendingPermissions === null ? 'Loading...' : `${totalPendingPermissions}`}</div>
             <CardDescription>permission Requests</CardDescription>
           </CardContent>
         </Card>
+
+        <Card className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 text-center border border-red-200">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center mb-2">
+              <div className="h-8 w-8 rounded-full bg-red-700 flex items-center justify-center text-white">
+                <AlertTriangle className="h-5 w-5" />
+              </div>
+            </div>
+            <div className="text-2xl font-bold text-red-700">
+              {isLoading ? 'Loading...' : warningsCount || 0}
+            </div>
+            <CardDescription>Students with Warnings</CardDescription>
+          </CardContent>
+        </Card>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card>
-          <CardContent className="pt-6">
-            <div className="flex justify-between items-center mb-4">
-              <CardTitle className="text-lg">Attendance Daily Trends</CardTitle>
-              <Select
-                value={selectedDailyTrendTrack}
-                onValueChange={setSelectedDailyTrendTrack}
-              >
-                <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Track" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Tracks</SelectItem>
-                  {tracksData?.map((track) => (
-                    <SelectItem key={track.id} value={track.id.toString()}>
-                      {track.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+
+        <Card >
+          <CardHeader>
+            <CardTitle className="text-lg">Attendance Calendar</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4 ">
+            <div className="grid place-items-center w-full">
+
+              <Calendar
+                mode="single"
+                onSelect={handleSelect}
+                className="calendar-component"
+                numberOfMonths={2}
+              />
+              <div className="flex flex-wrap gap-4 mt-4">
+                {[
+                  { status: 'attendance >= 75%', color: 'bg-green-200', label: 'attendance >= 75%' },
+                  { status: 'attendance <= 25%', color: 'bg-red-200', label: 'attendance <= 25%' },
+                  { status: '25% < attendance < 75%', color: 'bg-yellow-200', label: ' 25% < attendance < 75%' },
+                  // { status: 'excused', color: 'bg-blue-200', label: 'Excused' }
+                ].map(({ status, color, label }) => (
+                  <div key={status} className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded ${color}`} />
+                    <span className="text-sm capitalize">{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={dailyTrends}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis dataKey="date" />
-                  <YAxis domain={[60, 100]} />
-                  <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} />
-                  <Line
-                    type="monotone"
-                    dataKey="attendance_percentage"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ r: 4, fill: "#3b82f6" }}
-                    activeDot={{ r: 6 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
             </div>
+
           </CardContent>
+          
         </Card>
 
         <Card>
@@ -388,12 +427,16 @@ const SupervisorDashboard = () => {
                 </SelectContent>
               </Select>
             </div>
-            <div className="h-64">
+            <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={filteredData}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
                   <XAxis dataKey="week" />
-                  <YAxis domain={[60, 100]} />
+                  <YAxis 
+                    domain={[0, 100]} 
+                    ticks={[0, 25, 50, 75, 100]}
+                    tickFormatter={(value) => `${value}%`}
+                  />
                   <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} />
                   <Line
                     type="monotone"
@@ -414,7 +457,7 @@ const SupervisorDashboard = () => {
         <CardContent className="pt-6">
           <div className="flex justify-between items-center mb-6">
             <div className="flex items-center gap-4">
-              <CardTitle className="text-lg">Today's Classes</CardTitle>
+              <CardTitle className="text-lg mb-4">Today's Classes</CardTitle>
               <Select
                 value={selectedTrack}
                 onValueChange={setSelectedTrack}
@@ -442,7 +485,6 @@ const SupervisorDashboard = () => {
               <p className="text-sm text-red-500">Error loading classes.</p>
             ) : scheduledClasses.length > 0 ? (
               scheduledClasses.map((cls) => {
-                // Determine class status (completed, active, upcoming)
                 const now = dayjs();
                 const startTime = dayjs(cls.start);
                 const endTime = dayjs(cls.end);
@@ -484,46 +526,6 @@ const SupervisorDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-amber-100/30">
-        <CardContent className="pt-6">
-          <div className="flex justify-between items-center mb-4">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-600" />
-              <CardTitle className="text-lg">Verification Requests</CardTitle>
-            </div>
-            <Link to="/student-verification" className="text-sm text-primary flex items-center">
-              View All Requests <ArrowRight className="h-4 w-4 ml-1" />
-            </Link>
-          </div>
-          <div className="space-y-4">
-            {verificationRequests.map((request) => (
-              <div key={request.id} className="p-4 rounded-lg border bg-white shadow-sm">
-                <div className="flex justify-between mb-2">
-                  <div>
-                    <h3 className="font-medium">{request.student}</h3>
-                    <p className="text-sm text-muted-foreground">{request.type}</p>
-                  </div>
-                  <RequestBadge status={request.status} />
-                </div>
-                <div className="flex justify-between items-center mt-3">
-                  <span className="text-xs text-muted-foreground">Submitted {request.submitted}</span>
-                  {request.status === "pending" && (
-                    <div className="flex gap-2">
-                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100">
-                        Approve
-                      </Button>
-                      <Button variant="outline" size="sm" className="h-7 px-2 text-xs bg-red-50 text-red-700 border-red-200 hover:bg-red-100">
-                        Decline
-                      </Button>
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card> */}
-
       <Card>
         <CardContent className="pt-6">
           <div className="flex items-center gap-4">
@@ -549,7 +551,7 @@ const SupervisorDashboard = () => {
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={weeklyBreakdown}>
+              <BarChart data={displayWeeklyBreakdown}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                 <XAxis dataKey="name" />
                 <YAxis domain={[0, 100]} />
@@ -612,45 +614,6 @@ const SupervisorDashboard = () => {
         </CardContent>
       </Card>
 
-      {/* <Card>
-        <CardContent className="pt-6">
-          <CardTitle className="text-lg mb-4">Insights</CardTitle>
-          <div className="space-y-4">
-            <div className="p-3 rounded-lg bg-blue-50 border border-blue-200 shadow-sm">
-              <div className="flex items-center gap-2 text-blue-700 font-medium mb-1">
-                <BarChart3 className="h-4 w-4" />
-                Attendance Insight
-              </div>
-              <p className="text-sm text-blue-600">
-                Wednesday shows a significant drop in attendance. Consider investigating potential scheduling conflicts.
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 shadow-sm">
-              <div className="flex items-center gap-2 text-amber-700 font-medium mb-1">
-                <BarChart3 className="h-4 w-4" />
-                Recommendation
-              </div>
-              <p className="text-sm text-amber-600">
-                Five students have missed multiple classes this week. Consider reaching out to them directly.
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-emerald-50 border border-emerald-200 shadow-sm">
-              <div className="flex items-center gap-2 text-emerald-700 font-medium mb-1">
-                <BellRing className="h-4 w-4" />
-                Improvement
-              </div>
-              <p className="text-sm text-emerald-600">
-                Overall attendance has improved by 7% compared to last month. Keep up the good work!
-              </p>
-            </div>
-            <Link to="/attendance-insights" className="text-sm text-primary flex items-center">
-              View More Insights <ArrowRight className="h-4 w-4 ml-1" />
-            </Link>
-          </div>
-        </CardContent>
-      </Card> */}
-      
-      {/* Attendance Insights and Recent Absences */}
       {recentAbsencesLoading ? (
         <div className="text-center py-4">Loading recent absences...</div>
       ) : recentAbsencesError ? (
@@ -663,7 +626,6 @@ const SupervisorDashboard = () => {
           tracks={tracksData}
         />
       )}
-
     </div>
   );
 };
@@ -693,30 +655,5 @@ const ClassBadge = ({ status }) => {
     </div>
   );
 };
-
-// const RequestBadge = ({ status }) => {
-//   if (status === "pending") {
-//     return (
-//       <div className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-//         Pending
-//       </div>
-//     );
-//   }
-
-//   if (status === "approved") {
-//     return (
-//       <div className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-//         <Check className="h-3 w-3 mr-1" />
-//         Approved
-//       </div>
-//     );
-//   }
-
-//   return (
-//     <div className="inline-flex items-center rounded-full bg-red-50 px-2.5 py-1 text-xs font-medium text-red-700">
-//       Declined
-//     </div>
-//   );
-// };
 
 export default SupervisorDashboard;
