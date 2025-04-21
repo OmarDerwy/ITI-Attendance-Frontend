@@ -36,90 +36,79 @@ import StudentSchedule from './pages/Attendance/StudentSchedule';
 import { PermissionsProvider } from "@/context/PermissionsContext"; 
 import StudentsWithWarnings from "@/pages/Attendance/StudentsWithWarnings";
 import StudentDashboard from './pages/Dashboard/StudentDashboard';
+import ProtectedRoute from "./components/routing/ProtectedRoute";
 
 const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-     <PermissionsProvider>
-    <UserProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner
-          theme="system"
-          position="bottom-right"
-          closeButton
-          richColors
-          className="toast-theme-override"
-          toastOptions={{
-            classNames: {
-              toast: "toast-with-theme",
-              title: "toast-title",
-              description: "toast-description",
-            },
-          }}
-        />
-        <BrowserRouter>
-          <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/" element={<LostFound />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
-              <Route path="/activate/:token" element={<Activate />} />
-              <Route path="/forget-password" element={<ForgetPassword />} />
-              <Route path="/otp-verification" element={<OtpVerification />} />
-              <Route path="/schedule" element={<Schedule />} />
-              <Route path="/lost-found" element={<LostFound />} />
-              <Route
-                path="/student-verification"
-                element={<StudentVerification />}
-              />
-              <Route path="/report-lost-found" element={<ReportLostFound />} />
-              <Route path="/item-details/:type/:id" element={<ItemDetail />} />
-              <Route
-                path="/matched-item-details/:id"
-                element={<MatchedItemDetail />}
-              />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/previous-courses" element={<PreviousCourses />} />
-              <Route
-                path="/attendance-insights"
-                element={<AttendanceInsights />}
-              />
-              <Route path="/my-items" element={<ManageMyItems />} />
-              <Route path="/announcements" element={<Announcements />} />
-              <Route path="/branches" element={<BranchManagement />} />
-              <Route path="/branches/add" element={<BranchForm />} />
-              <Route path="/branches/edit/:branchId" element={<BranchForm />} />
-              <Route path="/tracks" element={<TrackManagement />} />
-              <Route path="/tracks/add" element={<TrackForm />} />
-              <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
-              <Route path="/users" element={<UserManagement />} />
-              <Route path="/users/add" element={<UserForm />} />
-              <Route path="/users/edit/:userId" element={<UserForm />} />
-              <Route
-                path="/attendance-status/:date"
-                element={<AttendanceStatus />}
-              />
-              <Route path="/attendance-status" element={<AttendanceStatus />} />
-              <Route
-                path="/leave-request-center"
-                element={<LeaveRequestCenter />}
-              />
-              <Route
-                path="/leave-request-form"
-                element={<LeaveRequestForm />}
-              />
-              <Route path="/student-schedule" element={<StudentSchedule />} />
-              <Route path="/student-dashboard" element={<StudentDashboard />} />
-              <Route path="/students-with-warnings" element={<StudentsWithWarnings />} /> 
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </ThemeProvider>
-        </BrowserRouter>
-      </TooltipProvider>
-    </UserProvider>
+    <PermissionsProvider>
+      <UserProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner
+            theme="system"
+            position="bottom-right"
+            closeButton
+            richColors
+            className="toast-theme-override"
+            toastOptions={{
+              classNames: {
+                toast: "toast-with-theme",
+                title: "toast-title",
+                description: "toast-description",
+              },
+            }}
+          />
+          <BrowserRouter>
+            <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+              <Routes>
+                {/* Guest-only routes */}
+                <Route element={<ProtectedRoute requireAuth={false} />}>
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
+                  <Route path="/activate/:token" element={<Activate />} />
+                  <Route path="/forget-password" element={<ForgetPassword />} />
+                  <Route path="/otp-verification" element={<OtpVerification />} />
+                </Route>
+                {/* Authenticated-only routes */}
+                <Route element={<ProtectedRoute requireAuth={true} />}>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/schedule" element={<Schedule />} />
+                  <Route path="/lost-found" element={<LostFound />} />
+                  <Route path="/student-verification" element={<StudentVerification />} />
+                  <Route path="/report-lost-found" element={<ReportLostFound />} />
+                  <Route path="/item-details/:type/:id" element={<ItemDetail />} />
+                  <Route path="/matched-item-details/:id" element={<MatchedItemDetail />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/previous-courses" element={<PreviousCourses />} />
+                  <Route path="/attendance-insights" element={<AttendanceInsights />} />
+                  <Route path="/my-items" element={<ManageMyItems />} />
+                  <Route path="/announcements" element={<Announcements />} />
+                  <Route path="/branches" element={<BranchManagement />} />
+                  <Route path="/branches/add" element={<BranchForm />} />
+                  <Route path="/branches/edit/:branchId" element={<BranchForm />} />
+                  <Route path="/tracks" element={<TrackManagement />} />
+                  <Route path="/tracks/add" element={<TrackForm />} />
+                  <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
+                  <Route path="/users" element={<UserManagement />} />
+                  <Route path="/users/add" element={<UserForm />} />
+                  <Route path="/users/edit/:userId" element={<UserForm />} />
+                  <Route path="/attendance-status/:date" element={<AttendanceStatus />} />
+                  <Route path="/attendance-status" element={<AttendanceStatus />} />
+                  <Route path="/leave-request-center" element={<LeaveRequestCenter />} />
+                  <Route path="/leave-request-form" element={<LeaveRequestForm />} />
+                  <Route path="/student-schedule" element={<StudentSchedule />} />
+                  <Route path="/student-dashboard" element={<StudentDashboard />} />
+                  <Route path="/students-with-warnings" element={<StudentsWithWarnings />} />
+                </Route>
+                {/* Not found route */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </ThemeProvider>
+          </BrowserRouter>
+        </TooltipProvider>
+      </UserProvider>
     </PermissionsProvider>
   </QueryClientProvider>
 );

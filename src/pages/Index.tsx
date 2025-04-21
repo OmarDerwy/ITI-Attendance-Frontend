@@ -11,11 +11,11 @@ import BranchManagement from "./Management/BranchManagement";
 
 const Index = () => {
   const navigate = useNavigate();
-  const { userRole, isLoading } = useUser();
+  const { userRole, isLoading, logout } = useUser();
 
   useEffect(() => {
     if (!isLoading && !userRole) {
-      navigate("/login");
+      logout();
     }
   }, [userRole, isLoading, navigate]);
 
