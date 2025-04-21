@@ -392,7 +392,7 @@ const SupervisorDashboard = () => {
                 className="calendar-component"
                 numberOfMonths={2}
               />
-              <div className="flex flex-wrap gap-4 mt-4">
+              {/* <div className="flex flex-wrap gap-4 mt-4">
                 {[
                   { status: 'attendance >= 75%', color: 'bg-green-200', label: 'attendance >= 75%' },
                   { status: 'attendance <= 25%', color: 'bg-red-200', label: 'attendance <= 25%' },
@@ -404,7 +404,7 @@ const SupervisorDashboard = () => {
                     <span className="text-sm capitalize">{label}</span>
                   </div>
                 ))}
-              </div>
+              </div> */}
             </div>
             </div>
 
