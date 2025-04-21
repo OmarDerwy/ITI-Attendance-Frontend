@@ -315,7 +315,16 @@ const SupervisorDashboard = () => {
   
   // Don't filter out data based on day index for now - show all data
   const displayWeeklyBreakdown = weeklyBreakdown;
-  
+  const [calendarMonths, setCalendarMonths] = useState(2);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setCalendarMonths(window.innerWidth < 1700 ? 1 : 2);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -390,7 +399,7 @@ const SupervisorDashboard = () => {
                 mode="single"
                 onSelect={handleSelect}
                 className="calendar-component"
-                numberOfMonths={2}
+                numberOfMonths={calendarMonths}
               />
               {/* <div className="flex flex-wrap gap-4 mt-4">
                 {[
