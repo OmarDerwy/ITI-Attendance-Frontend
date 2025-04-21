@@ -793,35 +793,43 @@ const Schedule = () => {
               <Label htmlFor="event-dates" className="text-right">
                 Dates
               </Label>
-              <div className="flex space-x-2 col-span-3">
-                <Input
-                  id="event-start"
-                  type="datetime-local"
-                  value={
-                    selectedEvent
-                      ? selectedEvent.start?.slice(0, 16)
-                      : newEvent.start?.slice(0, 16)
-                  }
-                  onChange={(e) =>
-                    selectedEvent
-                      ? updateSelectedEvent("start", e.target.value)
-                      : setNewEvent({ ...newEvent, start: e.target.value })
-                  }
-                />
-                <Input
-                  id="event-end"
-                  type="datetime-local"
-                  value={
-                    selectedEvent
-                      ? selectedEvent.end?.slice(0, 16)
-                      : newEvent.end?.slice(0, 16)
-                  }
-                  onChange={(e) =>
-                    selectedEvent
-                      ? updateSelectedEvent("end", e.target.value)
-                      : setNewEvent({ ...newEvent, end: e.target.value })
-                  }
-                />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 col-span-3 w-full">
+                <div className="space-y-1">
+                  <Label htmlFor="event-start" className="text-xs text-gray-500">Start</Label>
+                  <Input
+                    id="event-start"
+                    type="datetime-local"
+                    value={
+                      selectedEvent
+                        ? selectedEvent.start?.slice(0, 16)
+                        : newEvent.start?.slice(0, 16)
+                    }
+                    onChange={(e) =>
+                      selectedEvent
+                        ? updateSelectedEvent("start", e.target.value)
+                        : setNewEvent({ ...newEvent, start: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="event-end" className="text-xs text-gray-500">End</Label>
+                  <Input
+                    id="event-end"
+                    type="datetime-local"
+                    value={
+                      selectedEvent
+                        ? selectedEvent.end?.slice(0, 16)
+                        : newEvent.end?.slice(0, 16)
+                    }
+                    onChange={(e) =>
+                      selectedEvent
+                        ? updateSelectedEvent("end", e.target.value)
+                        : setNewEvent({ ...newEvent, end: e.target.value })
+                    }
+                    className="w-full"
+                  />
+                </div>
               </div>
             </div>
           </div>
