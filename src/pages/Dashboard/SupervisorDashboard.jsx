@@ -16,7 +16,7 @@ import {
   LineChart,
   Line,
 } from 'recharts';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends, getScheduledClasses, get_weekly_attendance_by_track, getRecentAbsentees } from '@/api/attendance';
 import { usePermissions } from '@/context/PermissionsContext';
 import RecentAbsences from '@/components/dashboard/RecentAbsences';
@@ -33,7 +33,7 @@ const SupervisorDashboard = () => {
   const COLORS = ['#10b981', '#3b82f6', '#f59e0b'];
   const [filteredData, setFilteredData] = useState([]);
   const [dailyTrends, setDailyTrends] = useState([]);
-  const [selectedTrack, setSelectedTrack] = useState("1");
+  const [selectedTrack, setSelectedTrack] = useState("");
   const [selectedDailyTrendTrack, setSelectedDailyTrendTrack] = useState("all");
   const [selectedWeeklyTrendTrack, setSelectedWeeklyTrendTrack] = useState("all");
   const [selectedRecentAbsencesTrack, setSelectedRecentAbsencesTrack] = useState("all");
@@ -43,6 +43,39 @@ const SupervisorDashboard = () => {
   const [weeklyBreakdownTrack, setWeeklyBreakdownTrack] = useState("All tracks");
   const [recentAbsences, setRecentAbsences] = useState([]);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const tracksResponse = await axiosBackendInstance.get('attendance/tracks/');
+        const tracks = tracksResponse.data;
+        
+        if (tracks && tracks.length > 0) {
+          const defaultTrackId = tracks[0].id.toString();
+          setSelectedTrack(defaultTrackId);
+          
+          const classesResponse = await getScheduledClasses(parseInt(defaultTrackId));
+          console.log('Initial classes data:', classesResponse);
+          
+          const todayClasses = classesResponse.filter(cls => 
+            cls.start && dayjs(cls.start).isToday()
+          );
+          
+          setScheduledClasses(todayClasses);
+          
+          setTimeout(() => {
+            console.log('Force refreshing with initial data');
+            setScheduledClasses([...todayClasses]);
+          }, 500);
+        }
+      } catch (error) {
+        console.error('Error during initial data fetch:', error);
+      }
+    };
+    
+    fetchInitialData();
+  }, []);
 
   const { data: tracksData } = useQuery({
     queryKey: ['tracks'],
@@ -52,7 +85,7 @@ const SupervisorDashboard = () => {
     },
     onSuccess: (data) => {
       if (data && data.length > 0) {
-        setSelectedTrack(data[0].id.toString());
+        console.log('Tracks Data:', data);
       }
     }
   });
@@ -144,12 +177,21 @@ const SupervisorDashboard = () => {
     cacheTime: 10 * 60 * 1000,
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
-    enabled: Boolean(selectedTrack) && !isNaN(parseInt(selectedTrack)),
+    enabled: Boolean(selectedTrack) && selectedTrack !== "all" && selectedTrack !== "" && !isNaN(parseInt(selectedTrack)),
     onSuccess: (data) => {
       // console.log('Fetched Scheduled Classes Data:', data);
+      if (data) {
+        const todayClasses = data.filter(cls =>
+          cls.start && dayjs(cls.start).isToday()
+        );
+        setScheduledClasses(todayClasses);
+      } else {
+        setScheduledClasses([]);
+      }
     },
     onError: (error) => {
       console.error("Error fetching scheduled classes:", error);
+      setScheduledClasses([]);
     },
   });
 
@@ -227,8 +269,9 @@ const SupervisorDashboard = () => {
 
   useEffect(() => {
     if (recentAbsencesData) {
-      const formattedAbsences = recentAbsencesData.map(absence => ({
-        id: Math.random().toString(36).substring(2, 9),
+      // console.log('Recent Absences Data:', recentAbsencesData);
+            const formattedAbsences = recentAbsencesData.map(absence => ({
+        id: Math.random().toString(36).substring(2, 9), 
         student: absence.student_name,
         date: new Date(absence.date).toLocaleDateString('en-US', {
           month: 'short',
@@ -287,21 +330,10 @@ const SupervisorDashboard = () => {
   }, [weeklyTrendsQueryData, todayAttendance]);
 
   useEffect(() => {
-    if (selectedTrack === "all") {
-      setScheduledClasses([]);
-      return;
-    }
-    if (scheduledClassesData) {
-      const todayClasses = scheduledClassesData.filter(cls =>
-        cls.start && dayjs(cls.start).isToday()
-      );
-
-      setScheduledClasses(todayClasses);
-    } else {
+    if (selectedTrack === "all" || selectedTrack === "") {
       setScheduledClasses([]);
     }
-  }, [scheduledClassesData, selectedTrack]);
-
+  }, [selectedTrack]);
   const todayIndex = dayjs().day(); // 0 (Sunday) - 6 (Saturday)
   const displayWeeklyBreakdown = weeklyBreakdown.map((item, idx) => {
     if (idx > todayIndex) {
@@ -460,10 +492,31 @@ const SupervisorDashboard = () => {
               <CardTitle className="text-lg mb-4">Today's Classes</CardTitle>
               <Select
                 value={selectedTrack}
-                onValueChange={setSelectedTrack}
+                onValueChange={(value) => {
+                  console.log("Track selected:", value);
+                  setSelectedTrack(value);
+                  
+                  // Immediately fetch classes when track is selected
+                  if (value && value !== "all" && value !== "") {
+                    const trackId = parseInt(value);
+                    getScheduledClasses(trackId)
+                      .then(data => {
+                        console.log("Fetched classes immediately:", data);
+                        const todayClasses = data.filter(cls => 
+                          cls.start && dayjs(cls.start).isToday()
+                        );
+                        setScheduledClasses(todayClasses);
+                      })
+                      .catch(err => {
+                        console.error("Error fetching classes on selection:", err);
+                        setScheduledClasses([]);
+                      });
+                  }
+                }}
+                defaultValue={tracksData && tracksData.length > 0 ? tracksData[0].id.toString() : ""}
               >
                 <SelectTrigger className="w-[200px]">
-                  <SelectValue placeholder="Select Track" />
+                  <SelectValue placeholder={tracksData && tracksData.length > 0 ? tracksData[0].name : "Select Track"} />
                 </SelectTrigger>
                 <SelectContent>
                   {tracksData?.map((track) => (
@@ -483,6 +536,8 @@ const SupervisorDashboard = () => {
               <p className="text-sm text-muted-foreground">Loading classes...</p>
             ) : scheduledClassesError ? (
               <p className="text-sm text-red-500">Error loading classes.</p>
+            ) : selectedTrack === "all" || selectedTrack === "" ? (
+              <p className="text-sm text-muted-foreground">Please select a track to view classes.</p>
             ) : scheduledClasses.length > 0 ? (
               scheduledClasses.map((cls) => {
                 const now = dayjs();
