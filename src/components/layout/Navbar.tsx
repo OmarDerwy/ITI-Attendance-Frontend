@@ -17,7 +17,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from "@/api/notifications";
-import { setupAxiosInterceptors } from "@/api/config";
+// import { setupAxiosInterceptors } from "@/api/config";
 import { toast } from "sonner"; // Import from sonner directly
 
 type NavbarProps = {
@@ -25,7 +25,7 @@ type NavbarProps = {
 };
 
 const Navbar = ({ toggleSidebar }: NavbarProps) => {
-  const { userRole, userName, setUserRole } = useUser();
+  const { userRole, userName, setUserRole, logout } = useUser();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<
@@ -35,9 +35,9 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const token = localStorage.getItem("access");
   const navigate = useNavigate();
 
-  useEffect(() => {
-    setupAxiosInterceptors(() => navigate("/login"));
-  }, [navigate]);
+  // useEffect(() => {
+  //   setupAxiosInterceptors(() => navigate("/login"));
+  // }, [navigate]);
 
   if (import.meta.env.VITE_ENABLE_NOTIFICATIONS === "true") {
     const SOCKET_URL = `ws://localhost:8000/ws/notifications/?token=${token}`;
@@ -142,6 +142,12 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
       // console.error("Failed to mark notification as read:", error);
     }
   };
+
+  const handleLogout = async () => {
+    await logout();
+    setProfileOpen(false);
+    setNotificationsOpen(false);
+  }
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
@@ -320,7 +326,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                   <Link
                     to="/login"
                     className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted"
-                    onClick={() => setProfileOpen(false)}
+                    onClick={handleLogout}
                   >
                     Logout
                   </Link>

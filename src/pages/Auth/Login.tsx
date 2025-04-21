@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react"; // Removed UserCheck as it wasn't used
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { axiosBackendInstance } from "@/api/config";
 import { toast } from 'sonner';
 import { useUser } from '@/context/UserContext';
+import axios from "axios";
 import { useQueryClient } from '@tanstack/react-query';
 
 
@@ -20,6 +21,37 @@ const Login = () => {
   const user = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+
+
+  // useEffect(() => {
+  //   const tryRefreshToken = async () => {
+  //     if (localStorage.getItem("refresh")) {
+  //       try {
+  //         const refreshToken = localStorage.getItem('refresh');
+  //         if (!refreshToken) {
+  //           throw new Error('No refresh token available');
+  //         }
+
+  //         // Attempt to refresh the token
+  //         const response = await axios.post(
+  //           `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}accounts/auth/jwt/refresh/`,
+  //           { refresh: refreshToken }
+  //         );
+
+  //         // Update the stored access token
+  //         localStorage.setItem('access', response.data.access);
+  //         navigate("/"); // Redirect to the home page if refresh is successful
+  //       } catch (refreshError) {
+  //         // If refresh fails, clear the tokens and call the navigation callback
+  //         localStorage.removeItem('access');
+  //         localStorage.removeItem('refresh');
+  //         return Promise.reject(refreshError);
+  //       }
+  //     }
+  //   };
+
+  //   tryRefreshToken();
+  // }, [navigate]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {

@@ -1,5 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { axiosBackendInstance } from "../api/config";
+import { toast } from 'sonner';
+
 
 const UserContext = createContext(undefined);
 
@@ -69,7 +71,7 @@ export const UserProvider = ({ children }) => {
           console.error("Failed to initialize authentication:", error);
           // Clear invalid token
           localStorage.removeItem('access');
-          localStorage.removeItem('refresh');
+          // localStorage.removeItem('refresh');
         } finally {
           setIsLoading(false);
         }
@@ -79,13 +81,24 @@ export const UserProvider = ({ children }) => {
     }, []);
   
     // Logout function to clear auth state
-    const logout = () => {
+    const logout = async () => {
+      if (!localStorage.getItem('refresh')) {
+        const response = await axiosBackendInstance.post('accounts/auth/jwt/blacklist/', {
+          refresh: localStorage.getItem('refresh'),
+          });
+        if (response.status === 200) {
+          toast.success("Logged out successfully!");
+        } else {
+          toast.error("Failed to log out.");
+        }
+    }
       localStorage.removeItem('access');
       localStorage.removeItem('refresh');
       localStorage.removeItem('studentTrack');
       setUserRole(null);
       setUserName(null);
       setStudentTrack(null);
+      setUserId(null);
     };
   
 
