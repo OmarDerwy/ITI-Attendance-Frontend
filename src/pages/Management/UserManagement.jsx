@@ -38,13 +38,14 @@ import { axiosBackendInstance } from '@/api/config';
 const ITEMS_PER_PAGE = 6;
 
 const UserManagement = () => {
-  const [users, setUsers] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [displayedUsers, setDisplayedUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [userTypeFilter, setUserTypeFilter] = useState("all");
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [paginationMeta, setPaginationMeta] = useState({});
   const { userRole } = useUser();
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -61,29 +62,52 @@ const UserManagement = () => {
     //   return;
     // }
 
-    // Fetch paginated users from backend
-    fetchUsers(currentPage);
-  }, [userRole, navigate, currentPage]);
+    // Fetch all users from backend
+    fetchUsers();
+  }, [userRole, navigate]);
 
-  const fetchUsers = (page) => {
+  // Apply filtering and pagination whenever dependent values change
+  useEffect(() => {
+    applyFiltersAndPagination();
+  }, [allUsers, currentPage, searchTerm, userTypeFilter]);
+
+  const applyFiltersAndPagination = () => {
+    // Apply all filters
+    const filtered = allUsers.filter((user) => {
+      // Apply text search filter
+      const matchesSearch = `${user.first_name} ${user.last_name} ${user.email}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
+      
+      // Apply user type filter
+      const matchesType = 
+        userTypeFilter === "all" || 
+        user.groups[0].toLowerCase() === userTypeFilter.toLowerCase();
+      
+      return matchesSearch && matchesType;
+    });
+    
+    // Apply pagination
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    setDisplayedUsers(filtered.slice(startIndex, endIndex));
+  };
+
+  // Reset to first page when any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, userTypeFilter]);
+
+  const fetchUsers = () => {
     setIsLoading(true);
 
     axiosBackendInstance
-      .get(`/accounts/users/admins-and-supervisors`, { params: { page } })
+      .get(`/accounts/users/admins-and-supervisors`)
       .then((response) => {
         const data = response.data;
         console.log("Fetched users:", data);
-        setUsers(data.results || data); // Handle both paginated and non-paginated responses
-        
-        // Set pagination metadata if available
-        if (data.count !== undefined) {
-          setPaginationMeta({
-            count: data.count,
-            next: data.next,
-            previous: data.previous,
-          });
-        }
-        
+        setAllUsers(data.results || data); // Handle both formats
+        applyFiltersAndPagination();
         setIsLoading(false);
       })
       .catch((error) => {
@@ -107,11 +131,14 @@ const UserManagement = () => {
       axiosBackendInstance
         .delete(`/accounts/users/${selectedUser.id}/`)
         .then(() => {
-          setUsers(users.filter(user => user.id !== selectedUser.id));
+          const updatedUsers = allUsers.filter(user => user.id !== selectedUser.id);
+          setAllUsers(updatedUsers);
+          
           toast({
             title: "User Deleted",
             description: "The user has been deleted successfully."
           });
+          applyFiltersAndPagination();
         })
         .catch((error) => {
           console.error("Error deleting user:", error);
@@ -132,12 +159,20 @@ const UserManagement = () => {
     setCurrentPage(page);
   };
 
-  const filteredUsers = users.filter((user) =>
-    `${user.first_name} ${user.last_name} ${user.email}`
+  // Get filtered users for pagination calculation
+  const filteredUsers = allUsers.filter((user) => {
+    // Apply text search filter
+    const matchesSearch = `${user.first_name} ${user.last_name} ${user.email}`
       .toLowerCase()
-      .includes(searchTerm.toLowerCase())
-  );
-
+      .includes(searchTerm.toLowerCase());
+    
+    // Apply user type filter
+    const matchesType = 
+      userTypeFilter === "all" || 
+      user.groups[0].toLowerCase() === userTypeFilter.toLowerCase();
+    
+    return matchesSearch && matchesType;
+  });
 
   if (isLoading) {
     return (
@@ -160,7 +195,7 @@ const UserManagement = () => {
           action={<Button onClick={() => navigate("/users/add")}><Plus className="mr-2 h-4 w-4" /> Add User</Button>}
         />
         <div className="rounded-lg border bg-card shadow-sm">
-          <div className="flex items-center justify-between p-4 border-b">
+          <div className="flex flex-col sm:flex-row items-center justify-between p-4 border-b gap-4">
             <div className="relative w-full max-w-sm">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
@@ -169,6 +204,31 @@ const UserManagement = () => {
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-8 w-full"
               />
+            </div>
+            
+            {/* User type filter buttons */}
+            <div className="flex gap-2">
+              <Button 
+                variant={userTypeFilter === "all" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUserTypeFilter("all")}
+              >
+                All
+              </Button>
+              <Button 
+                variant={userTypeFilter === "admin" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUserTypeFilter("admin")}
+              >
+                Admin
+              </Button>
+              <Button 
+                variant={userTypeFilter === "supervisor" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUserTypeFilter("supervisor")}
+              >
+                Supervisor
+              </Button>
             </div>
           </div>
 
@@ -183,8 +243,8 @@ const UserManagement = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredUsers.length > 0 ? (
-                  filteredUsers.map((user) => (
+                {displayedUsers.length > 0 ? (
+                  displayedUsers.map((user) => (
                     <TableRow key={user.id}>
                       <TableCell className="font-medium">
                         {user.first_name} {user.last_name}
@@ -223,7 +283,7 @@ const UserManagement = () => {
           </div>
         </div>
 
-        {paginationMeta.count > ITEMS_PER_PAGE && (
+        {filteredUsers.length > ITEMS_PER_PAGE && (
           <div className="mt-6">
             <Pagination>
               <PaginationContent>
@@ -233,7 +293,7 @@ const UserManagement = () => {
                     className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
-                {[...Array(Math.ceil(paginationMeta.count / ITEMS_PER_PAGE))].map((_, index) => (
+                {[...Array(Math.ceil(filteredUsers.length / ITEMS_PER_PAGE))].map((_, index) => (
                   <PaginationItem key={index + 1}>
                     <PaginationLink
                       isActive={currentPage === index + 1}
@@ -245,8 +305,8 @@ const UserManagement = () => {
                 ))}
                 <PaginationItem>
                   <PaginationNext
-                    onClick={() => handlePageChange(Math.min(currentPage + 1, Math.ceil(paginationMeta.count / ITEMS_PER_PAGE)))}
-                    className={currentPage === Math.ceil(paginationMeta.count / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : ""}
+                    onClick={() => handlePageChange(Math.min(currentPage + 1, Math.ceil(filteredUsers.length / ITEMS_PER_PAGE)))}
+                    className={currentPage === Math.ceil(filteredUsers.length / ITEMS_PER_PAGE) ? "pointer-events-none opacity-50" : ""}
                   />
                 </PaginationItem>
               </PaginationContent>
