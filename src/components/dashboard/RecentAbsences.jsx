@@ -7,12 +7,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const RecentAbsences = ({ absences = [], onViewAll, selectedTrack, onTrackChange, tracks }) => {
   // Limit to 3 absences
   const limitedAbsences = absences.slice(0, 3);
-  
+  console.log("Recent absences:", limitedAbsences);
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center mb-4">
-          <CardTitle>Recent Absences</CardTitle>
+          <div>
+            <CardTitle>Recent Absences</CardTitle>
+          <CardDescription>Latest student absences reported</CardDescription>
+          </div>
+          
           <div className="flex items-center gap-4">
             <Select
               value={selectedTrack}
@@ -30,16 +36,15 @@ const RecentAbsences = ({ absences = [], onViewAll, selectedTrack, onTrackChange
                 ))}
               </SelectContent>
             </Select>
-            <Link to="/attendance-status" className="text-sm text-primary flex items-center">
+            <Link to={`/attendance-status?from_date=${today}`} className="text-sm text-primary flex items-center">
               View All <ArrowRight className="h-4 w-4 ml-1" />
             </Link>
           </div>
         </div>
-        <CardDescription>Latest student absences reported</CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-3">
-          {limitedAbsences.length > 0 ? (
+          {limitedAbsences?.length > 0 ? (
             limitedAbsences.map((absence) => (
               <div key={absence.id} className="flex justify-between items-start border-b pb-3">
                 <div>

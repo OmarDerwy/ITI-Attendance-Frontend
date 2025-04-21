@@ -70,8 +70,6 @@ export const getAttendanceTrends = async (
     const params: any = {};
     if (trackId) params.track_id = trackId;
     if (branchId) params.branch_id = branchId;
-    console.log("params", params);
-
     const response = await axiosBackendInstance.get('attendance/attendance-trends', { params });
     // console.log('Attendance Trends Response:', response.data);
     

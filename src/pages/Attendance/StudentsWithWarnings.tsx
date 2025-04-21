@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useUser } from "@/context/UserContext";
 import {
   AlertTriangle,
@@ -38,19 +38,16 @@ const StudentsWithWarnings = () => {
   const { userRole } = useUser();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTrack, setSelectedTrack] = useState("all");
+  const [filteredData, setFilteredData] = useState<StudentWithWarning[]>([]);
 
-  const {
-    data: students,
-    isLoading,
-    isError,
-    error,
-  } = useQuery<StudentWithWarning[]>({
+  const { data: students = [], isLoading, isError, error } = useQuery({
     queryKey: ["studentsWithWarnings"],
     queryFn: async () => {
       const response = await axiosBackendInstance.get(
         "/attendance/students/with-warnings/"
       );
-      return response.data;
+      console.log("API Response:", response.data); // Debug
+      return Array.isArray(response.data) ? response.data : [];
     },
     refetchOnWindowFocus: false,
   });
@@ -65,14 +62,20 @@ const StudentsWithWarnings = () => {
     },
   });
 
-  const filteredStudents = students?.filter(
-    (student) =>
-      (selectedTrack === "all" ||
-        student.track_name?.toLowerCase() === selectedTrack.toLowerCase()) &&
-      (student.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        student.email?.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
+  useEffect(() => {
+    if (Array.isArray(students)) {
+      const filtered = students.filter((student: StudentWithWarning) =>
+        (selectedTrack === "all" ||
+          student.track_name?.toLowerCase() === selectedTrack.toLowerCase()) &&
+        (student.first_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          student.last_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          student.email?.toLowerCase().includes(searchQuery.toLowerCase()))
+      );
+      setFilteredData(filtered);
+    } else {
+      setFilteredData([]); 
+    }
+  }, [searchQuery, selectedTrack, students]);
 
   if (userRole !== "admin" && userRole !== "supervisor") {
     return (
@@ -154,7 +157,7 @@ const StudentsWithWarnings = () => {
                   <div className="animate-spin h-6 w-6 border-2 border-primary border-t-transparent rounded-full mx-auto" />
                   <p className="mt-2 text-sm text-muted-foreground">Loading students...</p>
                 </div>
-              ) : filteredStudents && filteredStudents.length > 0 ? (
+              ) : filteredData && filteredData.length > 0 ? (
                 <div className="rounded-md border">
                   <div className="grid grid-cols-12 gap-4 py-3 px-4 bg-muted/50">
                     <div className="col-span-4 font-medium text-sm">Student</div>
@@ -164,7 +167,7 @@ const StudentsWithWarnings = () => {
                     <div className="col-span-2 font-medium text-sm">Excused</div>
                   </div>
                   <div className="divide-y">
-                    {filteredStudents.map((student) => (
+                    {filteredData.map((student) => (
                       <div
                         key={student.id}
                         className="grid grid-cols-12 gap-4 py-3 px-4 items-center hover:bg-muted/50 transition-colors"

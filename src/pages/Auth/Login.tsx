@@ -10,6 +10,8 @@ import { axiosBackendInstance } from "@/api/config";
 import { toast } from 'sonner';
 import { useUser } from '@/context/UserContext';
 import axios from "axios";
+import { useQueryClient } from '@tanstack/react-query';
+
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -18,6 +20,8 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const user = useUser();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
 
   // useEffect(() => {
   //   const tryRefreshToken = async () => {
@@ -94,6 +98,7 @@ const Login = () => {
       user.setUserName(userResponse.data.email);
       user.setUserId(userResponse.data.id);
       localStorage.setItem("userId", userData.id.toString());
+      queryClient.refetchQueries();
       // console.log("User ID stored in localStorage:", userData.id); // Keep console logs minimal for production
       if (userRole === "student") {
         navigate("/student-dashboard");

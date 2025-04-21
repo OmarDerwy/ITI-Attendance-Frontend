@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Calendar, MapPin, User } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, User, Phone } from "lucide-react";
 import { format } from "date-fns";
 import Layout from "@/components/layout/Layout";
 import PageTitle from "@/components/ui/page-title";
@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useToast } from "@/components/ui/use-toast";
 
 const ItemDetail = () => {
   const { type, id } = useParams();
@@ -18,8 +19,10 @@ const ItemDetail = () => {
   const [item, setItem] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [user, setUser] = useState(null);
+  const [showContact, setShowContact] = useState(false);
+  const { toast } = useToast();
 
-  // Add default image URL constant near the top of the component
   const DEFAULT_IMAGE_URL =
     "https://res.cloudinary.com/dha2yp5tj/image/upload/v1743913360/annonymous_photo_ny7plk.png";
 
@@ -27,7 +30,6 @@ const ItemDetail = () => {
     const fetchItemDetails = async () => {
       setLoading(true);
       try {
-        // Determine API endpoint based on item type
         const endpoint =
           type === "lost"
             ? `http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/${id}/`
@@ -40,11 +42,37 @@ const ItemDetail = () => {
         });
 
         setItem(response.data);
+
+        if (response.data.user_id) {
+          fetchUserDetails(response.data.user_id);
+        }
       } catch (err) {
         console.error(`Error fetching ${type} item:`, err);
         setError(`Failed to load item details. ${err.message}`);
       } finally {
         setLoading(false);
+      }
+    };
+
+    const fetchUserDetails = async (userId) => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/v1/accounts/auth/users/${userId}/`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        console.log("User details:", response.data);
+        setUser(response.data);
+      } catch (err) {
+        console.error("Error fetching user details:", err);
+        toast({
+          title: "Error",
+          description: "Could not load reporter contact information.",
+          variant: "destructive",
+        });
       }
     };
 
@@ -70,6 +98,26 @@ const ItemDetail = () => {
     }
 
     return <Badge className={`${colorClass} capitalize`}>{item.status}</Badge>;
+  };
+
+  const handleContactClick = () => {
+    if (!user || !user.phone_number) {
+      toast({
+        title: "Contact Information Unavailable",
+        description: "This user's contact information is not available.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setShowContact(true);
+
+    navigator.clipboard.writeText(user.phone_number).then(() => {
+      toast({
+        title: "Phone Number Copied",
+        description: "The phone number has been copied to your clipboard.",
+      });
+    });
   };
 
   return (
@@ -113,7 +161,6 @@ const ItemDetail = () => {
         </Card>
       ) : (
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Left column - Image */}
           <Card className="overflow-hidden">
             <div className="aspect-square w-full">
               <img
@@ -124,7 +171,6 @@ const ItemDetail = () => {
             </div>
           </Card>
 
-          {/* Right column - Details */}
           <Card>
             <CardHeader>
               <div className="flex justify-between items-start">
@@ -196,7 +242,6 @@ const ItemDetail = () => {
                 >
                   Go Back
                 </Button>
-                <Button className="w-full">Contact Reporter</Button>
               </div>
             </CardContent>
           </Card>

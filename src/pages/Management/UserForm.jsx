@@ -10,7 +10,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Loader2, User } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import PageTitle from "../../components/ui/page-title";
-import { axiosBackendInstance } from '@/api/config';
+import { axiosBackendInstance } from "@/api/config";
 
 const UserForm = () => {
   const { userId } = useParams();
@@ -40,7 +40,9 @@ const UserForm = () => {
     const fetchUserData = async () => {
       try {
         if (userId && userId !== "add") {
-          const userRes = await axiosBackendInstance.get(`/accounts/users/${userId}/`);
+          const userRes = await axiosBackendInstance.get(
+            `/accounts/users/${userId}/`
+          );
           const userData = userRes.data;
           setFirstName(userData.first_name || "");
           setLastName(userData.last_name || "");
@@ -96,7 +98,10 @@ const UserForm = () => {
 
     try {
       if (userId && userId !== "add") {
-        await axiosBackendInstance.patch(`/accounts/users/${userId}/`, userData);
+        await axiosBackendInstance.patch(
+          `/accounts/users/${userId}/`,
+          userData
+        );
         toast({
           title: "User Updated",
           description: `User ${firstName} ${lastName} has been updated successfully.`,
@@ -111,11 +116,12 @@ const UserForm = () => {
       navigate("/users");
     } catch (error) {
       console.error("Error saving user:", error);
-      
+
       // More specific error message if available
-      const errorMessage = error.response?.data?.detail || 
-                          "Failed to save user. Please try again later.";
-                          
+      const errorMessage =
+        error.response?.data?.detail ||
+        "Failed to save user. Please try again later.";
+
       toast({
         title: "Error",
         description: errorMessage,
@@ -127,10 +133,10 @@ const UserForm = () => {
   if (isLoading) {
     return (
       <Layout>
-          <div className="flex flex-col items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
-            <p className="text-muted-foreground">Loading data...</p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-12">
+          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <p className="text-muted-foreground">Loading data...</p>
+        </div>
       </Layout>
     );
   }
@@ -138,11 +144,9 @@ const UserForm = () => {
   return (
     <Layout>
       <div className="space-y-6 p-6 min-h-screen">
-        <div className="space-y-6">
+        <div className="space-y-6 max-w-3xl mx-auto">
           <PageTitle
-            title={
-              userId && userId !== "add" ? "Edit User" : "Add New User"
-            }
+            title={userId && userId !== "add" ? "Edit User" : "Add New User"}
             subtitle="Manage user information and access rights"
             icon={<User className="h-6 w-6" />}
           />

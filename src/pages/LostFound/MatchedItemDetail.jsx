@@ -9,6 +9,7 @@ import {
   Percent,
   Link as LinkIcon,
   Info,
+  Phone, // Add Phone icon import
 } from "lucide-react";
 import { format } from "date-fns";
 import Layout from "@/components/layout/Layout";
@@ -29,7 +30,10 @@ const MatchedItemDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [confirming, setConfirming] = useState(false);
+  const [declining, setDeclining] = useState(false);
   const { toast } = useToast(); // Add this line to get the toast function
+  const [lostUser, setLostUser] = useState(null);
+  const [foundUser, setFoundUser] = useState(null);
 
   // Add default image URL constant near the top of the component
   const DEFAULT_IMAGE_URL =
@@ -58,12 +62,51 @@ const MatchedItemDetail = () => {
       }
     };
 
+    const fetchLostUserDetails = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/v1/accounts/auth/users/${matchedItem.lost_item_user}/`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        setLostUser(response.data);
+      } catch (err) {
+        console.error("Error fetching lost user details:", err);
+      }
+    };
+
+    const fetchFoundUserDetails = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:8000/api/v1/accounts/auth/users/${matchedItem.found_item_user}/`,
+          {
+            headers: {
+              Authorization: `Bearer ${localStorage.getItem("access")}`,
+            },
+          }
+        );
+        setFoundUser(response.data);
+      } catch (err) {
+        console.error("Error fetching found user details:", err);
+      }
+    };
+
     fetchMatchedItemDetails();
+    fetchLostUserDetails();
+    fetchFoundUserDetails();
   }, [id]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown date";
     return format(new Date(dateString), "MMMM d, yyyy 'at' h:mm a");
+  };
+
+  // Helper function to format phone numbers
+  const formatPhoneNumber = (phone) => {
+    return phone || "Not available";
   };
 
   const getStatusBadge = (status) => {
@@ -115,6 +158,40 @@ const MatchedItemDetail = () => {
       });
     } finally {
       setConfirming(false);
+    }
+  };
+
+  const handleDeclineMatch = async () => {
+    try {
+      setDeclining(true);
+      const response = await axios.post(
+        `http://localhost:8000/api/v1/lost-and-found/matched-items/${id}/decline-match/`,
+        {}, // Empty body
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+
+      console.log("Match decline response:", response.data);
+
+      toast({
+        title: "Match Declined",
+        description: "The match has been declined successfully.",
+      });
+
+      // Navigate back to the lost and found page
+      navigate("/lost-found");
+    } catch (err) {
+      console.error("Error declining match:", err);
+      toast({
+        title: "Error",
+        description: "Failed to decline match. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeclining(false);
     }
   };
 
@@ -240,6 +317,15 @@ const MatchedItemDetail = () => {
                               {matchedItem.lost_item_details.user}
                             </span>
                           </div>
+                          {/* Add Phone Number - Change color from green to match other icons */}
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {lostUser
+                                ? formatPhoneNumber(lostUser.phone_number)
+                                : "Loading..."}
+                            </span>
+                          </div>
                         </div>
 
                         <p className="text-sm text-muted-foreground">
@@ -291,6 +377,15 @@ const MatchedItemDetail = () => {
                             <User className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
                               {matchedItem.found_item_details.user}
+                            </span>
+                          </div>
+                          {/* Add Phone Number - Change color from green to match other icons */}
+                          <div className="flex items-center gap-2">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">
+                              {foundUser
+                                ? formatPhoneNumber(foundUser.phone_number)
+                                : "Loading..."}
                             </span>
                           </div>
                         </div>
@@ -416,6 +511,19 @@ const MatchedItemDetail = () => {
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Add Phone Number - Change color from green to match other icons */}
+                              <div className="flex items-start gap-2">
+                                <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                                <div>
+                                  <h4 className="font-medium">Contact Phone</h4>
+                                  <p className="text-muted-foreground">
+                                    {lostUser
+                                      ? formatPhoneNumber(lostUser.phone_number)
+                                      : "Loading..."}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -504,6 +612,21 @@ const MatchedItemDetail = () => {
                                   </div>
                                 </div>
                               </div>
+
+                              {/* Add Phone Number - Change color from green to match other icons */}
+                              <div className="flex items-start gap-2">
+                                <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
+                                <div>
+                                  <h4 className="font-medium">Contact Phone</h4>
+                                  <p className="text-muted-foreground">
+                                    {foundUser
+                                      ? formatPhoneNumber(
+                                          foundUser.phone_number
+                                        )
+                                      : "Loading..."}
+                                  </p>
+                                </div>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -515,19 +638,19 @@ const MatchedItemDetail = () => {
 
               <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0 mt-6">
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   className="w-full"
-                  onClick={() => navigate("/lost-found")}
-                  disabled={confirming}
+                  onClick={handleDeclineMatch}
+                  disabled={declining || confirming}
                 >
-                  Return to List
+                  {declining ? "Declining..." : "Decline Match"}
                 </Button>
 
                 {matchedItem.status === "FAILED" ? (
                   <Button
-                    className="w-full"
+                    className="w-full bg-green-500 hover:bg-green-600"
                     onClick={handleConfirmMatch}
-                    disabled={confirming}
+                    disabled={confirming || declining}
                   >
                     {confirming ? "Confirming..." : "Confirm Match"}
                   </Button>
