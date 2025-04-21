@@ -56,7 +56,6 @@ const SupervisorDashboard = () => {
           setSelectedTrack(defaultTrackId);
           
           const classesResponse = await getScheduledClasses(parseInt(defaultTrackId));
-          console.log('Initial classes data:', classesResponse);
           
           const todayClasses = classesResponse.filter(cls => 
             cls.start && dayjs(cls.start).isToday()
@@ -65,7 +64,6 @@ const SupervisorDashboard = () => {
           setScheduledClasses(todayClasses);
           
           setTimeout(() => {
-            console.log('Force refreshing with initial data');
             setScheduledClasses([...todayClasses]);
           }, 500);
         }
@@ -85,7 +83,6 @@ const SupervisorDashboard = () => {
     },
     onSuccess: (data) => {
       if (data && data.length > 0) {
-        console.log('Tracks Data:', data);
       }
     }
   });
@@ -110,7 +107,6 @@ const SupervisorDashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     onSuccess: (data) => {
-      // console.log('Weekly Attendance Data:', data);
     },
     onError: (error) => {
       console.error("Error fetching weekly attendance:", error);
@@ -123,8 +119,6 @@ const SupervisorDashboard = () => {
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
     onSuccess: (data) => {
-      // console.log('Daily Trends Data Success:', data);
-      // console.log('Daily Trends:', data.daily_trends);
     },
     onError: (error) => {
       console.error("Error fetching daily trends:", error);
@@ -139,8 +133,6 @@ const SupervisorDashboard = () => {
       console.error("Error fetching weekly trends:", error);
     },
     onSuccess: (data) => {
-      // console.log('Weekly Trends Data Success:', data);
-      // console.log('Weekly Trends:', data.weekly_trends);
     }
   });
 
@@ -160,7 +152,7 @@ const SupervisorDashboard = () => {
   }, [weeklyTrendsQueryData]); 
 
   const { data: warningsCount, isLoading: warningsLoading, isError: warningsError, error: warningsErrorData } = useQuery({
-    queryKey: ["studentsWithWarnings"],
+    queryKey: ["studentsWithWarningsCount"],
     queryFn: async () => {
       const response = await axiosBackendInstance.get(
         "/attendance/students/with-warnings/"
@@ -179,7 +171,6 @@ const SupervisorDashboard = () => {
     refetchIntervalInBackground: false,
     enabled: Boolean(selectedTrack) && selectedTrack !== "all" && selectedTrack !== "" && !isNaN(parseInt(selectedTrack)),
     onSuccess: (data) => {
-      // console.log('Fetched Scheduled Classes Data:', data);
       if (data) {
         const todayClasses = data.filter(cls =>
           cls.start && dayjs(cls.start).isToday()
@@ -203,7 +194,6 @@ const SupervisorDashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     onSuccess: (data) => {
-      // console.log('Weekly Attendance Breakdown Data:', data);
     },
     onError: (error) => {
       console.error("Error fetching weekly attendance breakdown:", error);
@@ -218,34 +208,11 @@ const SupervisorDashboard = () => {
     refetchInterval: 60000,
     refetchIntervalInBackground: false,
     onSuccess: (data) => {
-      // console.log('Recent Absences Data:', data);
     },
     onError: (error) => {
       console.error("Error fetching recent absences:", error);
     },
   });
-
-  const handleSelect = (date) => {
-    if (date) {
-      const formattedDate = dayjs(date).format('YYYY-MM-DD');
-      navigate(`/attendance-status?from_date=${formattedDate}`);
-    }
-  };
-
-  useEffect(() => {
-    if (weeklyTrendsQueryData && weeklyTrendsQueryData.weekly_trends) { 
-      const today = dayjs(); 
-
-      const processedData = weeklyTrendsQueryData.weekly_trends.filter(item => {
-        const itemDate = dayjs(item.week); 
-        return itemDate.isValid() && itemDate.isSameOrBefore(today, 'day');
-      });
-
-      setFilteredData(processedData);
-    } else {
-      setFilteredData([]); 
-    }
-  }, [weeklyTrendsQueryData]); 
 
   useEffect(() => {
     if (weeklyAttendanceBreakdown) {
@@ -261,16 +228,16 @@ const SupervisorDashboard = () => {
           isFreeDay,
           absent: isFreeDay ? null : (trackData.absent_percent || 0)
         };
-      });
-
+      });      
+      
       setWeeklyBreakdown(transformedData);
     }
   }, [weeklyAttendanceBreakdown, weeklyBreakdownTrack]);
 
   useEffect(() => {
     if (recentAbsencesData) {
-      // console.log('Recent Absences Data:', recentAbsencesData);
-            const formattedAbsences = recentAbsencesData.map(absence => ({
+        
+      const formattedAbsences = recentAbsencesData.map(absence => ({
         id: Math.random().toString(36).substring(2, 9), 
         student: absence.student_name,
         date: new Date(absence.date).toLocaleDateString('en-US', {
@@ -334,14 +301,21 @@ const SupervisorDashboard = () => {
       setScheduledClasses([]);
     }
   }, [selectedTrack]);
-  const todayIndex = dayjs().day(); // 0 (Sunday) - 6 (Saturday)
-  const displayWeeklyBreakdown = weeklyBreakdown.map((item, idx) => {
-    if (idx > todayIndex) {
-      return { ...item, attendance: null, absent: null };
-    }
-    return item;
-  });
 
+  const handleSelect = (date) => {
+    if (date) {
+      const formattedDate = dayjs(date).format('YYYY-MM-DD');
+      navigate(`/attendance-status?from_date=${formattedDate}`);
+    }
+  };
+
+  const todayIndex = dayjs().day(); // 0 (Sunday) - 6 (Saturday)
+  // Convert JavaScript day index (0=Sunday) to our day index (0=Saturday)
+  const adjustedTodayIndex = todayIndex === 0 ? 1 : todayIndex - 1;
+  
+  // Don't filter out data based on day index for now - show all data
+  const displayWeeklyBreakdown = weeklyBreakdown;
+  
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -469,7 +443,15 @@ const SupervisorDashboard = () => {
                     ticks={[0, 25, 50, 75, 100]}
                     tickFormatter={(value) => `${value}%`}
                   />
-                  <Tooltip formatter={(value) => [`${value}%`, 'Attendance Rate']} />
+                  <Tooltip formatter={(value, name, props) => {
+                    if (props?.payload?.isFreeDay) {
+                      return ['Free Day', 'Status'];
+                    }
+                    if (name === 'Present') {
+                      return [`${value}%`, 'Present'];
+                    }
+                    return [`${value}%`, 'Absent'];
+                  }} />
                   <Line
                     type="monotone"
                     dataKey="attendance_percentage"
@@ -493,7 +475,6 @@ const SupervisorDashboard = () => {
               <Select
                 value={selectedTrack}
                 onValueChange={(value) => {
-                  console.log("Track selected:", value);
                   setSelectedTrack(value);
                   
                   // Immediately fetch classes when track is selected
@@ -501,7 +482,6 @@ const SupervisorDashboard = () => {
                     const trackId = parseInt(value);
                     getScheduledClasses(trackId)
                       .then(data => {
-                        console.log("Fetched classes immediately:", data);
                         const todayClasses = data.filter(cls => 
                           cls.start && dayjs(cls.start).isToday()
                         );
@@ -606,64 +586,78 @@ const SupervisorDashboard = () => {
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={displayWeeklyBreakdown}>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" />
-                <YAxis domain={[0, 100]} />
-                <Tooltip
-                  formatter={(value, name, props) => {
-                    if (props?.payload?.isFreeDay) {
-                      return ['Free Day', 'Status'];
-                    }
-                    if (name === 'Present') {
-                      return [`${value}%`, 'Present'];
-                    }
-                    return [`${value}%`, 'Absent'];
-                  }}
-                />
-                <Legend />
-                <Bar
-                  dataKey="attendance"
-                  name="Present"
-                  fill="#10b981"
-                  radius={[4, 4, 0, 0]}
-                  label={({ x, y, width, height, value, payload }) => {
-                    if (!payload) return null;
-                    if (payload.isFreeDay) {
-                      return (
-                        <text
-                          x={x + width / 2}
-                          y={y + height / 2}
-                          fill="#6b7280"
-                          textAnchor="middle"
-                          dominantBaseline="middle"
-                        >
-                          Free Day
-                        </text>
-                      );
-                    }
-                    if (value) {
-                      return (
-                        <text
-                          x={x + width / 2}
-                          y={y - 5}
-                          fill="#374151"
-                          textAnchor="middle"
-                        >
-                          {`${value}%`}
-                        </text>
-                      );
-                    }
-                    return null;
-                  }}
-                />
-                <Bar
-                  dataKey="absent"
-                  name="Absent"
-                  fill="#ef4444"
-                  radius={[4, 4, 0, 0]}
-                />
-              </BarChart>
+              {weeklyAttendanceBreakdownLoading ? (
+                <div className="flex h-full items-center justify-center">
+                  <p>Loading weekly attendance data...</p>
+                </div>
+              ) : weeklyAttendanceBreakdownError ? (
+                <div className="flex h-full items-center justify-center text-red-500">
+                  <p>Error loading weekly attendance data</p>
+                </div>
+              ) : displayWeeklyBreakdown && displayWeeklyBreakdown.length > 0 ? (
+                <BarChart data={displayWeeklyBreakdown}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                  <XAxis dataKey="name" />
+                  <YAxis domain={[0, 100]} />
+                  <Tooltip
+                    formatter={(value, name, props) => {
+                      if (props?.payload?.isFreeDay) {
+                        return ['Free Day', 'Status'];
+                      }
+                      if (name === 'Present') {
+                        return [`${value}%`, 'Present'];
+                      }
+                      return [`${value}%`, 'Absent'];
+                    }}
+                  />
+                  <Legend />
+                  <Bar
+                    dataKey="attendance"
+                    name="Present"
+                    fill="#10b981"
+                    radius={[4, 4, 0, 0]}
+                    label={({ x, y, width, height, value, payload }) => {
+                      if (!payload) return null;
+                      if (payload.isFreeDay) {
+                        return (
+                          <text
+                            x={x + width / 2}
+                            y={y + height / 2}
+                            fill="#6b7280"
+                            textAnchor="middle"
+                            dominantBaseline="middle"
+                          >
+                            Free Day
+                          </text>
+                        );
+                      }
+                      if (value) {
+                        return (
+                          <text
+                            x={x + width / 2}
+                            y={y - 5}
+                            fill="#374151"
+                            textAnchor="middle"
+                          >
+                            {`${value}%`}
+                          </text>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar
+                    dataKey="absent"
+                    name="Absent"
+                    fill="#ef4444"
+                    radius={[4, 4, 0, 0]}
+                  />
+                </BarChart>
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <p>No attendance data available.</p>
+                </div>
+              )}
             </ResponsiveContainer>
           </div>
         </CardContent>

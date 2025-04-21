@@ -39,7 +39,7 @@ const RecentAbsences = ({ absences = [], onViewAll, selectedTrack, onTrackChange
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-3">
-          {limitedAbsences.length > 0 ? (
+          {limitedAbsences?.length > 0 ? (
             limitedAbsences.map((absence) => (
               <div key={absence.id} className="flex justify-between items-start border-b pb-3">
                 <div>
