@@ -29,16 +29,16 @@ const StudentVerification = () => {
 
   // Real student data from the server using tanstack query
   const fetchStudents = async () => {
-    const response = await axiosBackendInstance.get('/accounts/students/', {
-      params: { search: searchQuery, track: selectedTrack }
+    const response = await axiosBackendInstance.get("/accounts/students/", {
+      params: { search: searchQuery, track: selectedTrack },
     });
     return response.data as ApiResponse;
   };
 
   const fetchTracks = async () => {
-    const response = await axiosBackendInstance.get('/attendance/tracks/');
+    const response = await axiosBackendInstance.get("/attendance/tracks/");
     return response.data;
-  }
+  };
 
   // Load supervisor tracks as soon as page loads
   const { data: tracksData } = useQuery({
@@ -47,14 +47,20 @@ const StudentVerification = () => {
     refetchOnWindowFocus: false,
   });
 
-  const { data: studentsData, isLoading, isError, error, refetch } = useQuery({
+  const {
+    data: studentsData,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ["students", searchQuery, selectedTrack],
     queryFn: fetchStudents,
     refetchOnWindowFocus: false,
   });
 
-  
-  useEffect(() => { // Initialize pagination data when studentsData is loaded
+  useEffect(() => {
+    // Initialize pagination data when studentsData is loaded
     if (studentsData) {
       setStudentEntries(studentsData.results);
       setNextPageUrl(studentsData.next);
@@ -87,7 +93,7 @@ const StudentVerification = () => {
     setIsLoadingMore(true);
     try {
       const response = await axiosBackendInstance.get(nextPageUrl);
-      setStudentEntries(prev => [...prev, ...response.data.results]);
+      setStudentEntries((prev) => [...prev, ...response.data.results]);
       setNextPageUrl(response.data.next);
     } catch (error) {
       console.error("Error loading more students:", error);
@@ -112,7 +118,9 @@ const StudentVerification = () => {
 
   const handleRevoke = async (studentId: number) => {
     try {
-      await axiosBackendInstance.patch(`/accounts/students/${studentId}/make-inactive/`);
+      await axiosBackendInstance.patch(
+        `/accounts/students/${studentId}/make-inactive/`
+      );
       toast({
         title: "Student Revoked",
         description: "The student verification has been revoked.",
@@ -131,13 +139,18 @@ const StudentVerification = () => {
   };
 
   const handleResendActivation = async (studentId: number) => {
-    try{
-      await axiosBackendInstance.get(`/accounts/students/${studentId}/resend-activation/`);
+    try {
+      await axiosBackendInstance.get(
+        `/accounts/students/${studentId}/resend-activation/`
+      );
       toast({
         title: "Activation Email Resent",
         description: "The activation email has been resent to the student.",
       });
-      console.log("Activation email resent successfully for student:", studentId);
+      console.log(
+        "Activation email resent successfully for student:",
+        studentId
+      );
     } catch (error) {
       toast({
         title: "Error",
@@ -146,7 +159,7 @@ const StudentVerification = () => {
       });
       console.error("Error resending activation email:", error);
     }
-  }
+  };
 
   if (userRole !== "admin" && userRole !== "supervisor") {
     return (
@@ -165,7 +178,9 @@ const StudentVerification = () => {
     return (
       <Layout>
         <Card className="p-8 text-center">
-          <h2 className="text-xl font-semibold mb-4 text-red-500">Error loading students</h2>
+          <h2 className="text-xl font-semibold mb-4 text-red-500">
+            Error loading students
+          </h2>
           <p className="text-muted-foreground">
             {error instanceof Error ? error.message : "Unknown error occurred"}
           </p>
@@ -177,13 +192,13 @@ const StudentVerification = () => {
   return (
     <Layout>
       <div className="flex flex-col items-center min-h-screen py-6 px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-start">
+        <div className="container items-start">
           <PageTitle
             title="Student Verification"
             subtitle="Verify and manage student accounts"
             icon={<UserCheck />}
           />
-          <div className="space-y-6 max-w-4xl">
+          <div className="space-y-6">
             <Card className="p-6">
               <SearchToolbar
                 searchQuery={searchQuery}
@@ -197,11 +212,14 @@ const StudentVerification = () => {
                 pendingCount={studentsData?.inactive_users}
                 verifiedCount={studentsData?.active_users}
               />
-              {isLoading ?
-                (<Card className="p-8 text-center">
-                  <h2 className="text-xl font-semibold mb-4">Loading students...</h2>
+              {isLoading ? (
+                <Card className="p-8 text-center">
+                  <h2 className="text-xl font-semibold mb-4">
+                    Loading students...
+                  </h2>
                 </Card>
-                ) : (<StudentTable
+              ) : (
+                <StudentTable
                   students={studentEntries}
                   getFullName={getFullName}
                   getStatus={getStatus}
@@ -209,25 +227,29 @@ const StudentVerification = () => {
                   onViewDetailsValue={selectedStudent}
                   onRevoke={handleRevoke}
                   onResendActivation={handleResendActivation}
-                />)}
-              {/* Pagination: View More Button */}
-              { isLoading || nextPageUrl && (
-                <div className="mt-4 flex justify-center">
-                  <Button
-                    variant="outline"
-                    onClick={loadMoreStudents}
-                    disabled={isLoadingMore}
-                    className="w-full max-w-xs"
-                  >
-                    {isLoadingMore ? (
-                      <span className="flex items-center gap-2">
-                        <LoaderCircle size={16} className="animate-spin" />
-                        Loading more...
-                      </span>
-                    ) : "View More"}
-                  </Button>
-                </div>
+                />
               )}
+              {/* Pagination: View More Button */}
+              {isLoading ||
+                (nextPageUrl && (
+                  <div className="mt-4 flex justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={loadMoreStudents}
+                      disabled={isLoadingMore}
+                      className="w-full max-w-xs"
+                    >
+                      {isLoadingMore ? (
+                        <span className="flex items-center gap-2">
+                          <LoaderCircle size={16} className="animate-spin" />
+                          Loading more...
+                        </span>
+                      ) : (
+                        "View More"
+                      )}
+                    </Button>
+                  </div>
+                ))}
             </Card>
           </div>
         </div>
