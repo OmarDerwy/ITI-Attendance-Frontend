@@ -239,7 +239,7 @@ const SupervisorDashboard = () => {
         
       const formattedAbsences = recentAbsencesData.map(absence => ({
         id: Math.random().toString(36).substring(2, 9), 
-        student: absence.student_name,
+        student: absence.student,
         date: new Date(absence.date).toLocaleDateString('en-US', {
           month: 'short',
           day: 'numeric',

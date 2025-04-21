@@ -7,12 +7,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const RecentAbsences = ({ absences = [], onViewAll, selectedTrack, onTrackChange, tracks }) => {
   // Limit to 3 absences
   const limitedAbsences = absences.slice(0, 3);
+  console.log("Recent absences:", limitedAbsences);
   
   return (
     <Card>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-center mb-4">
-          <CardTitle>Recent Absences</CardTitle>
+          <div>
+            <CardTitle>Recent Absences</CardTitle>
+          <CardDescription>Latest student absences reported</CardDescription>
+          </div>
+          
           <div className="flex items-center gap-4">
             <Select
               value={selectedTrack}
@@ -35,7 +40,6 @@ const RecentAbsences = ({ absences = [], onViewAll, selectedTrack, onTrackChange
             </Link>
           </div>
         </div>
-        <CardDescription>Latest student absences reported</CardDescription>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="space-y-3">
