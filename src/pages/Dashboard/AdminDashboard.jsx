@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/card";
 import AttendanceBarChart from "@/components/dashboard/AttendanceBarChart";
 import RecentAbsences from "@/components/dashboard/RecentAbsences";
-import QuickActions from "@/components/dashboard/QuickActions";
-import AnnouncementCard from "@/components/dashboard/AnnouncementCard";
 import {
   ResponsiveContainer,
   BarChart,

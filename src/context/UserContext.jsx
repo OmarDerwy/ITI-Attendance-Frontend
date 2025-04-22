@@ -11,8 +11,6 @@ export const UserProvider = ({ children }) => {
   const [userName, setUserName] = useState("");
   const [userItems, setUserItems] = useState([]);
   const [userProfilePic, setUserProfilePic] = useState("/placeholder.svg");
-  const [userAnnouncements, setUserAnnouncements] = useState([]);
-  const [readAnnouncements, setReadAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);  
   const [studentTrack, setStudentTrack] = useState(null);
   const [attendanceStats, setAttendanceStats] = useState(null);
@@ -27,20 +25,6 @@ export const UserProvider = ({ children }) => {
 
   const deleteUserItem = (id) => {
     setUserItems(userItems.filter(item => item.id !== id));
-  };
-
-  const addAnnouncement = (announcement) => {
-    setUserAnnouncements([announcement, ...userAnnouncements]);
-  };
-
-  const markAnnouncementAsRead = (id) => {
-    if (!readAnnouncements.includes(id)) {
-      setReadAnnouncements([...readAnnouncements, id]);
-    }
-  };
-
-  const isAnnouncementRead = (id) => {
-    return readAnnouncements.includes(id);
   };
 
   const fetchAttendanceStats = async () => {
@@ -137,10 +121,6 @@ export const UserProvider = ({ children }) => {
         deleteUserItem,
         userProfilePic,
         setUserProfilePic,
-        userAnnouncements,
-        addAnnouncement,
-        markAnnouncementAsRead,
-        isAnnouncementRead,
         isLoading,
         logout,
         studentTrack,

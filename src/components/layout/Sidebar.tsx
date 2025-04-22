@@ -23,6 +23,7 @@ import {
   Clock2,
   HandHeart,
   TriangleAlert,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
@@ -191,22 +192,10 @@ const Sidebar = () => {
     {icon: TriangleAlert, label: "Students with Warnings", to: "/students-with-warnings", roles: ["supervisor"]},
     { icon: HandHeart, label: "Leave Request Center", to: "/leave-request-center", roles: ["supervisor"] },
     
-    // {
-    //   icon: Brain,
-    //   label: "Attendance Insights",
-    //   to: "/attendance-insights",
-    //   roles: ["supervisor"],
-    // },
-    // Admin only
-    // {
-    //   icon: Megaphone,
-    //   label: "Announcements",
-    //   to: "/announcements",
-    //   roles: ["admin"],
-    // },
-    { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
-    { icon: MapPin, label: "Tracks", to: "/tracks", roles: ["admin"] },
     { icon: Users, label: "Users", to: "/users", roles: ["admin"] },
+    { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
+    { icon: BookOpen, label: "Tracks", to: "/tracks", roles: ["admin"] },
+  
     { 
       icon: Settings, 
       label: "Settings", 

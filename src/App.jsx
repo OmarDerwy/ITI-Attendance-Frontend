@@ -6,13 +6,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import Index from "./pages/Index";
 import Login from "./pages/Auth/Login";
-import OtpVerification from "./pages/Auth/OtpVerification";
 import Schedule from "./pages/Attendance/Schedule";
 import LostFound from "./pages/LostFound/LostFound";
 import StudentVerification from "./pages/Management/StudentVerification";
 import AttendanceInsights from "./pages/Attendance/AttendanceInsights";
 import ManageMyItems from "./pages/LostFound/ManageMyItems";
-import Announcements from "./pages/Announcement/Announcements";
 import TrackManagement from "./pages/Management/TrackManagement";
 import ReportLostFound from "./pages/LostFound/ReportLostFound";
 import Profile from "./pages/Account/Profile";
@@ -69,7 +67,6 @@ const App = () => (
                   <Route path="/reset-password/:userId/:token" element={<ResetPassword />} />
                   <Route path="/activate/:token" element={<Activate />} />
                   <Route path="/forget-password" element={<ForgetPassword />} />
-                  <Route path="/otp-verification" element={<OtpVerification />} />
                 </Route>
                 {/* Authenticated-only routes */}
                 <Route element={<ProtectedRoute requireAuth={true} />}>
@@ -84,7 +81,6 @@ const App = () => (
                   <Route path="/previous-courses" element={<PreviousCourses />} />
                   <Route path="/attendance-insights" element={<AttendanceInsights />} />
                   <Route path="/my-items" element={<ManageMyItems />} />
-                  <Route path="/announcements" element={<Announcements />} />
                   <Route path="/branches" element={<BranchManagement />} />
                   <Route path="/branches/add" element={<BranchForm />} />
                   <Route path="/branches/edit/:branchId" element={<BranchForm />} />
