@@ -83,31 +83,29 @@ const AttendanceCalendar = () => {
       ].includes(status)
     ) {
       return "bg-green-600";
-    } else if (["check-in_early-check-out", "late-check-in" , "late"].includes(status)) {
+    } else if (
+      ["check-in_early-check-out", "late-check-in", "late"].includes(status)
+    ) {
       return "bg-green-400";
     } else if (
       ["late-check-in_early-check-out", "late-check-in_no-check-out"].includes(
         status
       )
     ) {
-      return "bg-green-100";
+      return "bg-green-200";
     }
 
     // Absent statuses - Red
     else if (status === "absent") {
       return "bg-red-500";
     }
-    // Excused statuses - Blue
-    else if ([].includes(status)) {
-      return "bg-blue-500";
-    }
     // No-check-out statuses - Orange
-    else if (["no-check-out"].includes(status)) {
+    else if (["no-check-out", "late"].includes(status)) {
       return "bg-green-300";
     } else if (status === "check_in_active") {
       return "bg-blue-300";
     } else {
-      return "bg-green border border-green-200";
+      return "bg-green border border-orange-200";
     }
   };
 

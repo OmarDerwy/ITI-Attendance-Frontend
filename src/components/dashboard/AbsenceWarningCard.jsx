@@ -31,10 +31,10 @@ const AbsenceWarningCard = () => {
   
   return (
     <Card className={cn(
-      "overflow-hidden h-full border-l-4 shadow-lg",
-      attendance_status === 'good' && "border-l-green-500",
-      attendance_status === 'warning' && "border-l-amber-500",
-      attendance_status === 'danger' && "border-l-red-500"
+      // "overflow-hidden h-full border-l-4 shadow-lg",
+      // attendance_status === 'good' && "border-l-green-500",
+      // attendance_status === 'warning' && "border-l-amber-500",
+      // attendance_status === 'danger' && "border-l-red-500"
     )}>
       <CardContent className="pt-4 h-full flex flex-col">
         <div className="flex items-center gap-2 mb-4">
@@ -197,7 +197,11 @@ const AbsenceWarningCard = () => {
           {/* Excused absences progress bar */}
           <div>
             <div className="flex justify-between text-xs mb-1">
-              <span className="text-blue-700 font-semibold">
+            <span className={cn(
+                attendance_status === 'good' && "text-green-700 font-semibold",
+                attendance_status === 'warning' && "text-amber-700 font-semibold",
+                attendance_status === 'danger' && "text-red-700 font-semibold",
+              )}>
                 Excused Absences: {excused_consumed}
               </span>
             </div>
