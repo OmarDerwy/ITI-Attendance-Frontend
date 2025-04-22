@@ -15,6 +15,7 @@ export const UserProvider = ({ children }) => {
   const [readAnnouncements, setReadAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);  
   const [studentTrack, setStudentTrack] = useState(null);
+  const [attendanceStats, setAttendanceStats] = useState(null);
 
   const addUserItem = (item) => {
     setUserItems([...userItems, item]);
@@ -42,6 +43,25 @@ export const UserProvider = ({ children }) => {
     return readAnnouncements.includes(id);
   };
 
+  const fetchAttendanceStats = async () => {
+    if (userRole === 'student' && userId) {
+      try {
+        const response = await axiosBackendInstance.get('attendance/attendance-stats/');
+        if (response.data) {
+          setAttendanceStats(response.data);
+          // Optionally store in localStorage if needed
+          localStorage.setItem('attendanceStats', JSON.stringify(response.data));
+        }
+        return response.data;
+      } catch (error) {
+        console.error("Failed to fetch attendance statistics:", error);
+        toast.error("Could not retrieve attendance statistics");
+        return null;
+      }
+    }
+    return null;
+  };
+
   useEffect(() => {
       const initializeAuth = async () => {
         const token = localStorage.getItem('access');
@@ -63,10 +83,10 @@ export const UserProvider = ({ children }) => {
           setUserName(email);
 
           //Load student track data from localStorage if it exists
-          const storedTrackData = localStorage.getItem('studentTrack');
-           if (storedTrackData && role === 'student') {
-            setStudentTrack(JSON.parse(storedTrackData));
-           }
+          // const storedTrackData = localStorage.getItem('studentTrack');
+          //  if (storedTrackData && role === 'student') {
+          //   setStudentTrack(JSON.parse(storedTrackData));
+          //  }
         } catch (error) {
           console.error("Failed to initialize authentication:", error);
           // Clear invalid token
@@ -125,6 +145,9 @@ export const UserProvider = ({ children }) => {
         logout,
         studentTrack,
         setStudentTrack,
+        attendanceStats,
+        setAttendanceStats,
+        fetchAttendanceStats,
       }}
     >
       {children}

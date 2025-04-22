@@ -89,6 +89,17 @@ const Login = () => {
           const trackData = studentTrackResponse.data;
           localStorage.setItem("studentTrack", JSON.stringify(trackData));
           user.setStudentTrack?.(trackData); // Optional chaining
+          
+          // Fetch attendance statistics for students
+          try {
+            const attendanceStats = await user.fetchAttendanceStats?.();
+            if (attendanceStats) {
+              console.log("Attendance statistics loaded successfully");
+            }
+          } catch (statsError) {
+            console.error("Failed to fetch attendance statistics:", statsError);
+            // Don't block login flow if stats fetch fails
+          }
         } catch (error) {
           console.error("Failed to fetch student track:", error);
           toast.error("Could not retrieve student track information");
