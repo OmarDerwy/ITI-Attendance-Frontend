@@ -10,10 +10,8 @@ const TrackBranchCard = () => {
     return (
       <Card className="relative overflow-hidden">
         <CardContent className="pt-4 pb-4 sm:pt-6 sm:pb-6 flex justify-center items-center">
-          <div className="flex flex-col items-center gap-2">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-sm text-muted-foreground">Loading track information...</p>
-          </div>
         </CardContent>
       </Card>
     );
@@ -40,8 +38,7 @@ const TrackBranchCard = () => {
   const daysRemaining = calculateDaysRemaining();
   
   return (
-    <Card className="relative overflow-hidden">
-      <CardContent className="pt-4 pb-4 sm:pt-6 sm:pb-6">
+    <>
         <div className="flex flex-col gap-3 md:gap-4 lg:gap-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 gap-2 md:gap-4">
             <div className="bg-primary/10 p-3 sm:p-4 rounded-lg flex items-center gap-2 sm:gap-3">
@@ -94,8 +91,7 @@ const TrackBranchCard = () => {
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+    </>
   );
 };
 export default TrackBranchCard;

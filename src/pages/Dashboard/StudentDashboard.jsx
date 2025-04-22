@@ -8,7 +8,6 @@ import AttendanceCalendar from "@/components/dashboard/AttendanceCalendar";
 import ItiValuesCard from "@/components/dashboard/ItiValuesCard";
 import Layout from "@/components/layout/Layout";
 import CombinedScheduleCard from "../../components/dashboard/CombinedScheduleCard";
-import AttendanceStatsCard from "@/components/dashboard/AttendanceStatsCard";
 import AbsenceWarningCard from "@/components/dashboard/AbsenceWarningCard";
 import { useUser } from "@/context/UserContext";
 import { axiosBackendInstance } from "@/api/config";
@@ -80,23 +79,16 @@ const StudentDashboard = () => {
     <Layout>
       <div className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-          <div className="md:col-span-5">
+          <div className="md:col-span-7">
             <AttendanceCalendar />
-          </div>
-          <div className="md:col-span-2">
-            <AttendanceStatsCard />
           </div>
           <div className="md:col-span-5 space-y-6">
             <TrackBranchCard />
             <Card className="overflow-hidden">
-              <CardContent className="pt-6">
-                <ItiValuesCard />
-              </CardContent>
+                <AbsenceWarningCard compact={true} />
             </Card>
           </div>
         </div>
-        
-        {/* Row for schedule and today's classes */}
           <div >
             <CombinedScheduleCard />
           </div>

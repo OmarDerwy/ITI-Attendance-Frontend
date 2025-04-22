@@ -9,7 +9,7 @@ import { useUser } from "@/context/UserContext";
 const AttendanceCalendar = () => {
   const [attendanceData, setAttendanceData] = useState({});
   const [isLoading, setIsLoading] = useState(true);
-  const { studentTrack } = useUser();
+  const { studentTrack, attendanceStats } = useUser();
 
   // Memoize fetchAttendanceData
   const fetchAttendanceData = useMemo(
@@ -82,11 +82,11 @@ const AttendanceCalendar = () => {
         "late_excused",
       ].includes(status)
     ) {
-      return "bg-green-600";
+      return "bg-green-500";
     } else if (
       ["check-in_early-check-out", "late-check-in", "late"].includes(status)
     ) {
-      return "bg-green-400";
+      return "bg-green-300";
     } else if (
       ["late-check-in_early-check-out", "late-check-in_no-check-out"].includes(
         status
@@ -150,6 +150,13 @@ const AttendanceCalendar = () => {
     monthRows.push(calendarMonths.slice(i, i + 3));
   }
 
+  // Get attendance stats from context
+  const present = attendanceStats?.total_attended || 0;
+  const absent = attendanceStats?.total_absent || 0;
+  const totalDays = attendanceStats?.total_days || 0;
+  const attendancePercentage = attendanceStats?.attendance_percentage || 
+      (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
+
   return (
     <Card>
       <CardContent className="pt-6">
@@ -191,7 +198,7 @@ const AttendanceCalendar = () => {
                               )}
                               title={
                                 day
-                                  ? `Day ${day.day}: ${day.status || "No data"}`
+                                  ? `Day ${day.day}: ${day.status || "No schedule"}`
                                   : ""
                               }
                             ></div>
@@ -205,27 +212,45 @@ const AttendanceCalendar = () => {
           </div>
         )}
 
-        {/* Legend */}
-        <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs mt-3">
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-[2px] bg-green-500"></div>
-            <span>Attended</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-[2px] bg-red-500"></div>
-            <span>Absent</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-[2px] bg-blue-500"></div>
-            <span>Excused</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-[2px] bg-orange-500"></div>
-            <span>No Check-out</span>
-          </div>
-          <div className="flex items-center gap-1">
-            <div className="w-2 h-2 rounded-[2px] bg-white border border-gray-200"></div>
-            <span>No Schedule</span>
+        <div className="mt-4 border-t pt-3">
+          <div className="flex flex-wrap justify-between items-start">
+            {/* Legend */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-[2px] bg-green-500"></div>
+                <span>Attended</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-[2px] bg-green-300"></div>
+                <span>Late</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-[2px] bg-green-200"></div>
+                <span>Missing Checkout</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <div className="w-2 h-2 rounded-[2px] bg-red-500"></div>
+                <span>Absent</span>
+              </div>
+            </div>
+            
+            {/* Attendance Stats */}
+            <div className="flex flex-wrap gap-4 mt-2 md:mt-0">
+              <div className="bg-green-50 rounded-md px-3 py-2 text-sm">
+                <span className="font-medium text-green-700">Present:</span> 
+                <span className="text-green-800 ml-1">{present}</span>
+              </div>
+              <div className="bg-red-50 rounded-md px-3 py-2 text-sm">
+                <span className="font-medium text-red-700">Absent:</span> 
+                <span className="text-red-800 ml-1">{absent}</span>
+              </div>
+              <div className="bg-purple-50 rounded-md px-3 py-2 text-sm flex-1 max-w-fit">
+                <span className="font-medium text-purple-700">Attendance:</span>
+                <span className="text-purple-800 ml-1">
+                  {attendancePercentage}% for {totalDays} days
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </CardContent>

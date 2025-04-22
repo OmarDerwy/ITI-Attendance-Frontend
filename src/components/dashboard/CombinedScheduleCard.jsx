@@ -8,6 +8,7 @@ import { useUser } from '@/context/UserContext';
 import { axiosBackendInstance } from '@/api/config';
 import { format, isToday, isFuture, parseISO, isAfter, isBefore, addDays, getHours, getMinutes } from 'date-fns';
 import AbsenceWarningCard from '@/components/dashboard/AbsenceWarningCard';
+import ItiValuesCard from '@/components/dashboard/ItiValuesCard';
 
 const CombinedScheduleCard = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -158,9 +159,9 @@ const CombinedScheduleCard = () => {
   }
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
       {/* Today's Schedule Card - removed gradient */}
-      <Card className="overflow-hidden lg:col-span-1 border-l-4 border-l-primary">
+      <Card className="overflow-hidden lg:col-span-4 border-l-4 border-l-primary">
         <CardContent className="pt-5">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2.5">
@@ -264,7 +265,7 @@ const CombinedScheduleCard = () => {
       </Card>
 
       {/* Weekly Schedule Grid Card - Simplified Version */}
-      <Card className="overflow-hidden h-full lg:col-span-1">
+      <Card className="overflow-hidden h-full lg:col-span-5">
         <CardContent className="pt-4">
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
@@ -347,10 +348,11 @@ const CombinedScheduleCard = () => {
         </CardContent>
       </Card>
       
-      {/* AbsenceWarningCard - Now using context directly without props */}
-      <div className="lg:col-span-1 h-full">
-        <AbsenceWarningCard />
-      </div>
+      <Card className="lg:col-span-3 h-full overflow-hidden">
+        <CardContent className="pt-6">
+          <ItiValuesCard />
+        </CardContent>
+      </Card>
     </div>
   );
 };
