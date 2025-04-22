@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { axiosBackendInstance } from "@/api/config";
-import { toast } from 'sonner';
-import { useUser } from '@/context/UserContext';
+import { toast } from "sonner";
+import { useUser } from "@/context/UserContext";
 import axios from "axios";
-import { useQueryClient } from '@tanstack/react-query';
-
+import { useQueryClient } from "@tanstack/react-query";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -80,6 +79,46 @@ const Login = () => {
       const userRole = userResponse.data.groups[0];
       user.setUserRole(userRole);
 
+      // Fetch user profile to get first_name and last_name
+      try {
+        const profileEndpoint = import.meta.env.VITE_USER_PROFILE_ENDPOINT;
+        const profileResponse = await axios.get(profileEndpoint, {
+          headers: {
+            Authorization: `Bearer ${access}`,
+          },
+        });
+
+        // Set user's full name if available
+        if (profileResponse.data.first_name || profileResponse.data.last_name) {
+          const fullName = `${profileResponse.data.first_name || ""} ${
+            profileResponse.data.last_name || ""
+          }`.trim();
+          // Set the full name in context
+          user.setUserFullName(fullName);
+        }
+      } catch (profileError) {
+        console.error("Failed to fetch user profile details:", profileError);
+        // Don't block login flow if profile fetch fails
+      }
+
+      // Fetch user profile picture
+      try {
+        const photoGetEndpoint = import.meta.env
+          .VITE_PROFILE_PHOTO_GET_ENDPOINT;
+        const profilePhotoResponse = await axios.get(photoGetEndpoint, {
+          headers: {
+            Authorization: `Bearer ${access}`,
+          },
+        });
+
+        if (profilePhotoResponse.data && profilePhotoResponse.data.photo_url) {
+          user.setUserProfilePic(profilePhotoResponse.data.photo_url);
+        }
+      } catch (photoError) {
+        console.error("Failed to fetch profile picture:", photoError);
+        // Don't block login flow if photo fetch fails
+      }
+
       //Check if user is a student and fetch track information
       if (userRole === "student") {
         try {
@@ -89,7 +128,7 @@ const Login = () => {
           const trackData = studentTrackResponse.data;
           localStorage.setItem("studentTrack", JSON.stringify(trackData));
           user.setStudentTrack?.(trackData); // Optional chaining
-          
+
           // Fetch attendance statistics for students
           try {
             const attendanceStats = await user.fetchAttendanceStats?.();
@@ -153,16 +192,17 @@ const Login = () => {
           >
             Knowledge City
           </h2>
-          
+
           {/* Track name appears third */}
           <p className="login-track text-xl text-muted-foreground mb-6">
             Track Full Stack using Python
           </p>
-          
+
           {/* Description appears last */}
           <p className="login-description text-base text-muted-foreground/90 max-w-md">
-            Streamline your experience with integrated tools for attendance management,
-            lost & found items, leave request handling, insightful dashboards, and more.
+            Streamline your experience with integrated tools for attendance
+            management, lost & found items, leave request handling, insightful
+            dashboards, and more.
           </p>
         </div>
       </div>
@@ -172,13 +212,15 @@ const Login = () => {
         <div className="w-full max-w-md">
           {/* Changed lg:text-left to text-center to keep it centered */}
           <div className="mb-8 text-center">
-             {/* Optional: Smaller logo for mobile/right side */}
-             <div className="flex items-center justify-center lg:hidden w-12 h-12 mx-auto mb-4 rounded-xl text-primary-foreground">
-               <img src="/images/iti-logo.png" alt="logo" className="w-10 h-10"/>
-             </div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Welcome back
-            </h1>
+            {/* Optional: Smaller logo for mobile/right side */}
+            <div className="flex items-center justify-center lg:hidden w-12 h-12 mx-auto mb-4 rounded-xl text-primary-foreground">
+              <img
+                src="/images/iti-logo.png"
+                alt="logo"
+                className="w-10 h-10"
+              />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
             <p className="mt-2 text-muted-foreground">
               Sign in to your account to continue
             </p>
@@ -239,7 +281,9 @@ const Login = () => {
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />
