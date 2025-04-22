@@ -1,25 +1,40 @@
 import React from 'react';
 import { Card, CardContent, CardTitle } from '@/components/ui/card';
-import { AlertCircle, CheckCircle, AlertTriangle, Shield } from 'lucide-react';
+import { AlertCircle, CheckCircle, AlertTriangle, Shield, FileCheck } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useUser } from '@/context/UserContext';
 
-const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
-  // Calculate warning status
-  const absencePercentage = Math.round((absent / maxAbsenceLimit) * 100);
-  const remainingAbsences = maxAbsenceLimit - absent;
+const AbsenceWarningCard = () => {
+  const { attendanceStats } = useUser();
   
-  // Define status thresholds
-  const isDanger = remainingAbsences <= 0;
-  const isWarning = remainingAbsences <= 2 && remainingAbsences > 0;
-  const isSafe = !isWarning && !isDanger;
+  // Extract values from attendance stats
+  const unexcused_absences = attendanceStats?.unexcused_absences;
+  const excused_absences = attendanceStats?.excused_absences;
+  const total_absent = attendanceStats?.total_absent;
+  
+  // Get attendance status directly from the API (lowercase for consistent comparison)
+  const attendance_status = attendanceStats?.attendance_status.toLowerCase();
+  
+  // Get threshold information
+  const unexcused_threshold = attendanceStats?.thresholds?.unexcused_threshold;
+  const excused_threshold = attendanceStats?.thresholds?.excused_threshold;
+  const unexcused_consumed = attendanceStats?.thresholds?.unexcused_consumed;
+  const excused_consumed = attendanceStats?.thresholds?.excused_consumed;
+  
+  // Get remaining absences directly from API
+  const remainingAbsences = attendanceStats?.remaining_absences;
+  
+  // Calculate percentage for progress bars
+  const unexcusedPercentage = Math.round((unexcused_absences / unexcused_threshold) * 100);
+  const excusedPercentage = Math.round((excused_absences / excused_threshold) * 100);
   
   return (
     <Card className={cn(
-      "overflow-hidden h-full border-l-4 shadow-lg", // Added shadow-lg for more depth
-      isSafe && "border-l-green-500",
-      isWarning && "border-l-amber-500",
-      isDanger && "border-l-red-500"
+      "overflow-hidden h-full border-l-4 shadow-lg",
+      attendance_status === 'good' && "border-l-green-500",
+      attendance_status === 'warning' && "border-l-amber-500",
+      attendance_status === 'danger' && "border-l-red-500"
     )}>
       <CardContent className="pt-4 h-full flex flex-col">
         <div className="flex items-center gap-2 mb-4">
@@ -30,47 +45,39 @@ const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
         <div className="flex justify-center items-center flex-grow">
           <motion.div 
             className={cn(
-              "relative w-48 h-48 flex items-center justify-center rounded-full shadow-inner", // Increased from w-36 h-36 to w-48 h-48
-              isSafe && "bg-gradient-to-br from-green-50 to-green-100",
-              isWarning && "bg-gradient-to-br from-amber-50 to-amber-100",
-              isDanger && "bg-gradient-to-br from-red-50 to-red-100"
+              "relative w-48 h-48 flex items-center justify-center rounded-full shadow-inner",
+              attendance_status === 'good' && "bg-gradient-to-br from-green-50 to-green-100",
+              attendance_status === 'warning' && "bg-gradient-to-br from-amber-50 to-amber-100",
+              attendance_status === 'danger' && "bg-gradient-to-br from-red-50 to-red-100"
             )}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5 }}
           >
             {/* Icon with animation */}
-            {isSafe && (
+            {attendance_status === 'good' && (
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 whileHover={{ scale: 1.1 }}
-                transition={{ 
-                  type: "spring",
-                  stiffness: 260,
-                  damping: 20,
-                  delay: 0.2
-                }}
-                className="drop-shadow-xl" // Added drop shadow effect
+                transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.2 }}
+                className="drop-shadow-xl"
               >
-                <Shield className="h-20 w-20 text-green-600" /> {/* Increased icon size from h-16 w-16 to h-20 w-20 */}
+                <Shield className="h-20 w-20 text-green-600" />
               </motion.div>
             )}
             
-            {isWarning && (
+            {attendance_status === 'warning' && (
               <motion.div
                 animate={{ rotate: [0, 5, 0, -5, 0], scale: [1, 1.05, 1] }}
-                transition={{ 
-                  rotate: { duration: 1.5, repeat: Infinity, repeatDelay: 1 },
-                  scale: { duration: 2, repeat: Infinity, repeatDelay: 0 }
-                }}
-                className="drop-shadow-xl" // Added drop shadow effect
+                transition={{ rotate: { duration: 1.5, repeat: Infinity, repeatDelay: 1 }, scale: { duration: 2, repeat: Infinity, repeatDelay: 0 } }}
+                className="drop-shadow-xl"
               >
-                <AlertTriangle className="h-20 w-20 text-amber-600" /> {/* Increased icon size from h-16 w-16 to h-20 w-20 */}
+                <AlertTriangle className="h-20 w-20 text-amber-600" />
               </motion.div>
             )}
             
-            {isDanger && (
+            {attendance_status === 'danger' && (
               <motion.div
                 animate={{ 
                   scale: [1, 1.1, 1],
@@ -78,7 +85,7 @@ const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
                 }}
                 transition={{ duration: 1, repeat: Infinity }}
               >
-                <AlertCircle className="h-20 w-20 text-red-600" /> {/* Increased icon size from h-16 w-16 to h-20 w-20 */}
+                <AlertCircle className="h-20 w-20 text-red-600" />
               </motion.div>
             )}
           </motion.div>
@@ -87,17 +94,17 @@ const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
         {/* Status message */}
         <motion.div 
           className={cn(
-            "mt-4 p-4 rounded-lg shadow-md", // Added shadow for depth
-            isSafe && "bg-gradient-to-r from-green-50 to-green-100 border border-green-200",
-            isWarning && "bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200",
-            isDanger && "bg-gradient-to-r from-red-50 to-red-100 border border-red-200"
+            "mt-4 p-4 rounded-lg shadow-md",
+            attendance_status === 'good' && "bg-gradient-to-r from-green-50 to-green-100 border border-green-200",
+            attendance_status === 'warning' && "bg-gradient-to-r from-amber-50 to-amber-100 border border-amber-200",
+            attendance_status === 'danger' && "bg-gradient-to-r from-red-50 to-red-100 border border-red-200"
           )}
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.5 }}
-          whileHover={{ y: -2, transition: { duration: 0.2 } }} // Subtle hover effect
+          whileHover={{ y: -2, transition: { duration: 0.2 } }}
         >
-          {isSafe && (
+          {attendance_status === 'good' && (
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <motion.div 
@@ -115,7 +122,7 @@ const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
             </div>
           )}
 
-          {isWarning && (
+          {attendance_status === 'warning' && (
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <motion.div
@@ -136,7 +143,7 @@ const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
             </div>
           )}
 
-          {isDanger && (
+          {attendance_status === 'danger' && (
             <div className="space-y-1">
               <div className="flex items-center gap-2">
                 <motion.div
@@ -158,30 +165,51 @@ const AbsenceWarningCard = ({ absent, maxAbsenceLimit = 5 }) => {
           )}
         </motion.div>
 
-        {/* Progress bar showing absences used */}
-        <div className="mt-4">
-          <div className="flex justify-between text-xs mb-1">
-            <span className={cn(
-              isSafe && "text-green-700 font-semibold",
-              isWarning && "text-amber-700 font-semibold",
-              isDanger && "text-red-700 font-semibold",
-            )}>
-              Absences: {absent}/{maxAbsenceLimit}
-            </span>
+        {/* Progress bars showing absences */}
+        <div className="mt-4 space-y-3">
+          {/* Unexcused absences progress bar */}
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span className={cn(
+                attendance_status === 'good' && "text-green-700 font-semibold",
+                attendance_status === 'warning' && "text-amber-700 font-semibold",
+                attendance_status === 'danger' && "text-red-700 font-semibold",
+              )}>
+                Unexcused Absences: {unexcused_consumed}
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 shadow-inner">
+              <motion.div 
+                className={cn(
+                  "h-3 rounded-full shadow-lg",
+                  attendance_status === 'good' && "bg-gradient-to-r from-green-400 to-green-500",
+                  attendance_status === 'warning' && "bg-gradient-to-r from-amber-400 to-amber-500",
+                  attendance_status === 'danger' && "bg-gradient-to-r from-red-400 to-red-500"
+                )}
+                style={{ width: `${Math.min(unexcusedPercentage, 100)}%` }}
+                initial={{ width: '0%' }}
+                animate={{ width: `${Math.min(unexcusedPercentage, 100)}%` }}
+                transition={{ duration: 1 }}
+              ></motion.div>
+            </div>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-3 shadow-inner">
-            <motion.div 
-              className={cn(
-                "h-3 rounded-full shadow-lg",
-                isSafe && "bg-gradient-to-r from-green-400 to-green-500",
-                isWarning && "bg-gradient-to-r from-amber-400 to-amber-500",
-                isDanger && "bg-gradient-to-r from-red-400 to-red-500"
-              )}
-              style={{ width: `${Math.min(absencePercentage, 100)}%` }}
-              initial={{ width: '0%' }}
-              animate={{ width: `${Math.min(absencePercentage, 100)}%` }}
-              transition={{ duration: 1 }}
-            ></motion.div>
+          
+          {/* Excused absences progress bar */}
+          <div>
+            <div className="flex justify-between text-xs mb-1">
+              <span className="text-blue-700 font-semibold">
+                Excused Absences: {excused_consumed}
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 rounded-full h-3 shadow-inner">
+              <motion.div 
+                className="h-3 rounded-full shadow-lg bg-gradient-to-r from-blue-400 to-blue-500"
+                style={{ width: `${Math.min(excusedPercentage, 100)}%` }}
+                initial={{ width: '0%' }}
+                animate={{ width: `${Math.min(excusedPercentage, 100)}%` }}
+                transition={{ duration: 1, delay: 0.3 }}
+              ></motion.div>
+            </div>
           </div>
         </div>
       </CardContent>

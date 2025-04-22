@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { CheckSquare, Clock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
+import { useUser } from '@/context/UserContext';
 
 const CircularProgress = ({ value, max, color, label, icon }) => {
   const percentage = (value / max) * 100;
@@ -64,7 +65,16 @@ const CircularProgress = ({ value, max, color, label, icon }) => {
   );
 };
 
-const AttendanceStatsCard = ({ present = 28, absent = 2, totalDays = 30 }) => {
+const AttendanceStatsCard = () => {
+  const { attendanceStats } = useUser();
+  
+  // Use data from API response structure
+  const present = attendanceStats?.total_attended || 0;
+  const absent = attendanceStats?.total_absent || 0;
+  const totalDays = attendanceStats?.total_days || (present + absent);
+  const attendancePercentage = attendanceStats?.attendance_percentage || 
+    (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
+
   return (
     <Card className="h-full shadow-sm border border-gray-100">
       <CardContent className="pt-6 flex flex-col items-center justify-center h-full">
@@ -87,7 +97,7 @@ const AttendanceStatsCard = ({ present = 28, absent = 2, totalDays = 30 }) => {
         <div className="mt-4 text-center text-xs text-gray-500">
           <p>Overall Attendance</p>
           <p className="font-semibold text-blue-600 text-sm">
-            {Math.round((present / totalDays) * 100)}%
+            {attendancePercentage}%
           </p>
         </div>
       </CardContent>

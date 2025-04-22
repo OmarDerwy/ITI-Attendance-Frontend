@@ -9,14 +9,13 @@ import { axiosBackendInstance } from '@/api/config';
 import { format, isToday, isFuture, parseISO, isAfter, isBefore, addDays, getHours, getMinutes } from 'date-fns';
 import AbsenceWarningCard from '@/components/dashboard/AbsenceWarningCard';
 
-const CombinedScheduleCard = ({ attendanceData = { present: 0, absent: 0, totalDays: 0 }, maxAbsenceLimit = 5 }) => {
+const CombinedScheduleCard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [todayClasses, setTodayClasses] = useState([]);
   const [upcomingClassesByDay, setUpcomingClassesByDay] = useState({});
   const [upcomingDays, setUpcomingDays] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
-  const { studentTrack } = useUser();
-  
+  const { studentTrack, attendanceStats, fetchAttendanceStats } = useUser();
   // Color variables to match Schedule.jsx and StudentSchedule.jsx
   const onlineForeground = "rgb(254, 230, 231)";
   const offlineForeground = "hsl(var(--accent-foreground))"; 
@@ -26,10 +25,15 @@ const CombinedScheduleCard = ({ attendanceData = { present: 0, absent: 0, totalD
   useEffect(() => {
     if (studentTrack) {
       fetchScheduleData(studentTrack.track.id);
+      
+      // If attendance stats aren't loaded yet, fetch them
+      if (!attendanceStats) {
+        fetchAttendanceStats?.();
+      }
     } else {
       setIsLoading(false);
     }
-  }, [studentTrack]);
+  }, [studentTrack, attendanceStats, fetchAttendanceStats]);
 
   const fetchScheduleData = async (trackId) => {
     try {
@@ -343,12 +347,9 @@ const CombinedScheduleCard = ({ attendanceData = { present: 0, absent: 0, totalD
         </CardContent>
       </Card>
       
-      {/* AbsenceWarningCard added here */}
+      {/* AbsenceWarningCard - Now using context directly without props */}
       <div className="lg:col-span-1 h-full">
-        <AbsenceWarningCard
-          absent={attendanceData.absent}
-          maxAbsenceLimit={maxAbsenceLimit}
-        />
+        <AbsenceWarningCard />
       </div>
     </div>
   );

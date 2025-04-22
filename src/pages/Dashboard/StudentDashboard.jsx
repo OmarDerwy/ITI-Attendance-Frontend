@@ -19,13 +19,6 @@ const StudentDashboard = () => {
   const [isLoading, setIsLoading] = useState(true);
   const { studentTrack } = useUser();
 
-  // Sample attendance data - replace with actual data from your backend
-  const attendanceData = {
-    present: 28,
-    absent: 2,
-    totalDays: 30
-  };
-
   useEffect(() => {
     if (studentTrack) {
       fetchTodayClasses(studentTrack.track.id);
@@ -91,11 +84,7 @@ const StudentDashboard = () => {
             <AttendanceCalendar />
           </div>
           <div className="md:col-span-2">
-            <AttendanceStatsCard 
-              present={attendanceData.present} 
-              absent={attendanceData.absent} 
-              totalDays={attendanceData.totalDays} 
-            />
+            <AttendanceStatsCard />
           </div>
           <div className="md:col-span-5 space-y-6">
             <TrackBranchCard />
@@ -108,12 +97,8 @@ const StudentDashboard = () => {
         </div>
         
         {/* Row for schedule and today's classes */}
-
           <div >
-            <CombinedScheduleCard 
-              attendanceData={attendanceData}
-              maxAbsenceLimit={5}
-            />
+            <CombinedScheduleCard />
           </div>
         
         <div className="w-full">
