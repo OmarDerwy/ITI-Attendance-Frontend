@@ -67,10 +67,10 @@ export const UserProvider = ({ children }) => {
           setUserName(email);
 
           //Load student track data from localStorage if it exists
-          // const storedTrackData = localStorage.getItem('studentTrack');
-          //  if (storedTrackData && role === 'student') {
-          //   setStudentTrack(JSON.parse(storedTrackData));
-          //  }
+          const storedTrackData = localStorage.getItem('studentTrack');
+           if (storedTrackData && role === 'student') {
+            setStudentTrack(JSON.parse(storedTrackData));
+           }
         } catch (error) {
           console.error("Failed to initialize authentication:", error);
           // Clear invalid token
