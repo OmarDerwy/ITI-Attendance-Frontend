@@ -231,7 +231,7 @@ const Sidebar = () => {
       {isMobile && !isOpen && (
         <button
           onClick={toggleSidebar}
-          className="fixed bottom-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground shadow-lg"
+          className="fixed bottom-4 left-4 z-50 flex items-center justify-center w-10 h-10 rounded-full bg-background text-primary-foreground "
         >
           <Menu size={20} />
         </button>
@@ -239,7 +239,8 @@ const Sidebar = () => {
 
       <aside
         className={cn(
-          "sticky top-0 flex flex-col border-r shadow-sm transition-all duration-300 ease-in-out bg-card/90 backdrop-blur-md",
+          "sticky top-0 flex flex-col border-r shadow-sm transition-all duration-300 ease-in-out ",
+          "bg-background",
           expanded ? "w-64" : "w-16",
           isMobile && expanded && isOpen
             ? "translate-x-0"
@@ -250,7 +251,7 @@ const Sidebar = () => {
           isMobile && !expanded ? "w-0" : ""
         )}
       >
-        <div className="flex items-center justify-between h-16 px-4 border-b bg-card/80">
+        <div className="flex items-center justify-between h-16 px-4 border-b bg-background ">
           {expanded && (
             <Link to="/" className="flex items-center gap-x-2">
               <div className="mb-2 flex items-center justify-center w-8 h-9 rounded-md  text-primary-foreground font-bold">

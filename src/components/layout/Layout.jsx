@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useUser } from "@/context/UserContext";
@@ -22,7 +21,7 @@ const Layout = ({ children }) => {
   }
 
   return (
-    <div className="min-h-screen flex bg-background">
+    <div className="min-h-screen flex">
       <Sidebar />
       
       <div className={cn(

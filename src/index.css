@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 210 40% 98%; /* This is slate-50 in hsl format */
     --foreground: 0 10% 10%;
 
     --card: 0 0% 100%;
@@ -92,7 +92,15 @@
   }
 
   body {
-    @apply bg-background text-foreground font-sans;
+    background-color: #F9F9F9;
+    font-family: "SF Pro Display", system-ui, sans-serif;
+    color: hsl(var(--foreground));
+  }
+
+  #root, 
+  main, 
+  .bg-background {
+    background-color: #F9F9F9;
   }
 }
 
