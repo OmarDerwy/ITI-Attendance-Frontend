@@ -160,8 +160,8 @@ const CombinedScheduleCard = () => {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-      {/* Today's Schedule Card - removed gradient */}
-      <Card className="overflow-hidden lg:col-span-4 border-l-4 border-l-primary">
+      {/* Today's Schedule Card - reduced width from col-span-4 to col-span-3 */}
+      <Card className="overflow-hidden lg:col-span-3 border-l-4 border-l-primary">
         <CardContent className="pt-5">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-2.5">
@@ -171,9 +171,6 @@ const CombinedScheduleCard = () => {
                 <p className="text-sm text- italic">{format(new Date(), 'EEEE, MMMM d')}</p>
               </div>
             </div>
-            <Link to="/student-schedule" className="text-sm text-primary hover:text-primary/80 flex items-center font-medium">
-              Full Schedule <ArrowRight className="h-3.5 w-3.5 ml-1" />
-            </Link>
           </div>
           
           <div className="space-y-3 mt-4">
@@ -182,10 +179,10 @@ const CombinedScheduleCard = () => {
                 <div 
                   key={cls.id} 
                   className={cn(
-                    "p-4 rounded-lg border relative overflow-hidden",
-                    cls.status === "completed" && "bg-gray-50 border-gray-200",
-                    cls.status === "active" && "bg-accent border-primary/20 shadow-sm",
-                    cls.status === "upcoming" && "bg-white border-primary/10"
+                    "p-4 rounded-lg relative overflow-hidden",
+                    cls.status === "completed" && "bg-gray-50",
+                    cls.status === "active" && "bg-accent shadow-sm",
+                    cls.status === "upcoming" && "bg-white"
                   )}
                 >
                   {/* Left border status indicator */}
@@ -200,15 +197,14 @@ const CombinedScheduleCard = () => {
                   <div className="flex justify-between items-center mb-2">
                     <h3 className="font-semibold text-base pl-2 text-gray-800">{cls.title}</h3>
                     {cls.status === "completed" && (
-                      <span className="px-2.5 py-1 text-xs bg-gray-100 text-gray-600 rounded-full font-medium flex items-center border border-gray-200">
+                      <span className="px-2.5 py-1 text-xs bg-gray-100 text-gray-600 rounded-full font-medium flex items-center">
                         <Check className="h-3.5 w-3.5 mr-1" />
                         Completed
                       </span>
                     )}
                     
                     {cls.status === "active" && (
-                      <span className="px-2.5 py-1 text-xs bg-primary/10 text-primary-foreground rounded-full font-medium flex items-center border border-primary/20">
-                        <span className="h-2 w-2 rounded-full bg-primary mr-1.5 animate-pulse"></span>
+                      <span className="px-2.5 py-1 text-xs bg-primary/10 text-primary rounded-full font-medium flex items-center border border-primary/20">
                         In Progress
                       </span>
                     )}
@@ -265,15 +261,15 @@ const CombinedScheduleCard = () => {
       </Card>
 
       {/* Weekly Schedule Grid Card - Simplified Version */}
-      <Card className="overflow-hidden h-full lg:col-span-5">
+      <Card className="overflow-hidden h-full lg:col-span-6">
         <CardContent className="pt-4">
           <div className="flex justify-between items-center mb-3">
             <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5 text-primary" />
               <CardTitle className="text-2xl">Weekly Schedule</CardTitle>
             </div>
-            <Link to="/student-schedule" className="text-xs text-primary flex items-center hover:text-primary/80">
-              View Full Schedule <ArrowRight className="h-3 w-3 ml-1" />
+            <Link to="/student-schedule" className="text-sm text-primary hover:text-primary/80 flex items-center font-medium">
+              Full Schedule <ArrowRight className="h-3.5 w-3.5 ml-1" />
             </Link>
           </div>
           
@@ -297,14 +293,14 @@ const CombinedScheduleCard = () => {
                         "w-[90px] p-2 border-r flex flex-col justify-center shrink-0",
                         day.isToday && "font-bold text-primary"
                       )}>
-                        <div className="text-sm">{day.displayName}</div>
-                        <div className="text-xs text-muted-foreground">
+                        <div className="text-base">{day.displayName}</div>
+                        <div className="text-sm text-muted-foreground">
                           {format(day.date, 'MMM d')}
                         </div>
                       </div>
                       
                       {/* Sessions for this day - Updated color scheme */}
-                      <div className="flex-1 p-2 flex gap-2 flex-wrap">
+                      <div className="flex-1 p-2 flex gap-2 flex-nowrap overflow-x-auto">
                         {events.length > 0 ? events.map((event, eventIndex) => {
                           const isOnline = Boolean(event.isOnline);
                           const textColorClass = isOnline ? onlineTextClass : offlineTextClass;
@@ -313,8 +309,7 @@ const CombinedScheduleCard = () => {
                             <div
                               key={event.id}
                               className={cn(
-                                "rounded-md border text-xs py-1 px-2 flex-grow-0 flex-shrink-0",
-                                "max-w-[160px] min-w-[100px]",
+                                "rounded-md border text-sm py-2 px-3 flex-1 whitespace-nowrap",
                                 textColorClass,
                                 "transition-all hover:shadow-md"
                               )}
@@ -322,19 +317,19 @@ const CombinedScheduleCard = () => {
                                 backgroundColor: isOnline ? onlineForeground : offlineForeground 
                               }}
                             >
-                              <div className="font-medium truncate text-sm">
+                              <div className="font-medium truncate text-base">
                                 {event.title}
                               </div>
-                              <div className="text-[10px] opacity-90 mt-1">
+                              <div className="text-xs opacity-90 mt-1">
                                 {format(event.start, 'h:mm a')} - {format(event.end, 'h:mm a')}
                               </div>
-                              <div className="text-[10px] opacity-90 truncate">
+                              <div className="text-xs opacity-90 truncate">
                                 {event.instructor}
                               </div>
                             </div>
                           );
                         }) : (
-                          <div className="text-xs text-muted-foreground py-3 italic">
+                          <div className="text-sm text-muted-foreground py-3 italic">
                             No classes scheduled
                           </div>
                         )}

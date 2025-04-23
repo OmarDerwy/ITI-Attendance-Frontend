@@ -25,7 +25,7 @@ const AbsenceWarningCard = ({ compact = false }) => {
       <div className="bg-white p-5 rounded-lg shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
-            <AlertTriangle className="h-5 w-5" />
+            <AlertTriangle className="h-5 w-5 text-primary" />
             <h3 className="font-medium text-lg">Absence Status</h3>
           </div>
           <div className="font-bold text-base">

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Calendar, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import axios from "axios";
 import { axiosBackendInstance } from "@/api/config";
 import { useUser } from "@/context/UserContext";
 
@@ -99,7 +98,6 @@ const AttendanceCalendar = () => {
     else if (status === "absent") {
       return "bg-red-500";
     }
-    // No-check-out statuses - Orange
     else if (["no-check-out", "late"].includes(status)) {
       return "bg-green-300";
     } else if (status === "check_in_active") {
@@ -107,6 +105,15 @@ const AttendanceCalendar = () => {
     } else {
       return "bg-green border border-orange-200";
     }
+  };
+
+  // Function to check if a date is today
+  const isToday = (year, month, day) => {
+    if (!day) return false;
+    const today = new Date();
+    return day.day === today.getDate() && 
+           month === today.getMonth() && 
+           year === today.getFullYear();
   };
 
   // Function to generate calendar data for each month
@@ -158,7 +165,7 @@ const AttendanceCalendar = () => {
       (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
 
   return (
-    <Card>
+    <Card className="bg-slate-50 border border-slate-200">
       <CardContent className="pt-6">
         <div className="flex items-center gap-2 mb-4">
           <Calendar className="h-5 w-5 text-primary" />
@@ -194,11 +201,13 @@ const AttendanceCalendar = () => {
                                 "aspect-square w-3/4 rounded-[2px]",
                                 day?.status && day.status !== "vacation"
                                   ? getStatusClass(day.status)
-                                  : "bg-transparent"
+                                  : "bg-transparent",
+                                isToday(month.year, month.month, day) && 
+                                  "border-b-2 border-primary"
                               )}
                               title={
                                 day
-                                  ? `Day ${day.day}: ${day.status || "No schedule"}`
+                                  ? `${day.day.toString().padStart(2, '0')}-${(month.month + 1).toString().padStart(2, '0')}-${month.year}: ${day.status || "No schedule"}`
                                   : ""
                               }
                             ></div>
@@ -244,9 +253,9 @@ const AttendanceCalendar = () => {
                 <span className="font-medium text-red-700">Absent:</span> 
                 <span className="text-red-800 ml-1">{absent}</span>
               </div>
-              <div className="bg-purple-50 rounded-md px-3 py-2 text-sm flex-1 max-w-fit">
-                <span className="font-medium text-purple-700">Attendance:</span>
-                <span className="text-purple-800 ml-1">
+              <div className="bg-blue-50 rounded-md px-3 py-2 text-sm flex-1 max-w-fit">
+                <span className="font-medium text-blue-600">Attendance:</span>
+                <span className="text-blue-600 ml-1">
                   {attendancePercentage}% for {totalDays} days
                 </span>
               </div>
