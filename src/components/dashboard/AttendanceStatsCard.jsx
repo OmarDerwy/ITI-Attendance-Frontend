@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { motion } from "framer-motion";
 import { useUser } from '@/context/UserContext';
 
-const CircularProgress = ({ value, max, color, label, icon }) => {
+const CircularProgress = ({ value, max, color, bgColor, label, icon }) => {
   const percentage = (value / max) * 100;
   const [count, setCount] = useState(0);
   
@@ -27,8 +27,8 @@ const CircularProgress = ({ value, max, color, label, icon }) => {
             cy="50" 
             r="40" 
             fill="none" 
-            stroke={`${color}20`} 
-            strokeWidth="6" 
+            stroke={bgColor || `${color}15`} 
+            strokeWidth="7" 
           />
           {/* Progress circle with animation */}
           <motion.circle 
@@ -37,7 +37,7 @@ const CircularProgress = ({ value, max, color, label, icon }) => {
             r="40" 
             fill="none" 
             stroke={color} 
-            strokeWidth="6" 
+            strokeWidth="7" 
             strokeLinecap="round"
             strokeDasharray={`${percentage * 2.51} 251`}
             strokeDashoffset="0" 
@@ -50,7 +50,7 @@ const CircularProgress = ({ value, max, color, label, icon }) => {
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           {icon && <span className="mb-1">{icon}</span>}
           <motion.span 
-            className="text-xl font-bold"
+            className="text-lg font-medium"
             style={{ color }}
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
@@ -60,7 +60,7 @@ const CircularProgress = ({ value, max, color, label, icon }) => {
           </motion.span>
         </div>
       </div>
-      <span className="text-sm font-medium mt-1 text-gray-600">{label}</span>
+      <span className="text-sm font-medium mt-2 text-gray-500">{label}</span>
     </div>
   );
 };
@@ -76,29 +76,35 @@ const AttendanceStatsCard = () => {
     (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
 
   return (
-    <Card className="h-full shadow-sm border border-gray-100">
-      <CardContent className="pt-6 flex flex-col items-center justify-center h-full">
-        <div className="space-y-6 w-full">
+    <Card className="h-full shadow-md border border-gray-100 bg-gradient-to-br from-white to-slate-50">
+      <CardContent className="pt-6 h-full">
+        <h3 className="text-lg font-medium text-gray-700 mb-4 text-center">Attendance Overview</h3>
+        
+        <div className="flex justify-center gap-8 flex-wrap">
           <CircularProgress 
             value={present} 
             max={totalDays} 
-            color="#22c55e" 
+            color="#4ade80" 
+            bgColor="#e6f7ec"
             label="Present Days"
-            icon={<CheckSquare size={15} style={{ color: "#22c55e" }} />}
+            icon={<CheckSquare size={16} style={{ color: "#4ade80" }} />}
           />
           <CircularProgress 
             value={absent} 
             max={totalDays} 
-            color="#ef4444" 
+            color="#f87171" 
+            bgColor="#fdf2f2"
             label="Absent Days" 
-            icon={<Clock size={15} style={{ color: "#ef4444" }} />}
+            icon={<Clock size={16} style={{ color: "#f87171" }} />}
           />
         </div>
-        <div className="mt-4 text-center text-xs text-gray-500">
-          <p>Overall Attendance</p>
-          <p className="font-semibold text-blue-600 text-sm">
-            {attendancePercentage}%
-          </p>
+        
+        <div className="mt-6 text-center p-3 bg-slate-50 rounded-lg shadow-inner">
+          <p className="text-sm text-gray-600 mb-1">Overall Attendance</p>
+          <div className="flex items-center justify-center gap-1">
+            <span className="font-semibold text-indigo-600 text-lg">{attendancePercentage}%</span>
+            <span className="text-xs text-gray-400">of classes</span>
+          </div>
         </div>
       </CardContent>
     </Card>

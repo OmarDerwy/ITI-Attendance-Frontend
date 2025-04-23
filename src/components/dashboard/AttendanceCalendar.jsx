@@ -77,9 +77,10 @@ const AttendanceCalendar = () => {
         "late-check-in_early-excused",
         "check-in_early-excused",
         "late_excused",
+        "check_in_active",
       ].includes(status)
     ) {
-      return "bg-green-500";
+      return "bg-emerald-500";
     } else if (
       [
         "check-in_early-check-out",
@@ -88,23 +89,21 @@ const AttendanceCalendar = () => {
         "late",
       ].includes(status)
     ) {
-      return "bg-green-300";
+      return "bg-emerald-300";
     } else if (
       ["late-check-in_early-check-out", "late-check-in_no-check-out"].includes(
         status
       )
     ) {
-      return "bg-green-200";
+      return "bg-emerald-200";
     }
     // Absent statuses - Red
     else if (["absent", "excused"].includes(status)) {
-      return "bg-red-500";
-    } else if (["no-check-out", "late"].includes(status)) {
+      return "bg-red-400";
+    } else if (["no-check-out"].includes(status)) {
       return "bg-green-300";
-    } else if (status === "check_in_active") {
-      return "bg-blue-300";
     } else {
-      return "bg-green border border-orange-200";
+      return "bg-orange-200";
     }
   };
 
@@ -169,9 +168,9 @@ const AttendanceCalendar = () => {
     (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
 
   return (
-    <Card className="bg-slate-50 border border-slate-200">
-      <CardContent className="pt-6">
-        <div className="flex items-center gap-2 mb-4">
+    <Card className="border border-emerald-100" style={{ backgroundColor: "#F7FAF9" }}>
+      <CardContent className="pt-4">
+        <div className="flex items-center gap-2 mb-3">
           <Calendar className="h-5 w-5 text-primary" />
           <h2 className="text-2xl font-semibold leading-none tracking-tight">
             Attendance Calendar
@@ -184,15 +183,15 @@ const AttendanceCalendar = () => {
             <p className="text-muted-foreground">Loading data...</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {monthRows.map((row, rowIndex) => (
               <div key={rowIndex} className="flex overflow-x-auto">
                 {row.map((month, idx) => (
-                  <div key={idx} className="flex-1 min-w-0 ml-[-8px] first:ml-0 mr-4 last:mr-0">
-                    <div className="text-xs font-medium text-center text-muted-foreground mb-1">
+                  <div key={idx} className="flex-1 min-w-0 mr-3 last:mr-0 border border-emerald-100 rounded-md p-1.5 bg-white shadow-xs">
+                    <div className="text-xs font-medium text-center text-emerald-700 mb-1">
                       {month.name} {month.year}
                     </div>
-                    <div className="grid grid-cols-7 ">
+                    <div className="grid grid-cols-7">
                       {generateMonthCalendar(month.year, month.month)
                         .flat()
                         .map((day, dayIdx) => (
@@ -202,7 +201,7 @@ const AttendanceCalendar = () => {
                           >
                             <div
                               className={cn(
-                                "aspect-square w-3/5 rounded-[1px]",
+                                "aspect-square w-3/5 rounded-[3px]",
                                 day?.status && day.status !== "vacation"
                                   ? getStatusClass(day.status)
                                   : "bg-transparent",
@@ -234,21 +233,21 @@ const AttendanceCalendar = () => {
         <div className="mt-4 border-t pt-3">
           <div className="flex flex-wrap justify-between items-start">
             {/* Legend */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-xs">
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-[2px] bg-green-500"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-500"></div>
                 <span>Attended</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-[2px] bg-green-300"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-300"></div>
                 <span>Late</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-[2px] bg-green-200"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-200"></div>
                 <span>Missing Checkout</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-[2px] bg-red-500"></div>
+                <div className="w-3 h-3 rounded-none bg-red-400"></div>
                 <span>Absent</span>
               </div>
             </div>
