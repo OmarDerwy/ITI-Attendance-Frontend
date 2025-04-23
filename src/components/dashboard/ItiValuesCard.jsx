@@ -78,9 +78,9 @@ const ItiValuesCard = ({ className }) => {
   };
 
   return (
-    <div className={cn("h-full", className)}>
-      <div className="flex flex-col items-center gap-2 mb-4">
-        <img src="/images/iti-logo.png" alt="logo" className="h-auto w-28 block mx-auto mb-2" />
+    <div className={cn("h-full flex flex-col justify-between", className)}>
+      <div className="flex flex-col items-center gap-4 mb-6">
+        <img src="/images/iti-logo.png" alt="logo" className="h-auto w-32 block mx-auto mb-3" />
         <p className="text-xl font-bold tracking-tight text-primary">
           People develop countries, <br />We develop <span className="inline-flex tracking-wider">
           {values.map((value, index) => (
@@ -88,7 +88,7 @@ const ItiValuesCard = ({ className }) => {
               key={index}
               onClick={() => handleManualChange(index)}
               className={cn(
-                "transition-colors hover:scale-110 transform duration-200 text-2xl mx-0.5",
+                "transition-colors hover:scale-110 transform duration-200 text-2xl mx-1", // increased letter spacing
                 index === activeValue 
                   ? cn("text-transparent bg-clip-text bg-gradient-to-br", value.color)
                   : "hover:text-primary/80"
@@ -101,17 +101,17 @@ const ItiValuesCard = ({ className }) => {
         </p>
       </div>
       
-      <div className="mt-5 flex flex-col items-center text-center">
-        <div className="flex items-center mb-4">
+      <div className="mt-4 flex flex-col items-center text-center">
+        <div className="flex flex-col items-center mb-6">
           <div className={cn(
-            "p-4 rounded-full bg-gradient-to-br flex items-center justify-center mr-3",
+            "p-5 rounded-full bg-gradient-to-br flex items-center justify-center mb-4", // increased padding and margin
             values[activeValue].color,
             "text-white"
           )}>
-            {values[activeValue].icon}
+            {React.cloneElement(values[activeValue].icon, { className: "h-6 w-6" })} {/* increased icon size */}
           </div>
           
-          <h3 className="text-base font-semibold">
+          <h3 className="text-lg font-semibold mb-1"> {/* increased font and added margin */}
             <span className={cn(
               "text-transparent bg-clip-text bg-gradient-to-r mr-1",
               values[activeValue].color
@@ -122,7 +122,7 @@ const ItiValuesCard = ({ className }) => {
           </h3>
         </div>
         
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
           {values[activeValue].description}
         </p>
       </div>

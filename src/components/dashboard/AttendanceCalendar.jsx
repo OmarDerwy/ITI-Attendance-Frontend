@@ -74,8 +74,6 @@ const AttendanceCalendar = () => {
     if (
       [
         "attended",
-        "check-in",
-        "excused",
         "late-check-in_early-excused",
         "check-in_early-excused",
         "late_excused",
@@ -83,7 +81,12 @@ const AttendanceCalendar = () => {
     ) {
       return "bg-green-500";
     } else if (
-      ["check-in_early-check-out", "late-check-in", "late"].includes(status)
+      [
+        "check-in_early-check-out",
+        "late-check-in",
+        "check-in",
+        "late",
+      ].includes(status)
     ) {
       return "bg-green-300";
     } else if (
@@ -93,12 +96,10 @@ const AttendanceCalendar = () => {
     ) {
       return "bg-green-200";
     }
-
     // Absent statuses - Red
-    else if (status === "absent") {
+    else if (["absent", "excused"].includes(status)) {
       return "bg-red-500";
-    }
-    else if (["no-check-out", "late"].includes(status)) {
+    } else if (["no-check-out", "late"].includes(status)) {
       return "bg-green-300";
     } else if (status === "check_in_active") {
       return "bg-blue-300";
@@ -111,9 +112,11 @@ const AttendanceCalendar = () => {
   const isToday = (year, month, day) => {
     if (!day) return false;
     const today = new Date();
-    return day.day === today.getDate() && 
-           month === today.getMonth() && 
-           year === today.getFullYear();
+    return (
+      day.day === today.getDate() &&
+      month === today.getMonth() &&
+      year === today.getFullYear()
+    );
   };
 
   // Function to generate calendar data for each month
@@ -161,8 +164,9 @@ const AttendanceCalendar = () => {
   const present = attendanceStats?.total_attended || 0;
   const absent = attendanceStats?.total_absent || 0;
   const totalDays = attendanceStats?.total_days || 0;
-  const attendancePercentage = attendanceStats?.attendance_percentage || 
-      (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
+  const attendancePercentage =
+    attendanceStats?.attendance_percentage ||
+    (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
 
   return (
     <Card className="bg-slate-50 border border-slate-200">
@@ -182,32 +186,38 @@ const AttendanceCalendar = () => {
         ) : (
           <div className="space-y-3">
             {monthRows.map((row, rowIndex) => (
-              <div key={rowIndex} className="flex gap-3">
+              <div key={rowIndex} className="flex overflow-x-auto">
                 {row.map((month, idx) => (
-                  <div key={idx} className="flex-1">
+                  <div key={idx} className="flex-1 min-w-0 ml-[-8px] first:ml-0 mr-4 last:mr-0">
                     <div className="text-xs font-medium text-center text-muted-foreground mb-1">
                       {month.name} {month.year}
                     </div>
-                    <div className="grid grid-cols-7 gap-[1px]">
+                    <div className="grid grid-cols-7 ">
                       {generateMonthCalendar(month.year, month.month)
                         .flat()
                         .map((day, dayIdx) => (
                           <div
                             key={dayIdx}
-                            className="flex items-center justify-center p-[1px]"
+                            className="flex items-center justify-center mx-[0.5px] my-[2px]"
                           >
                             <div
                               className={cn(
-                                "aspect-square w-3/4 rounded-[2px]",
+                                "aspect-square w-3/5 rounded-[1px]",
                                 day?.status && day.status !== "vacation"
                                   ? getStatusClass(day.status)
                                   : "bg-transparent",
-                                isToday(month.year, month.month, day) && 
+                                isToday(month.year, month.month, day) &&
                                   "border-b-2 border-primary"
                               )}
                               title={
                                 day
-                                  ? `${day.day.toString().padStart(2, '0')}-${(month.month + 1).toString().padStart(2, '0')}-${month.year}: ${day.status || "No schedule"}`
+                                  ? `${day.day.toString().padStart(2, "0")}-${(
+                                      month.month + 1
+                                    )
+                                      .toString()
+                                      .padStart(2, "0")}-${month.year}: ${
+                                      day.status || "No schedule"
+                                    }`
                                   : ""
                               }
                             ></div>
@@ -242,15 +252,15 @@ const AttendanceCalendar = () => {
                 <span>Absent</span>
               </div>
             </div>
-            
+
             {/* Attendance Stats */}
             <div className="flex flex-wrap gap-4 mt-2 md:mt-0">
               <div className="bg-green-50 rounded-md px-3 py-2 text-sm">
-                <span className="font-medium text-green-700">Present:</span> 
+                <span className="font-medium text-green-700">Present:</span>
                 <span className="text-green-800 ml-1">{present}</span>
               </div>
               <div className="bg-red-50 rounded-md px-3 py-2 text-sm">
-                <span className="font-medium text-red-700">Absent:</span> 
+                <span className="font-medium text-red-700">Absent:</span>
                 <span className="text-red-800 ml-1">{absent}</span>
               </div>
               <div className="bg-blue-50 rounded-md px-3 py-2 text-sm flex-1 max-w-fit">

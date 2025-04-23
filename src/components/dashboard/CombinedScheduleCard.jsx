@@ -240,7 +240,7 @@ const CombinedScheduleCard = () => {
                         <span>Online</span>
                       </div>
                     ) : cls.branch && (
-                      <div className="flex items-center gap-1.5 text-sm text-primary">
+                      <div className="flex items-center gap-1.5 text-sm text-gray-700">
                         <MapPin className="h-4 w-4" />
                         <span>{cls.branch.name}</span>
                       </div>
