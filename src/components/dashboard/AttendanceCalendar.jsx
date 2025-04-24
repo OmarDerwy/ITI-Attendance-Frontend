@@ -77,7 +77,7 @@ const AttendanceCalendar = () => {
         "late-check-in_early-excused",
         "check-in_early-excused",
         "late_excused",
-        "check_in_active",
+      
       ].includes(status)
     ) {
       return "bg-emerald-500";
@@ -87,6 +87,7 @@ const AttendanceCalendar = () => {
         "late-check-in",
         "check-in",
         "late",
+        "check_in_active",
       ].includes(status)
     ) {
       return "bg-emerald-300";
@@ -122,34 +123,41 @@ const AttendanceCalendar = () => {
   const generateMonthCalendar = (year, month) => {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
-
+    const today = new Date();
+    
+    // Determine the maximum day to show (up to today for current month)
+    let maxDay = daysInMonth;
+    if (year === today.getFullYear() && month === today.getMonth()) {
+      maxDay = today.getDate(); // Only show days up to today for current month
+    }
+  
     // Initialize days array with empty days
     const days = Array(firstDay).fill(null);
-
-    // Add the days of the month
-    for (let i = 1; i <= daysInMonth; i++) {
+  
+    // Add the days of the month up to maxDay
+    for (let i = 1; i <= maxDay; i++) {
       const dateObj = new Date(year, month, i);
       const dateString = dateObj.toISOString().split("T")[0]; // Format: YYYY-MM-DD
-
+  
       days.push({
         day: i,
         status: attendanceData[dateString] || null,
       });
     }
-
+  
     // Organize into weeks
     const weeks = [];
     for (let i = 0; i < days.length; i += 7) {
       weeks.push(days.slice(i, i + 7));
     }
-
+  
     // If the last week is not complete, pad with null
     const lastWeek = weeks[weeks.length - 1];
     if (lastWeek && lastWeek.length < 7) {
       const padding = Array(7 - lastWeek.length).fill(null);
       weeks[weeks.length - 1] = [...lastWeek, ...padding];
     }
-
+  
     return weeks;
   };
 
@@ -206,7 +214,7 @@ const AttendanceCalendar = () => {
                                   ? getStatusClass(day.status)
                                   : "bg-transparent",
                                 isToday(month.year, month.month, day) &&
-                                  "border-b-2 border-primary"
+                                  "border-2 border-yellow-500"
                               )}
                               title={
                                 day
