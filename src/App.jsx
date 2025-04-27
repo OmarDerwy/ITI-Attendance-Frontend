@@ -9,7 +9,6 @@ import Login from "./pages/Auth/Login";
 import Schedule from "./pages/Attendance/Schedule";
 import LostFound from "./pages/LostFound/LostFound";
 import StudentVerification from "./pages/Management/StudentVerification";
-import AttendanceInsights from "./pages/Attendance/AttendanceInsights";
 import ManageMyItems from "./pages/LostFound/ManageMyItems";
 import TrackManagement from "./pages/Management/TrackManagement";
 import ReportLostFound from "./pages/LostFound/ReportLostFound";
@@ -79,7 +78,6 @@ const App = () => (
                   <Route path="/matched-item-details/:id" element={<MatchedItemDetail />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/previous-courses" element={<PreviousCourses />} />
-                  <Route path="/attendance-insights" element={<AttendanceInsights />} />
                   <Route path="/my-items" element={<ManageMyItems />} />
                   <Route path="/branches" element={<BranchManagement />} />
                   <Route path="/branches/add" element={<BranchForm />} />

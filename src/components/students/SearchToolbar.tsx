@@ -59,7 +59,9 @@ const SearchToolbar = ({
               <SelectItem value="All">All Tracks</SelectItem>
               {tracks.map((track: any) => (
                 <SelectItem key={track.id} value={track.id.toString()}>
-                  {track.name}
+                  {[track.name, track.intake, track.program_type_display, track.start_date, track.default_branch]
+                    .filter(Boolean)
+                    .join(" - ")}
                 </SelectItem>
               ))}
             </SelectContent>

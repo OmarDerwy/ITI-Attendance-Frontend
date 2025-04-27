@@ -429,14 +429,14 @@ const SupervisorDashboard = () => {
                 value={selectedWeeklyTrendTrack}
                 onValueChange={setSelectedWeeklyTrendTrack}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-fit">
                   <SelectValue placeholder="Select Track" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Tracks</SelectItem>
                   {tracksData?.map((track) => (
                     <SelectItem key={track.id} value={track.id.toString()}>
-                      {track.name}
+                      {track.name} - {track.intake} - {track.program_type_display} - {track.start_date} - {track.default_branch}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -504,13 +504,13 @@ const SupervisorDashboard = () => {
                 }}
                 defaultValue={tracksData && tracksData.length > 0 ? tracksData[0].id.toString() : ""}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-fit">
                   <SelectValue placeholder={tracksData && tracksData.length > 0 ? tracksData[0].name : "Select Track"} />
                 </SelectTrigger>
                 <SelectContent>
                   {tracksData?.map((track) => (
                     <SelectItem key={track.id} value={track.id.toString()}>
-                      {track.name}
+                        {track.name} - {track.intake} - {track.program_type_display} - {track.start_date} - {track.default_branch}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -579,14 +579,14 @@ const SupervisorDashboard = () => {
                 value={weeklyBreakdownTrack}
                 onValueChange={setWeeklyBreakdownTrack}
               >
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-fit">
                   <SelectValue placeholder="Select Track" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="All tracks">All Tracks</SelectItem>
                   {tracksData?.map((track) => (
                     <SelectItem key={track.id} value={track.name}>
-                      {track.name}
+                      {track.name} - {track.intake} - {track.program_type_display} - {track.start_date} - {track.default_branch}
                     </SelectItem>
                   ))}
                 </SelectContent>

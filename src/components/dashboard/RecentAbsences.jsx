@@ -24,14 +24,14 @@ const RecentAbsences = ({ absences = [], onViewAll, selectedTrack, onTrackChange
               value={selectedTrack}
               onValueChange={onTrackChange}
             >
-              <SelectTrigger className="w-[200px]">
+              <SelectTrigger className="w-fit">
                 <SelectValue placeholder="Select Track" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Tracks</SelectItem>
                 {tracks?.map((track) => (
                   <SelectItem key={track.id} value={track.id.toString()}>
-                    {track.name}
+                      {track.name} - {track.intake} - {track.program_type_display} - {track.start_date} - {track.default_branch}
                   </SelectItem>
                 ))}
               </SelectContent>

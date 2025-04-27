@@ -145,7 +145,7 @@ function AttendanceStatus() {
     tracksData
       ? [
           { name: "All", id: null },
-          ...tracksData.map((track) => ({ name: track.name, id: track.id })),
+          ...tracksData.map((track) => ({ ...track })),
         ]
       : [{ name: "All", id: null }]
   ), [tracksData]);
@@ -178,7 +178,7 @@ function AttendanceStatus() {
                   <SelectContent>
                     {tracksForSelect.map((track) => (
                       <SelectItem key={track.id ?? "All"} value={track.id?.toString() ?? "All"}>
-                        {track.name}
+                        {track.id === null ? "All" : [track.name, track.intake, track.program_type_display, track.start_date, track.default_branch].filter(Boolean).join(" - ")}
                       </SelectItem>
                     ))}
                   </SelectContent>
