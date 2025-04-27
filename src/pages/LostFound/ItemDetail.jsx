@@ -32,8 +32,8 @@ const ItemDetail = () => {
       try {
         const endpoint =
           type === "lost"
-            ? `http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/${id}/`
-            : `http://127.0.0.1:8000/api/v1/lost-and-found/found-items/${id}/`;
+            ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/lost-items/${id}/`
+            : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/found-items/${id}/`;
 
         const response = await axios.get(endpoint, {
           headers: {

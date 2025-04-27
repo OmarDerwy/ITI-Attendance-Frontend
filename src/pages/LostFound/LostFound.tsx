@@ -88,7 +88,7 @@ const LostFound = () => {
   const fetchLostItems = async (page = 1, search = "") => {
     console.log("Fetching lost items for page:", page, "search:", search);
     const response = await axios.get(
-      `http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/?page=${page}&search=${search}`,
+      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/lost-items/?page=${page}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -100,7 +100,7 @@ const LostFound = () => {
 
   const fetchFoundItems = async (page = 1, search = "") => {
     const response = await axios.get(
-      `http://127.0.0.1:8000/api/v1/lost-and-found/found-items/?page=${page}&search=${search}`,
+      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/found-items/?page=${page}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -112,7 +112,7 @@ const LostFound = () => {
 
   const fetchMatchedItems = async (page = 1, search = "") => {
     const response = await axios.get(
-      `http://127.0.0.1:8000/api/v1/lost-and-found/matched-items/?page=${page}${
+      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/?page=${page}${
         search ? `&search=${search}` : ""
       }`,
       {

@@ -44,7 +44,7 @@ const MatchedItemDetail = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `http://127.0.0.1:8000/api/v1/lost-and-found/matched-items/${id}/`,
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/${id}/`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -129,7 +129,7 @@ const MatchedItemDetail = () => {
     try {
       setConfirming(true);
       const response = await axios.post(
-        `http://127.0.0.1:8000/api/v1/lost-and-found/matched-items/${id}/update-status/`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/${id}/update-status/`,
         {}, // Empty body, as we're just updating status
         {
           headers: {

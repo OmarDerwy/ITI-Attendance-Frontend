@@ -95,8 +95,8 @@ const ReportLostFound = () => {
       // Determine endpoint based on the report type
       const endpoint =
         formData.type === "lost"
-          ? "http://127.0.0.1:8000/api/v1/lost-and-found/lost-items/"
-          : "http://127.0.0.1:8000/api/v1/lost-and-found/found-items/";
+          ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/lost-items/`
+          : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/found-items/`;
 
       // Create payload with the exact required format
       const payload = {
