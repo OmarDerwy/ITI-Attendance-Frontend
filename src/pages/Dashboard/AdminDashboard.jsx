@@ -490,7 +490,7 @@ const AdminDashboard = () => {
                     <SelectItem value="all">All Tracks</SelectItem>
                     {filteredDailyTracks?.map((track) => (
                       <SelectItem key={track.id} value={track.id.toString()}>
-                        {track.name}
+                        {track.name} - {track.intake} - {track.program_type_display} - {track.start_date}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -552,7 +552,7 @@ const AdminDashboard = () => {
                     <SelectItem value="all">All Tracks</SelectItem>
                     {filteredWeeklyTracks?.map((track) => (
                       <SelectItem key={track.id} value={track.id.toString()}>
-                        {track.name}
+                        {track.name} - {track.intake} - {track.program_type_display} - {track.start_date}
                       </SelectItem>
                     ))}
                   </SelectContent>

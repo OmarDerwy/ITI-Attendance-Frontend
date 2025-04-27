@@ -120,7 +120,7 @@ const StudentsWithWarnings = () => {
           <Card className="p-6">
             <CardHeader className="py-4">
               <div className="flex flex-col sm:flex-row gap-4 items-start">
-                <div className="w-full sm:w-auto flex-1">
+                <div className="w-full sm:w-[40%] lg:w-[50%]">
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
@@ -132,22 +132,22 @@ const StudentsWithWarnings = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-2 flex-wrap">
+                <div className="w-full sm:w-[60%] lg:w-[50%]">
                   <Select value={selectedTrack} onValueChange={setSelectedTrack}>
-                    <SelectTrigger className="w-[200px]">
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select Track" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Tracks</SelectItem>
                       {tracksData?.map((track) => (
                         <SelectItem key={track.id} value={track.name}>
-                          {track.name}
+                          {[track.name, track.intake, track.program_type_display, track.start_date, track.default_branch]
+                            .filter(Boolean)
+                            .join(" - ")}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
-
-
                 </div>
               </div>
             </CardHeader>
