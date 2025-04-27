@@ -38,7 +38,8 @@ function LeaveRequestCenter() {
 
     setIsLoadingMore(true);
     try {
-      const response = await axiosBackendInstance.get(nextPageUrl);
+      const nextPageUrlWithoutFirstPart = nextPageUrl.replace(/.*\/api\/v1\//, "");
+      const response = await axiosBackendInstance.get(nextPageUrlWithoutFirstPart);
       setLeaveRequests(prev => [...prev, ...response.data.results]);
       setNextPageUrl(response.data.next);
     } catch (error) {

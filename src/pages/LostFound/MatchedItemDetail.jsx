@@ -65,7 +65,7 @@ const MatchedItemDetail = () => {
     const fetchLostUserDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/v1/accounts/auth/users/${matchedItem.lost_item_user}/`,
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}accounts/auth/users/${matchedItem.lost_item_user}/`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -81,7 +81,7 @@ const MatchedItemDetail = () => {
     const fetchFoundUserDetails = async () => {
       try {
         const response = await axios.get(
-          `http://localhost:8000/api/v1/accounts/auth/users/${matchedItem.found_item_user}/`,
+          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}accounts/auth/users/${matchedItem.found_item_user}/`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -165,7 +165,7 @@ const MatchedItemDetail = () => {
     try {
       setDeclining(true);
       const response = await axios.post(
-        `http://localhost:8000/api/v1/lost-and-found/matched-items/${id}/decline-match/`,
+        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/${id}/decline-match/`,
         {}, // Empty body
         {
           headers: {

@@ -67,7 +67,9 @@ function AttendanceStatus() {
 
     setIsLoadingMore(true);
     try {
-      const response = await axiosBackendInstance.get(nextPageUrl);
+      // remove until /api/v1/ of the url in nexPageUrl
+      const nextPageUrlWithoutFirstPart = nextPageUrl.replace(/.*\/api\/v1\//, "");
+      const response = await axiosBackendInstance.get(nextPageUrlWithoutFirstPart);
       setScheduleEntries((prev) => [...prev, ...response.data.results]);
       setNextPageUrl(response.data.next);
     } catch (error) {

@@ -40,7 +40,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   // }, [navigate]);
 
   if (import.meta.env.VITE_ENABLE_NOTIFICATIONS === "true") {
-    const SOCKET_URL = `ws://localhost:8000/ws/notifications/?token=${token}`;
+    const SOCKET_URL = `${import.meta.env.VITE_API_BASE_WS || 'ws://localhost:8000/'}ws/notifications/?token=${token}`;
     const { lastMessage } = useWebSocket(SOCKET_URL, {
       onOpen: () => console.log("WebSocket Connected"),
       onClose: () => console.log("WebSocket Disconnected"),

@@ -92,7 +92,8 @@ const StudentVerification = () => {
     if (!nextPageUrl) return;
     setIsLoadingMore(true);
     try {
-      const response = await axiosBackendInstance.get(nextPageUrl);
+      const nextPageUrlWithoutFirstPart = nextPageUrl.replace(/.*\/api\/v1\//, "");
+      const response = await axiosBackendInstance.get(nextPageUrlWithoutFirstPart);
       setStudentEntries((prev) => [...prev, ...response.data.results]);
       setNextPageUrl(response.data.next);
     } catch (error) {
