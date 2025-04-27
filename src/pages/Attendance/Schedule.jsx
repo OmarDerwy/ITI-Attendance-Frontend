@@ -522,7 +522,7 @@ const Schedule = () => {
           </div>
         )}
         <div className="p-1 flex-col">
-          <div className="whitespace-normal">{eventInfo.event.title}</div>
+          <div className="whitespace-normal pr-6 truncate-multiline">{eventInfo.event.title}</div>
           <div className={`text-xs ${subtextColor}`}>
             {eventInfo.event.extendedProps.instructor || ""}
           </div>
@@ -628,7 +628,7 @@ const Schedule = () => {
           {tracks.length === 0 ? (
             <p className="text-gray-500 text-center">No tracks assigned.</p>
           ) : (
-            <Card className="p-6 bg-white border shadow-lg">
+            <Card className="p-6 bg-background border shadow-lg">
               <div className="mb-4 flex flex-col md:flex-row items-center gap-4 md:justify-between">
                 {userRole === "supervisor" && (
                   <p className="text-red-700 font-medium md:order-1 md:w-auto w-full text-center md:text-left">

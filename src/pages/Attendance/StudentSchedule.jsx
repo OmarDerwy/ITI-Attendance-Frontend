@@ -141,7 +141,7 @@ const StudentSchedule = () => {
 
 
             {/* Calendar Container */}
-            <Card className="p-6 bg-white border shadow-lg">
+            <Card className="p-6 bg-background border shadow-lg">
               <FullCalendar
                 ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin, listPlugin]}
@@ -168,7 +168,7 @@ const StudentSchedule = () => {
               />
             </Card>
                         {/* Legend */}
-                        <Card className="p-6 bg-white border shadow-lg transition-all hover:shadow-xl">
+                        <Card className="p-6 bg-background border shadow-lg transition-all hover:shadow-xl">
               <h2 className="text-xl font-semibold flex items-center mb-4">
                 <BookOpen className="mr-2 h-5 w-5 text-primary" /> Schedule Legend
               </h2>
@@ -186,45 +186,6 @@ const StudentSchedule = () => {
           </div>
         </>
       )}
-      <style jsx global>{`
-        .fc-button {
-          background-color: #ef4444 !important;
-          border-color: #ef4444 !important;
-          color: white !important;
-        }
-        .fc-button:hover {
-          background-color: #dc2626 !important;
-          border-color: #dc2626 !important;
-        }
-        .fc-event {
-          cursor: pointer;
-          font-size: 1.1rem;
-          font-weight: 500;
-          transition: transform 0.2s ease;
-        }
-        .fc-event:hover {
-          transform: scale(1.02);
-        }
-        .fc-event-title {
-          white-space: normal !important;
-          overflow: visible !important;
-          text-overflow: clip !important;
-          word-wrap: break-word !important;
-        }
-        .fc-daygrid-event {
-          height: auto !important;
-        }
-        .fc-today-button {
-          font-weight: bold !important;
-        }
-        .fc-toolbar-title {
-          font-size: 1.5rem !important;
-          font-weight: bold !important;
-        }
-        .fc-day-today {
-          background-color: rgba(239, 68, 68, 0.05) !important;
-        }
-      `}</style>
     </Layout>
   );
 };
