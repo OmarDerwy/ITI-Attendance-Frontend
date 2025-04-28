@@ -31,11 +31,11 @@ const StudentDashboard = () => {
       const response = await axiosBackendInstance.get(
         `attendance/sessions/calendar-data/?track_id=${trackId}`
       );
-      
+
       const currentTime = new Date();
-      
+
       // Process events for today
-      const allEvents = response.data.map(event => ({
+      const allEvents = response.data.map((event) => ({
         id: event.id,
         title: event.title,
         instructor: event.instructor,
@@ -44,29 +44,35 @@ const StudentDashboard = () => {
         isOnline: event.is_online,
         branch: event.branch,
       }));
-      
+
       // Filter today's classes
-      const todayEvents = allEvents.filter(event => isToday(event.start));
-      
+      const todayEvents = allEvents.filter((event) => isToday(event.start));
+
       // Determine status for today's classes
-      const processedTodayEvents = todayEvents.map(event => {
+      const processedTodayEvents = todayEvents.map((event) => {
         let status = "upcoming";
         if (isBefore(event.end, currentTime)) {
           status = "completed";
-        } else if (isAfter(event.end, currentTime) && isBefore(event.start, currentTime)) {
+        } else if (
+          isAfter(event.end, currentTime) &&
+          isBefore(event.start, currentTime)
+        ) {
           status = "active";
         }
-        
+
         return {
           ...event,
-          time: `${format(event.start, 'HH:mm')} - ${format(event.end, 'HH:mm')}`,
-          status
+          time: `${format(event.start, "HH:mm")} - ${format(
+            event.end,
+            "HH:mm"
+          )}`,
+          status,
         };
       });
-      
+
       // Sort today's events by start time
       processedTodayEvents.sort((a, b) => a.start - b.start);
-      
+
       setTodayClasses(processedTodayEvents);
       setIsLoading(false);
     } catch (error) {
@@ -85,14 +91,14 @@ const StudentDashboard = () => {
           <div className="md:col-span-5 space-y-6">
             <TrackBranchCard />
             <Card className="overflow-hidden">
-                <AbsenceWarningCard compact={true} />
+              <AbsenceWarningCard compact={true} />
             </Card>
           </div>
         </div>
-          <div >
-            <CombinedScheduleCard />
-          </div>
-        
+        <div>
+          <CombinedScheduleCard />
+        </div>
+
         <div className="w-full">
           <Card className="w-full">
             <CardContent className="pt-6">
@@ -103,45 +109,53 @@ const StudentDashboard = () => {
                 <Link to="/student-schedule" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 border-0"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-primary/10 hover:bg-primary/20 border-0 dark:bg-primary/20 dark:hover:bg-primary/30 dark:text-primary-foreground"
                   >
-                    <div className="bg-primary/20 p-2 rounded-full text-primary">
+                    <div className="bg-primary/20 p-2 rounded-full text-primary dark:bg-primary/30 dark:text-primary-foreground">
                       <Calendar className="h-5 w-5" />
                     </div>
-                    <span className="text-primary font-medium">View Schedule</span>
+                    <span className="text-primary font-medium dark:text-primary-foreground">
+                      View Schedule
+                    </span>
                   </Button>
                 </Link>
                 <Link to="/leave-request-form" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-blue-100/50 hover:bg-blue-100 border-0"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-blue-100/50 hover:bg-blue-100 border-0 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 dark:text-blue-300"
                   >
-                    <div className="bg-blue-100 p-2 rounded-full text-blue-600">
+                    <div className="bg-blue-100 p-2 rounded-full text-blue-600 dark:bg-blue-900/50 dark:text-blue-300">
                       <CheckSquare className="h-5 w-5" />
                     </div>
-                    <span className="text-blue-700 font-medium">Request Leave</span>
+                    <span className="text-blue-700 font-medium dark:text-blue-300">
+                      Request Leave
+                    </span>
                   </Button>
                 </Link>
                 <Link to="/report-lost-found" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-amber-100/50 hover:bg-amber-100 border-0"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-amber-100/50 hover:bg-amber-100 border-0 dark:bg-amber-900/30 dark:hover:bg-amber-900/50 dark:text-amber-300"
                   >
-                    <div className="bg-amber-100 p-2 rounded-full text-amber-600">
+                    <div className="bg-amber-100 p-2 rounded-full text-amber-600 dark:bg-amber-900/50 dark:text-amber-300">
                       <Flag className="h-5 w-5" />
                     </div>
-                    <span className="text-amber-700 font-medium">Report Lost Item</span>
+                    <span className="text-amber-700 font-medium dark:text-amber-300">
+                      Report Lost Item
+                    </span>
                   </Button>
                 </Link>
                 <Link to="/lost-found" className="w-full">
                   <Button
                     variant="outline"
-                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-emerald-100/50 hover:bg-emerald-100 border-0"
+                    className="w-full h-24 flex flex-col items-center justify-center gap-2 bg-emerald-100/50 hover:bg-emerald-100 border-0 dark:bg-emerald-900/30 dark:hover:bg-emerald-900/50 dark:text-emerald-300"
                   >
-                    <div className="bg-emerald-100 p-2 rounded-full text-emerald-600">
+                    <div className="bg-emerald-100 p-2 rounded-full text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-300">
                       <Search className="h-5 w-5" />
                     </div>
-                    <span className="text-emerald-700 font-medium">Lost & Found</span>
+                    <span className="text-emerald-700 font-medium dark:text-emerald-300">
+                      Lost & Found
+                    </span>
                   </Button>
                 </Link>
               </div>

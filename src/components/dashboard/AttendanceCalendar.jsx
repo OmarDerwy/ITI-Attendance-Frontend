@@ -77,10 +77,9 @@ const AttendanceCalendar = () => {
         "late-check-in_early-excused",
         "check-in_early-excused",
         "late_excused",
-      
       ].includes(status)
     ) {
-      return "bg-emerald-500";
+      return "bg-emerald-500 dark:bg-emerald-600";
     } else if (
       [
         "check-in_early-check-out",
@@ -90,21 +89,21 @@ const AttendanceCalendar = () => {
         "check_in_active",
       ].includes(status)
     ) {
-      return "bg-emerald-300";
+      return "bg-emerald-300 dark:bg-emerald-500";
     } else if (
       ["late-check-in_early-check-out", "late-check-in_no-check-out"].includes(
         status
       )
     ) {
-      return "bg-emerald-200";
+      return "bg-emerald-200 dark:bg-emerald-400";
     }
     // Absent statuses - Red
     else if (["absent", "excused"].includes(status)) {
-      return "bg-red-400";
+      return "bg-red-400 dark:bg-red-500";
     } else if (["no-check-out"].includes(status)) {
-      return "bg-green-300";
+      return "bg-green-300 dark:bg-green-500";
     } else {
-      return "bg-orange-200";
+      return "bg-orange-200 dark:bg-orange-500";
     }
   };
 
@@ -124,40 +123,40 @@ const AttendanceCalendar = () => {
     const firstDay = new Date(year, month, 1).getDay();
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const today = new Date();
-    
+
     // Determine the maximum day to show (up to today for current month)
     let maxDay = daysInMonth;
     if (year === today.getFullYear() && month === today.getMonth()) {
       maxDay = today.getDate(); // Only show days up to today for current month
     }
-  
+
     // Initialize days array with empty days
     const days = Array(firstDay).fill(null);
-  
+
     // Add the days of the month up to maxDay
     for (let i = 1; i <= maxDay; i++) {
       const dateObj = new Date(year, month, i);
       const dateString = dateObj.toISOString().split("T")[0]; // Format: YYYY-MM-DD
-  
+
       days.push({
         day: i,
         status: attendanceData[dateString] || null,
       });
     }
-  
+
     // Organize into weeks
     const weeks = [];
     for (let i = 0; i < days.length; i += 7) {
       weeks.push(days.slice(i, i + 7));
     }
-  
+
     // If the last week is not complete, pad with null
     const lastWeek = weeks[weeks.length - 1];
     if (lastWeek && lastWeek.length < 7) {
       const padding = Array(7 - lastWeek.length).fill(null);
       weeks[weeks.length - 1] = [...lastWeek, ...padding];
     }
-  
+
     return weeks;
   };
 
@@ -176,7 +175,10 @@ const AttendanceCalendar = () => {
     (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
 
   return (
-    <Card className="border border-emerald-100" style={{ backgroundColor: "#F7FAF9" }}>
+    <Card
+      className="border border-emerald-100 dark:border-emerald-950/30"
+      style={{ backgroundColor: "hsl(var(--card))" }}
+    >
       <CardContent className="pt-4">
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="h-5 w-5 text-primary" />
@@ -195,8 +197,11 @@ const AttendanceCalendar = () => {
             {monthRows.map((row, rowIndex) => (
               <div key={rowIndex} className="flex overflow-x-auto">
                 {row.map((month, idx) => (
-                  <div key={idx} className="flex-1 min-w-0 mr-3 last:mr-0 border border-emerald-100 rounded-md p-1.5 bg-white shadow-xs">
-                    <div className="text-xs font-medium text-center text-emerald-700 mb-1">
+                  <div
+                    key={idx}
+                    className="flex-1 min-w-0 mr-3 last:mr-0 border border-emerald-100 dark:border-emerald-900/30 rounded-md p-1.5 bg-white dark:bg-gray-900/50 shadow-xs"
+                  >
+                    <div className="text-xs font-medium text-center text-emerald-700 dark:text-emerald-400 mb-1">
                       {month.name} {month.year}
                     </div>
                     <div className="grid grid-cols-7">
@@ -214,7 +219,7 @@ const AttendanceCalendar = () => {
                                   ? getStatusClass(day.status)
                                   : "bg-transparent",
                                 isToday(month.year, month.month, day) &&
-                                  "border-2 border-yellow-500"
+                                  "border-2 border-yellow-500 dark:border-yellow-400"
                               )}
                               title={
                                 day
@@ -238,41 +243,51 @@ const AttendanceCalendar = () => {
           </div>
         )}
 
-        <div className="mt-4 border-t pt-3">
+        <div className="mt-4 border-t dark:border-t-gray-800 pt-3">
           <div className="flex flex-wrap justify-between items-start">
             {/* Legend */}
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-emerald-500"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-500 dark:bg-emerald-600"></div>
                 <span>Attended</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-emerald-300"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-300 dark:bg-emerald-500"></div>
                 <span>Late</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-emerald-200"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-200 dark:bg-emerald-400"></div>
                 <span>Missing Checkout</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-red-400"></div>
+                <div className="w-3 h-3 rounded-none bg-red-400 dark:bg-red-500"></div>
                 <span>Absent</span>
               </div>
             </div>
 
             {/* Attendance Stats */}
             <div className="flex flex-wrap gap-4 mt-2 md:mt-0">
-              <div className="bg-green-50 rounded-md px-3 py-2 text-sm">
-                <span className="font-medium text-green-700">Present:</span>
-                <span className="text-green-800 ml-1">{present}</span>
+              <div className="bg-green-50 dark:bg-green-950/30 rounded-md px-3 py-2 text-sm">
+                <span className="font-medium text-green-700 dark:text-green-400">
+                  Present:
+                </span>
+                <span className="text-green-800 dark:text-green-300 ml-1">
+                  {present}
+                </span>
               </div>
-              <div className="bg-red-50 rounded-md px-3 py-2 text-sm">
-                <span className="font-medium text-red-700">Absent:</span>
-                <span className="text-red-800 ml-1">{absent}</span>
+              <div className="bg-red-50 dark:bg-red-950/30 rounded-md px-3 py-2 text-sm">
+                <span className="font-medium text-red-700 dark:text-red-400">
+                  Absent:
+                </span>
+                <span className="text-red-800 dark:text-red-300 ml-1">
+                  {absent}
+                </span>
               </div>
-              <div className="bg-blue-50 rounded-md px-3 py-2 text-sm flex-1 max-w-fit">
-                <span className="font-medium text-blue-600">Attendance:</span>
-                <span className="text-blue-600 ml-1">
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-md px-3 py-2 text-sm flex-1 max-w-fit">
+                <span className="font-medium text-blue-600 dark:text-blue-400">
+                  Attendance:
+                </span>
+                <span className="text-blue-600 dark:text-blue-300 ml-1">
                   {attendancePercentage}% for {totalDays} days
                 </span>
               </div>

@@ -53,7 +53,6 @@
     --sidebar-ring: 0 72% 51%;
   }
 
-
   .dark {
     --background: 0 10% 10%;
     --foreground: 0 0% 98%;
@@ -192,22 +191,22 @@
 
 /* Sequenced animations for login page */
 @keyframes slide-in-from-left {
-  0% { 
+  0% {
     opacity: 0;
     transform: translateX(-60px);
   }
-  100% { 
+  100% {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
 @keyframes fade-in-sequence {
-  0% { 
+  0% {
     opacity: 0;
     transform: translateY(10px);
   }
-  100% { 
+  100% {
     opacity: 1;
     transform: translateY(0);
   }

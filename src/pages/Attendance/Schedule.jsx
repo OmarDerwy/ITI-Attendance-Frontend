@@ -87,12 +87,19 @@ const Schedule = () => {
 
   // Track if there are modified events
   const modifiedEvents = events.filter((event) => event.isModified);
-  
-  // Use CSS variables for theme-aware colors instead of hardcoded values
-  let onlineForeground = "hsl(var(--accent))"; 
-  let offlineForeground = "hsl(var(--primary))";
-  let offlineTextClass = "text-primary-foreground";
-  let onlineTextClass = "text-accent-foreground";
+
+  // Color variables with dark mode variants
+  const onlineForeground = "rgb(254, 230, 231)"; // Light red for light mode (unchanged)
+  const onlineForegroundDark = "#4C1B1B"; // Darker specific red for dark mode
+  const offlineForeground = "hsl(var(--primary))";
+  const offlineForegroundDark = "rgb(127, 0, 0)";
+  const offlineTextClass = "text-primary-foreground";
+  const onlineTextClass = "text-accent-foreground dark:text-red-100";
+
+  // Function to determine whether to use dark mode colors
+  const isDarkMode = () => {
+    return document.documentElement.classList.contains("dark");
+  };
 
   // Effect to set hasUnsavedChanges based on modified events
   useEffect(() => {
@@ -170,9 +177,21 @@ const Schedule = () => {
         schedule_date: event.schedule_date,
         schedule_id: event.schedule_id,
         branch: event.branch,
-        backgroundColor: event.is_online ? onlineForeground : offlineForeground,
-        borderColor: event.is_online ? onlineForeground : offlineForeground,
-        textColor: event.is_online ? onlineForeground : offlineForeground,
+        backgroundColor: event.is_online
+          ? isDarkMode()
+            ? onlineForegroundDark
+            : onlineForeground
+          : isDarkMode()
+          ? offlineForegroundDark
+          : offlineForeground,
+        borderColor: event.is_online
+          ? isDarkMode()
+            ? onlineForegroundDark
+            : onlineForeground
+          : isDarkMode()
+          ? offlineForegroundDark
+          : offlineForeground,
+        textColor: event.is_online ? onlineTextClass : offlineTextClass,
       }));
       setEvents(fetchedEvents);
     } catch (error) {
@@ -289,9 +308,21 @@ const Schedule = () => {
         isOnline: newEvent.isOnline,
         trackId: selectedTrack,
         branch: newEvent.branch,
-        backgroundColor: newEvent.isOnline ? onlineForeground : offlineForeground,
-        borderColor: newEvent.isOnline ? onlineForeground : offlineForeground,
-        textColor: newEvent.isOnline ? onlineForeground : offlineForeground,
+        backgroundColor: newEvent.isOnline
+          ? isDarkMode()
+            ? onlineForegroundDark
+            : onlineForeground
+          : isDarkMode()
+          ? offlineForegroundDark
+          : offlineForeground,
+        borderColor: newEvent.isOnline
+          ? isDarkMode()
+            ? onlineForegroundDark
+            : onlineForeground
+          : isDarkMode()
+          ? offlineForegroundDark
+          : offlineForeground,
+        textColor: newEvent.isOnline ? onlineTextClass : offlineTextClass,
         isModified: true, // Mark as modified
       };
       setEvents((prev) => [...prev, newEventData]); // Update events state
@@ -378,9 +409,21 @@ const Schedule = () => {
       [field]: value,
       ...(field === "isOnline"
         ? {
-            backgroundColor: value ? onlineForeground : offlineForeground,
-            borderColor: value ? onlineForeground : offlineForeground,
-            textColor: value ? onlineForeground : offlineForeground,
+            backgroundColor: value
+              ? isDarkMode()
+                ? onlineForegroundDark
+                : onlineForeground
+              : isDarkMode()
+              ? offlineForegroundDark
+              : offlineForeground,
+            borderColor: value
+              ? isDarkMode()
+                ? onlineForegroundDark
+                : onlineForeground
+              : isDarkMode()
+              ? offlineForegroundDark
+              : offlineForeground,
+            textColor: value ? onlineTextClass : offlineTextClass,
           }
         : {}),
     }));
@@ -403,9 +446,21 @@ const Schedule = () => {
           return {
             ...event,
             isOnline,
-            backgroundColor: isOnline ? onlineForeground : offlineForeground,
-            borderColor: isOnline ? onlineForeground : offlineForeground,
-            textColor: isOnline ? onlineForeground : offlineForeground,
+            backgroundColor: isOnline
+              ? isDarkMode()
+                ? onlineForegroundDark
+                : onlineForeground
+              : isDarkMode()
+              ? offlineForegroundDark
+              : offlineForeground,
+            borderColor: isOnline
+              ? isDarkMode()
+                ? onlineForegroundDark
+                : onlineForeground
+              : isDarkMode()
+              ? offlineForegroundDark
+              : offlineForeground,
+            textColor: isOnline ? onlineTextClass : offlineTextClass,
             isModified: true,
           };
         }
@@ -491,16 +546,17 @@ const Schedule = () => {
   const renderEventContent = (eventInfo) => {
     // Directly use eventInfo's extendedProps to get accurate isOnline state
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
+    const isDark = isDarkMode();
     const textColor = isOnline ? onlineTextClass : offlineTextClass;
-    
-    // Replace hardcoded colors with theme-aware classes for instructor name
-    const subtextColor = isOnline 
-      ? "text-accent-foreground/80 dark:text-accent-foreground/90" 
+
+    // Theme-aware colors for instructor name
+    const subtextColor = isOnline
+      ? "text-gray-700 dark:text-red-300"
       : "text-primary-foreground/80 dark:text-primary-foreground/90";
-    
-    // Replace hardcoded colors with theme-aware classes for branch location
-    const branchColor = isOnline 
-      ? "text-accent-foreground/90 dark:text-accent-foreground" 
+
+    // Theme-aware colors for branch location
+    const branchColor = isOnline
+      ? "text-gray-700 dark:text-red-300"
       : "text-primary-foreground/90 dark:text-primary-foreground";
 
     // Check if event is in the past
@@ -511,8 +567,14 @@ const Schedule = () => {
         className={`flex items-center justify-between p-1 ${textColor} rounded w-full h-full ${
           isPastEvent ? "opacity-75" : ""
         }`}
-        style={{ 
-          backgroundColor: isOnline ? onlineForeground : offlineForeground 
+        style={{
+          backgroundColor: isOnline
+            ? isDark
+              ? onlineForegroundDark
+              : onlineForeground
+            : isDark
+            ? offlineForegroundDark
+            : offlineForeground,
         }}
       >
         {currentView !== "dayGridMonth" && (
@@ -527,13 +589,17 @@ const Schedule = () => {
             ) : (
               <>
                 <MapPin size={12} className="mr-1" />
-                <span className="text-[12px]">{eventInfo.event.extendedProps.branch?.name}</span>
+                <span className="text-[12px]">
+                  {eventInfo.event.extendedProps.branch?.name}
+                </span>
               </>
             )}
           </div>
         )}
         <div className="p-1 flex-col">
-          <div className="whitespace-normal pr-6 truncate-multiline">{eventInfo.event.title}</div>
+          <div className="whitespace-normal pr-6 truncate-multiline">
+            {eventInfo.event.title}
+          </div>
           <div className={`text-xs ${subtextColor}`}>
             {eventInfo.event.extendedProps.instructor || ""}
           </div>
@@ -616,6 +682,60 @@ const Schedule = () => {
     );
     setIsBranchModalOpen(false);
   };
+
+  // Effect to update colors when theme changes
+  useEffect(() => {
+    const handleThemeChange = () => {
+      if (!calendarRef.current) return;
+
+      const api = calendarRef.current.getApi();
+      events.forEach((event) => {
+        const isDark = isDarkMode();
+        const eventObj = api.getEventById(event.id);
+        if (eventObj) {
+          eventObj.setProp(
+            "backgroundColor",
+            event.isOnline
+              ? isDark
+                ? onlineForegroundDark
+                : onlineForeground
+              : isDark
+              ? offlineForegroundDark
+              : offlineForeground
+          );
+          eventObj.setProp(
+            "borderColor",
+            event.isOnline
+              ? isDark
+                ? onlineForegroundDark
+                : onlineForeground
+              : isDark
+              ? offlineForegroundDark
+              : offlineForeground
+          );
+        }
+      });
+    };
+
+    // Listen for dark mode changes
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === "class") {
+          handleThemeChange();
+        }
+      });
+    });
+
+    observer.observe(document.documentElement, { attributes: true });
+
+    return () => observer.disconnect();
+  }, [
+    events,
+    onlineForeground,
+    onlineForegroundDark,
+    offlineForeground,
+    offlineForegroundDark,
+  ]);
 
   return (
     <Layout>
@@ -806,7 +926,12 @@ const Schedule = () => {
               </Label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 col-span-3 w-full">
                 <div className="space-y-1">
-                  <Label htmlFor="event-start" className="text-xs text-gray-500">Start</Label>
+                  <Label
+                    htmlFor="event-start"
+                    className="text-xs text-gray-500"
+                  >
+                    Start
+                  </Label>
                   <Input
                     id="event-start"
                     type="datetime-local"
@@ -824,7 +949,9 @@ const Schedule = () => {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="event-end" className="text-xs text-gray-500">End</Label>
+                  <Label htmlFor="event-end" className="text-xs text-gray-500">
+                    End
+                  </Label>
                   <Input
                     id="event-end"
                     type="datetime-local"
@@ -990,6 +1117,24 @@ const Schedule = () => {
           font-size: 1.1rem;
           font-weight: 500;
         }
+
+        /* Dark mode specific styles */
+        .dark .fc-button {
+          background-color: rgb(127, 0, 0) !important;
+          border-color: rgb(127, 0, 0) !important;
+          color: white !important;
+        }
+
+        .dark .fc-button:hover {
+          background-color: rgba(127, 0, 0, 0.8) !important;
+          border-color: rgba(127, 0, 0, 0.8) !important;
+        }
+
+        .dark .fc-event {
+          border: 0 !important;
+          border-radius: 0 !important;
+        }
+
         .fc-event-title {
           white-space: normal !important; /* Allow text wrapping */
           overflow: visible !important; /* Show full text */
@@ -998,6 +1143,31 @@ const Schedule = () => {
         }
         .fc-daygrid-event {
           height: auto !important; /* Adjust event height */
+        }
+
+        .dark .fc-timegrid-event {
+          border: none !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        .dark .fc td,
+        .dark .fc th {
+          border-style: solid !important;
+          border-color: var(--border) !important;
+        }
+
+        .fc-timegrid-slot {
+          height: 3em !important;
+        }
+
+        .dark .fc-timegrid-col-frame {
+          border: none !important;
+        }
+
+        .fc-timegrid-now-indicator-line {
+          border-color: #ef4444 !important;
+          border-width: 2px !important;
         }
       `}</style>
     </Layout>
