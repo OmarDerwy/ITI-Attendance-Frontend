@@ -16,12 +16,24 @@ const AbsenceWarningCard = ({ compact = false }) => {
     attendanceStats?.thresholds.unexcused_threshold +
     attendanceStats?.thresholds.excused_threshold;
 
-  // Calculate percentage for excused absences
+  // Calculate percentages for progress bars
   const excusedPercentage =
     Math.round(
       (attendanceStats?.excused_absences /
         attendanceStats?.thresholds.excused_threshold) *
         100
+    ) || 0;
+  
+  const unexcusedPercentage = 
+    Math.round(
+      (attendanceStats?.unexcused_absences /
+        attendanceStats?.thresholds?.unexcused_threshold) *
+        100
+    ) || 0;
+  
+  const totalPercentage = 
+    Math.round(
+      (attendanceStats?.total_absent / maxAllowedAbsences) * 100
     ) || 0;
 
   const status = attendanceStats?.attendance_status?.toLowerCase() || "good";
@@ -54,16 +66,51 @@ const AbsenceWarningCard = ({ compact = false }) => {
   const currentStatus = statusConfig[status] || statusConfig.good;
   const StatusIcon = currentStatus.icon;
 
-  // Progress bar colors with dark mode variants
-  const progressBarColors = {
-    danger: "bg-red-500 dark:bg-red-600",
-    warning: "bg-yellow-500 dark:bg-yellow-600",
-    good: "bg-green-500 dark:bg-green-600",
+  // Function to get color based on percentage
+  const getProgressBarColor = (percentage) => {
+    if (percentage >= 80) {
+      return "bg-red-400/80 dark:bg-red-500/60"; // Critical
+    } else if (percentage >= 60) {
+      return "bg-amber-400/80 dark:bg-amber-500/60"; // Warning
+    } else if (percentage >= 40) {
+      return "bg-yellow-400/80 dark:bg-yellow-500/60"; // Caution
+    } else {
+      return "bg-emerald-400/80 dark:bg-emerald-500/60"; // Good
+    }
   };
+
+  // Get colors based on percentage for each progress bar
+  const excusedBarColor = getProgressBarColor(excusedPercentage);
+  const unexcusedBarColor = getProgressBarColor(unexcusedPercentage);
+  const totalBarColor = getProgressBarColor(totalPercentage);
 
   if (compact) {
     return (
       <div className={`p-5 rounded-lg shadow-sm ${currentStatus.bgColor}`}>
+        <style jsx global>{`
+          @keyframes progress-fill {
+            0% { width: 0; }
+            100% { width: var(--target-width); }
+          }
+          
+          .progress-bar-animated {
+            animation: progress-fill 1s ease-out forwards;
+            width: 0;
+          }
+          
+          .progress-bar-delay-1 {
+            animation-delay: 0.2s;
+          }
+          
+          .progress-bar-delay-2 {
+            animation-delay: 0.5s;
+          }
+          
+          .progress-bar-delay-3 {
+            animation-delay: 0.8s;
+          }
+        `}</style>
+
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-3">
             <StatusIcon className={`h-5 w-5 ${currentStatus.iconColor}`} />
@@ -89,10 +136,10 @@ const AbsenceWarningCard = ({ compact = false }) => {
                 {attendanceStats?.thresholds.excused_threshold}
               </span>
             </div>
-            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3.5 overflow-hidden">
+            <div className="w-full bg-gray-100 dark:bg-gray-800/70 rounded-full h-3.5 overflow-hidden">
               <div
-                className={cn("h-full rounded-full", progressBarColors[status])}
-                style={{ width: `${excusedPercentage}%` }}
+                className={cn("h-full rounded-full progress-bar-animated progress-bar-delay-1", excusedBarColor)}
+                style={{ "--target-width": `${excusedPercentage}%` }}
               />
             </div>
           </div>
@@ -105,18 +152,25 @@ const AbsenceWarningCard = ({ compact = false }) => {
                 {attendanceStats?.thresholds?.unexcused_threshold}
               </span>
             </div>
-            <div className="w-full bg-gray-100 dark:bg-gray-800 rounded-full h-3.5 overflow-hidden">
+            <div className="w-full bg-gray-100 dark:bg-gray-800/70 rounded-full h-3.5 overflow-hidden">
               <div
-                className="h-full rounded-full bg-red-600"
-                style={{
-                  width: `${
-                    Math.round(
-                      (attendanceStats?.unexcused_absences /
-                        attendanceStats?.thresholds?.unexcused_threshold) *
-                        100
-                    ) || 0
-                  }%`,
-                }}
+                className={`h-full rounded-full progress-bar-animated progress-bar-delay-2 ${unexcusedBarColor}`}
+                style={{ "--target-width": `${unexcusedPercentage}%` }}
+              />
+            </div>
+          </div>
+
+          <div>
+            <div className="flex justify-between text-sm mb-2">
+              <span>Total Absences</span>
+              <span>
+                {attendanceStats?.total_absent}/{maxAllowedAbsences}
+              </span>
+            </div>
+            <div className="w-full bg-gray-100 dark:bg-gray-800/70 rounded-full h-3.5 overflow-hidden">
+              <div
+                className={`h-full rounded-full progress-bar-animated progress-bar-delay-3 ${totalBarColor}`}
+                style={{ "--target-width": `${totalPercentage}%` }}
               />
             </div>
           </div>
@@ -128,6 +182,26 @@ const AbsenceWarningCard = ({ compact = false }) => {
   return (
     <div className="h-full">
       <Card className={`h-full ${currentStatus.bgColor}`}>
+        <style jsx global>{`
+          @keyframes progress-fill {
+            0% { width: 0; }
+            100% { width: var(--target-width); }
+          }
+          
+          .progress-bar-animated {
+            animation: progress-fill 1s ease-out forwards;
+            width: 0;
+          }
+          
+          .progress-bar-delay-1 {
+            animation-delay: 0.2s;
+          }
+          
+          .progress-bar-delay-2 {
+            animation-delay: 0.5s;
+          }
+        `}</style>
+
         <CardContent className="pt-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-2">
@@ -157,14 +231,10 @@ const AbsenceWarningCard = ({ compact = false }) => {
               <div className="w-full bg-white/50 dark:bg-gray-800/50 rounded-full h-3">
                 <div
                   className={cn(
-                    "h-full rounded-full",
-                    progressBarColors[status]
+                    "h-full rounded-full progress-bar-animated progress-bar-delay-1",
+                    totalBarColor
                   )}
-                  style={{
-                    width: `${
-                      (attendanceStats?.total_absent / maxAllowedAbsences) * 100
-                    }%`,
-                  }}
+                  style={{ "--target-width": `${totalPercentage}%` }}
                 ></div>
               </div>
 
@@ -177,16 +247,8 @@ const AbsenceWarningCard = ({ compact = false }) => {
               </div>
               <div className="w-full bg-white/50 dark:bg-gray-800/50 rounded-full h-3">
                 <div
-                  className="h-full rounded-full bg-red-600"
-                  style={{
-                    width: `${
-                      Math.round(
-                        (attendanceStats?.unexcused_absences /
-                          attendanceStats?.thresholds?.unexcused_threshold) *
-                          100
-                      ) || 0
-                    }%`,
-                  }}
+                  className={`h-full rounded-full progress-bar-animated progress-bar-delay-2 ${unexcusedBarColor}`}
+                  style={{ "--target-width": `${unexcusedPercentage}%` }}
                 ></div>
               </div>
             </div>

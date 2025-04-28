@@ -139,10 +139,11 @@ const CombinedScheduleCard = () => {
         eventsByDay[dateStr] = [];
       }
 
-      // Populate events by day
+      // Populate events by day and add status
       upcomingEvents.forEach((event) => {
         const dateStr = format(event.start, "yyyy-MM-dd");
         if (eventsByDay[dateStr]) {
+          // All upcoming events have "upcoming" status
           eventsByDay[dateStr].push({
             ...event,
             time: `${format(event.start, "h:mm a")} - ${format(
@@ -153,6 +154,7 @@ const CombinedScheduleCard = () => {
             startMinute: getMinutes(event.start),
             endHour: getHours(event.end),
             endMinute: getMinutes(event.end),
+            status: "upcoming", // Add status for styling consistency
           });
         }
       });
@@ -361,57 +363,64 @@ const CombinedScheduleCard = () => {
                         </div>
                       </div>
 
-                      {/* Sessions for this day - Updated color scheme with dark mode support */}
+                      {/* Sessions for this day - Updated styling for more subtle online event styling */}
                       <div className="flex-1 p-2 flex gap-2 flex-nowrap overflow-x-auto">
                         {events.length > 0 ? (
                           events.map((event, eventIndex) => {
-                            const isOnline = Boolean(event.isOnline);
-
-                            // Dynamic styling based on online/offline status with dark mode support
-                            const bgColorClass = isOnline
-                              ? "bg-red-50 dark:bg-red-950/30 border-red-100 dark:border-red-900/50"
-                              : "bg-primary dark:bg-primary/90 border-primary/20 dark:border-primary/40";
-
-                            const textColorClass = isOnline
-                              ? "text-red-800 dark:text-red-300"
-                              : "text-primary-foreground";
-
+                            // Determine if the event is online
+                            const isOnline = event.isOnline;
+                            
                             return (
                               <div
                                 key={event.id}
                                 className={cn(
-                                  "rounded-md border text-sm py-2 px-3 flex-1 whitespace-nowrap",
-                                  bgColorClass,
-                                  textColorClass,
+                                  "rounded-md border p-0 flex-1 whitespace-nowrap relative overflow-hidden",
+                                  isOnline 
+                                    ? "bg-blue-50/30 dark:bg-blue-900/15 border-blue-100/70 dark:border-blue-800/30" 
+                                    : "bg-card dark:bg-card border-muted",
                                   "transition-all hover:shadow-md"
                                 )}
                               >
-                                <div className="font-medium truncate text-base">
-                                  {event.title}
-                                </div>
+                                {/* Left border status indicator - softer color for online/offline */}
                                 <div
-                                  className={`text-xs mt-1 ${
-                                    isOnline
-                                      ? "text-red-700 dark:text-red-300"
-                                      : "text-primary-foreground/90"
-                                  }`}
-                                >
-                                  {format(event.start, "h:mm a")} -{" "}
-                                  {format(event.end, "h:mm a")}
-                                </div>
-                                <div
-                                  className={`text-xs truncate flex items-center gap-1 ${
-                                    isOnline
-                                      ? "text-red-700 dark:text-red-300"
-                                      : "text-primary-foreground/90"
-                                  }`}
-                                >
-                                  {isOnline ? (
-                                    <Video className="h-3 w-3" />
-                                  ) : (
-                                    <Users className="h-3 w-3" />
+                                  className={cn(
+                                    "absolute left-0 top-0 bottom-0 w-1.5",
+                                    isOnline 
+                                      ? "bg-blue-400/80 dark:bg-blue-500/50" 
+                                      : "bg-primary/60"
                                   )}
-                                  {event.instructor}
+                                ></div>
+                                
+                                <div className="p-2 pl-3">
+                                  <div className="flex items-center">
+                                    <div className="font-medium truncate text-base text-foreground">
+                                      {event.title}
+                                    </div>
+                                  </div>
+                                  
+                                  <div className="text-xs mt-1 text-gray-700 dark:text-gray-300 flex items-center gap-1.5">
+                                    <Clock className="h-3.5 w-3.5" />
+                                    <span>{format(event.start, "h:mm a")} - {format(event.end, "h:mm a")}</span>
+                                  </div>
+                                  
+                                  <div className="text-xs truncate flex items-center gap-1.5 text-gray-700 dark:text-gray-300">
+                                    <Users className="h-3.5 w-3.5" />
+                                    <span>{event.instructor}</span>
+                                  </div>
+                                  
+                                  {isOnline ? (
+                                    <div className="text-xs flex items-center gap-1.5 text-blue-600 dark:text-blue-300 mt-1 font-medium">
+                                      <Video className="h-3.5 w-3.5" />
+                                      <span>Online</span>
+                                    </div>
+                                  ) : (
+                                    event.branch && (
+                                      <div className="text-xs flex items-center gap-1.5 text-gray-700 dark:text-gray-300 mt-1">
+                                        <MapPin className="h-3.5 w-3.5" />
+                                        <span>{event.branch.name}</span>
+                                      </div>
+                                    )
+                                  )}
                                 </div>
                               </div>
                             );
