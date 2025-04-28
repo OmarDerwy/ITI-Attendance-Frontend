@@ -1129,133 +1129,92 @@ const Schedule = () => {
           background-color: rgba(127, 0, 0, 0.8) !important;
           border-color: rgba(127, 0, 0, 0.8) !important;
         }
-
-        /* Fix for event borders in dark mode */
+        
+        /* Dark mode styles with less contrast borders */
+        .dark .fc {
+          /* Using more subtle border colors that are closer to background */
+          --fc-border-color: rgba(50, 50, 50, 0.8);
+          --fc-event-border-color: rgba(60, 60, 60, 0.8);
+          --fc-non-business-color: rgba(40, 40, 40, 0.3);
+          --fc-today-bg-color: rgba(239, 68, 68, 0.07);
+          
+          /* Button styles - unchanged */
+          --fc-button-bg-color: rgb(127, 0, 0);
+          --fc-button-border-color: rgb(127, 0, 0);
+          --fc-button-hover-bg-color: rgba(127, 0, 0, 0.8);
+          --fc-button-hover-border-color: rgba(127, 0, 0, 0.8);
+          --fc-button-active-bg-color: rgba(127, 0, 0, 0.9);
+          
+          /* List view styles */
+          --fc-list-event-hover-bg-color: rgba(60, 60, 60, 0.4);
+        }
+        
+        /* Enhanced borders for dark mode - more subtle */
+        .dark .fc th,
+        .dark .fc td,
+        .dark .fc .fc-divider,
+        .dark .fc .fc-list-table {
+          border-color: rgba(50, 50, 50, 0.8) !important;
+        }
+        
+        /* Extra highlight for key borders - still subtle */
+        .dark .fc .fc-scrollgrid,
+        .dark .fc .fc-scrollgrid-section,
+        .dark .fc .fc-col-header-cell,
+        .dark .fc .fc-list-day-cushion {
+          border-color: rgba(60, 60, 60, 0.8) !important;
+        }
+        
+        /* Subtle borders for events */
         .dark .fc-event {
-          border: 1px solid rgb(124, 124, 124) !important;
-          border-radius: 0 !important;
+          border: 1px solid rgba(60, 60, 60, 0.8) !important;
+          box-shadow: none !important;
         }
-
-        /* Fix for event content borders */
-        .dark .fc-event-main {
-          border-color: rgb(124, 124, 124) !important;
-          border-width: 0 !important; /* Remove internal borders */
+        
+        /* Enforce visibility of lines but keep subtle */
+        .dark .fc-timegrid-slot,
+        .dark .fc-timegrid-axis,
+        .dark .fc-scrollgrid-sync-inner {
+          border-color: rgba(45, 45, 45, 0.8) !important;
         }
-
-        .fc-event-title {
-          white-space: normal !important; /* Allow text wrapping */
-          overflow: visible !important; /* Show full text */
-          text-overflow: clip !important; /* Prevent ellipsis */
-          word-wrap: break-word !important; /* Break long words */
+        
+        /* Make list view items more subtle */
+        .dark .fc-list-event td {
+          border-color: rgba(50, 50, 50, 0.8) !important;
         }
-        .fc-daygrid-event {
-          height: auto !important; /* Adjust event height */
-        }
-
-        .dark .fc-timegrid-event {
-          border-color: rgb(124, 124, 124) !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          border-width: 1px 1px 1px 1px !important; /* Only keep outer border */
-        }
-
-        /* Box shadow for time grid events - only in dark mode */
+        
+        /* Remove box shadows */
         .dark .fc-timegrid-event-harness-inset .fc-timegrid-event,
         .dark .fc-timegrid-event.fc-event-mirror,
         .dark .fc-timegrid-more-link {
-          box-shadow: 0 0 0 1px rgb(124, 124, 124) !important;
+          box-shadow: none !important;
         }
 
-        /* Fix for event container borders */
-        .dark .fc-h-event,
-        .dark .fc-v-event,
-        .dark .fc-event-main-frame {
-          border-color: rgb(124, 124, 124) !important;
-          border-width: 0 !important; /* Remove internal borders */
+        /* Fix for event title text wrapping */
+        .fc-event-title {
+          white-space: normal !important;
+          overflow: visible !important;
+          text-overflow: clip !important;
+          word-wrap: break-word !important;
+        }
+        
+        .fc-daygrid-event {
+          height: auto !important;
         }
 
-        /* Comprehensive fix for all borders in dark mode */
+
+
+        /* Consistent border for all calendar elements */
         .dark .fc .fc-scrollgrid,
-        .dark .fc .fc-scrollgrid-section,
+        .dark .fc .fc-scrollgrid-section, 
         .dark .fc .fc-scrollgrid-section > *,
-        .dark .fc .fc-scrollgrid-section-header,
-        .dark .fc .fc-scrollgrid-section-header th,
-        .dark .fc .fc-scrollgrid-section-header td,
-        .dark .fc .fc-scrollgrid-section-body,
-        .dark .fc .fc-scrollgrid-section-footer,
-        .dark .fc .fc-daygrid-body,
-        .dark .fc .fc-scrollgrid-sync-table,
-        .dark .fc .fc-timegrid-body,
-        .dark .fc .fc-timegrid-body .fc-timegrid-cols,
-        .dark .fc .fc-timegrid-body .fc-timegrid-cols > table,
-        .dark .fc .fc-timegrid-body .fc-timegrid-col,
-        .dark .fc .fc-timegrid-slots,
-        .dark .fc .fc-timegrid-slots table,
-        .dark .fc .fc-timegrid-slot,
-        .dark .fc .fc-timegrid-slot-lane,
-        .dark .fc .fc-timegrid-slot-minor,
-        .dark .fc .fc-timegrid-axis,
-        .dark .fc .fc-col-header,
-        .dark .fc .fc-col-header-cell,
-        .dark .fc .fc-daygrid-day-frame,
-        .dark .fc .fc-daygrid-day-events,
-        .dark .fc .fc-daygrid-day-bg {
-          border-color: rgb(124, 124, 124) !important;
-        }
-
-        /* Force vertical borders to appear */
-        .dark .fc .fc-scrollgrid-section-body table,
-        .dark .fc .fc-scrollgrid-section-footer table,
-        .dark .fc .fc-timegrid-cols,
-        .dark .fc .fc-timegrid-cols table,
-        .dark .fc .fc-timegrid-cols > table,
-        .dark .fc .fc-daygrid-body > table {
-          border-collapse: separate !important;
-          border-spacing: 0 !important;
-        }
-
         .dark .fc .fc-timegrid-col,
         .dark .fc .fc-timegrid-slot-col,
         .dark .fc .fc-col-header-cell,
-        .dark .fc .fc-daygrid-day {
-          border-left: 1px solid rgb(124, 124, 124) !important;
-          border-right: 1px solid rgb(124, 124, 124) !important;
-        }
-
-        .dark .fc .fc-timegrid-col:first-child,
-        .dark .fc .fc-daygrid-day:first-child {
-          border-left: 1px solid rgb(124, 124, 124) !important;
-        }
-
-        .dark .fc .fc-timegrid-col:last-child,
-        .dark .fc .fc-daygrid-day:last-child {
-          border-right: 1px solid rgb(124, 124, 124) !important;
-        }
-
-        .dark .fc .fc-scrollgrid {
-          border: 1px solid rgb(124, 124, 124) !important;
-          overflow: hidden !important;
-        }
-
-        /* Fix for white corner in dark mode */
-        .dark .fc .fc-scrollgrid-section-header > th,
-        .dark .fc .fc-scrollgrid-section-header > td,
-        .dark .fc .fc-col-header-cell,
-        .dark .fc .fc-timegrid-axis,
-        .dark .fc .fc-timegrid-axis-frame,
-        .dark .fc .fc-timegrid-axis-cushion,
-        .dark .fc .fc-scrollgrid-section > td,
-        .dark .fc .fc-col-header-cell-cushion,
-        .dark .fc .fc-scrollgrid-sync-inner,
-        .dark .fc-theme-standard .fc-scrollgrid,
-        .dark .fc .fc-view-harness,
-        .dark .fc .fc-view-harness-active {
-          background-color: hsl(var(--background)) !important;
-        }
-
-        /* Add border to the header corner cell */
+        .dark .fc .fc-daygrid-day,
         .dark .fc-timegrid-axis.fc-scrollgrid-shrink {
-          border: 1px solid rgb(124, 124, 124) !important;
+          border-color: rgba(50, 50, 50, 0.8) !important;
+          border-width: 1px !important;
         }
       `}</style>
     </Layout>

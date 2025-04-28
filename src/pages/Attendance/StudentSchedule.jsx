@@ -316,82 +316,103 @@ const StudentSchedule = () => {
         </>
       )}
       <style jsx global>{`
+        /* Base calendar styles */
         .fc-button {
           background-color: #ef4444 !important;
           border-color: #ef4444 !important;
           color: white !important;
+          transition: background-color 0.2s ease;
         }
+
         .fc-button:hover {
           background-color: #dc2626 !important;
           border-color: #dc2626 !important;
         }
-
+        
         .fc-event {
           cursor: pointer;
           font-size: 1.1rem;
           font-weight: 500;
         }
 
-        /* Dark mode specific styles */
-        .dark .fc-button {
-          background-color: rgb(127, 0, 0) !important;
-          border-color: rgb(127, 0, 0) !important;
-          color: white !important;
-        }
-
-        .dark .fc-button:hover {
-          background-color: rgba(127, 0, 0, 0.8) !important;
-          border-color: rgba(127, 0, 0, 0.8) !important;
-        }
-
-        .dark .fc-event {
-          border: 1px solid rgb(124, 124, 124) !important;
-          border-radius: 0 !important;
-        }
-
-        .dark .fc-timegrid-event {
-          border-color: rgb(124, 124, 124) !important;
-          padding: 0 !important;
-          margin: 0 !important;
-        }
-
-        /* Box shadow for time grid events - only in dark mode */
-        .dark .fc-timegrid-event-harness-inset .fc-timegrid-event,
-        .dark .fc-timegrid-event.fc-event-mirror,
-        .dark .fc-timegrid-more-link {
-          box-shadow: 0 0 0 1px rgb(124, 124, 124) !important;
-        }
-
-        /* Fix for event container borders */
-        .dark .fc-h-event,
-        .dark .fc-v-event,
-        .dark .fc-event-main-frame {
-          border-color: rgb(124, 124, 124) !important;
-        }
-
-        /* Fix for event content borders */
-        .dark .fc-event-main {
-          border-color: rgb(124, 124, 124) !important;
-        }
-
+        /* Common styles across all views */
         .fc-event-title {
           white-space: normal !important;
           overflow: visible !important;
           text-overflow: clip !important;
           word-wrap: break-word !important;
         }
+        
         .fc-daygrid-event {
           height: auto !important;
         }
 
-        .dark .fc-timegrid-now-indicator-line {
-          border-color: #ef4444 !important;
-          border-width: 2px !important;
+        /* Fix for the list view hover issue */
+        .fc-list-event:hover td {
+          background-color: rgba(240, 240, 240, 0.7) !important;
+        }
+        
+        /* Dark mode styles with less contrast borders */
+        .dark .fc {
+          /* Using more subtle border colors that are closer to background */
+          --fc-border-color: rgba(50, 50, 50, 0.8);
+          --fc-event-border-color: rgba(60, 60, 60, 0.8);
+          --fc-non-business-color: rgba(40, 40, 40, 0.3);
+          --fc-today-bg-color: rgba(239, 68, 68, 0.07);
+          
+          /* Button styles - unchanged */
+          --fc-button-bg-color: rgb(127, 0, 0);
+          --fc-button-border-color: rgb(127, 0, 0);
+          --fc-button-hover-bg-color: rgba(127, 0, 0, 0.8);
+          --fc-button-hover-border-color: rgba(127, 0, 0, 0.8);
+          --fc-button-active-bg-color: rgba(127, 0, 0, 0.9);
+          
+          /* List view styles */
+          --fc-list-event-hover-bg-color: rgba(60, 60, 60, 0.4);
+        }
+        
+        /* Enhanced borders for dark mode - more subtle */
+        .dark .fc th,
+        .dark .fc td,
+        .dark .fc .fc-divider,
+        .dark .fc .fc-list-table {
+          border-color: rgba(50, 50, 50, 0.8) !important;
+        }
+        
+        /* Extra highlight for key borders - still subtle */
+        .dark .fc .fc-scrollgrid,
+        .dark .fc .fc-scrollgrid-section,
+        .dark .fc .fc-col-header-cell,
+        .dark .fc .fc-list-day-cushion {
+          border-color: rgba(60, 60, 60, 0.8) !important;
+        }
+        
+        /* Subtle borders for events */
+        .dark .fc-event {
+          border: 1px solid rgba(60, 60, 60, 0.8) !important;
+          box-shadow: none !important;
+        }
+        
+        /* Enforce visibility of lines but keep subtle */
+        .dark .fc-timegrid-slot,
+        .dark .fc-timegrid-axis,
+        .dark .fc-scrollgrid-sync-inner {
+          border-color: rgba(45, 45, 45, 0.8) !important;
+        }
+        
+        /* Make list view items more subtle */
+        .dark .fc-list-event td {
+          border-color: rgba(50, 50, 50, 0.8) !important;
+        }
+        
+        /* Remove box shadows */
+        .dark .fc-timegrid-event-harness-inset .fc-timegrid-event,
+        .dark .fc-timegrid-event.fc-event-mirror,
+        .dark .fc-timegrid-more-link {
+          box-shadow: none !important;
         }
 
-        .dark .fc-list-event {
-          border-left-width: 5px !important;
-        }
+        
       `}</style>
     </Layout>
   );
