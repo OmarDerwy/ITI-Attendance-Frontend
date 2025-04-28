@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* This is slate-50 in hsl format */
+    --background: 0 0% 94%; /* This is slate-50 in hsl format */
     --foreground: 0 10% 10%;
 
     --card: 0 0% 100%;
@@ -92,15 +92,15 @@
   }
 
   body {
-    background-color: #F9F9F9;
+    /* Use the CSS variable for background */
+    @apply bg-background text-foreground;
     font-family: "SF Pro Display", system-ui, sans-serif;
-    color: hsl(var(--foreground));
   }
 
-  #root, 
-  main, 
-  .bg-background {
-    background-color: #F9F9F9;
+  /* Ensure root and main also use the variable */
+  #root,
+  main {
+    @apply bg-background;
   }
 }
 
@@ -170,22 +170,22 @@
 
 /* Sequenced animations for login page */
 @keyframes slide-in-from-left {
-  0% { 
+  0% {
     opacity: 0;
     transform: translateX(-60px);
   }
-  100% { 
+  100% {
     opacity: 1;
     transform: translateX(0);
   }
 }
 
 @keyframes fade-in-sequence {
-  0% { 
+  0% {
     opacity: 0;
     transform: translateY(10px);
   }
-  100% { 
+  100% {
     opacity: 1;
     transform: translateY(0);
   }
@@ -253,7 +253,6 @@
   @apply bg-muted-foreground/40;
 }
 
-
 .fc-button {
   background-color: #ef4444 !important;
   border-color: #ef4444 !important;
@@ -292,14 +291,14 @@
   background-color: rgba(239, 68, 68, 0.05) !important;
 }
 /* Day header styling to match root background */
-.fc-col-header-cell, 
+.fc-col-header-cell,
 .fc-day-header {
-  background-color: #F9F9F9 !important;
+  background-color: hsl(var(--background)) !important; /* Use variable */
 }
 
 /* List view background styling */
-.fc-list-table, 
+.fc-list-table,
 .fc-list-day-cushion,
 .fc-list-empty {
-  background-color: #F9F9F9 !important;
+  background-color: hsl(var(--background)) !important; /* Use variable */
 }

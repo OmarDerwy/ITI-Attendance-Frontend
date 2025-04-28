@@ -8,6 +8,8 @@ import {
   X,
   Menu as MenuIcon,
   Search,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { Badge } from "@/components/ui/badge";
@@ -17,8 +19,8 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from "@/api/notifications";
-// import { setupAxiosInterceptors } from "@/api/config";
 import { toast } from "sonner"; // Import from sonner directly
+import { useTheme } from "@/context/ThemeContext.tsx"; // Import useTheme
 
 type NavbarProps = {
   toggleSidebar: () => void;
@@ -31,13 +33,14 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const [notifications, setNotifications] = useState<
     { id: number; message: string; created_at: string; is_read: boolean; matched_item: number }[]
   >([]);
+  const { theme, setTheme } = useTheme(); // Use the theme hook
 
   const token = localStorage.getItem("access");
   const navigate = useNavigate();
 
-  // useEffect(() => {
-  //   setupAxiosInterceptors(() => navigate("/login"));
-  // }, [navigate]);
+  const toggleTheme = () => {
+    setTheme(theme === "dark" ? "light" : "dark");
+  };
 
   if (import.meta.env.VITE_ENABLE_NOTIFICATIONS === "true") {
     const SOCKET_URL = `${import.meta.env.VITE_API_BASE_WS || 'ws://localhost:8000/'}ws/notifications/?token=${token}`;
@@ -233,6 +236,18 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
           >
             <Calendar className="h-5 w-5" />
           </Link>
+
+          <button
+            onClick={toggleTheme}
+            className="rounded-full p-1.5 hover:bg-muted transition-colors"
+          >
+            {theme === "dark" ? (
+              <Sun className="h-5 w-5" />
+            ) : (
+              <Moon className="h-5 w-5" />
+            )}
+            <span className="sr-only">Toggle theme</span>
+          </button>
 
           <div className="relative">
             <button

@@ -7,11 +7,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { axiosBackendInstance } from "@/api/config";
-import { toast } from 'sonner';
-import { useUser } from '@/context/UserContext';
+import { toast } from "sonner";
+import { useUser } from "@/context/UserContext";
 import axios from "axios";
-import { useQueryClient } from '@tanstack/react-query';
-
+import { useQueryClient } from "@tanstack/react-query";
 
 const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -21,7 +20,6 @@ const Login = () => {
   const user = useUser();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
 
   // useEffect(() => {
   //   const tryRefreshToken = async () => {
@@ -52,7 +50,6 @@ const Login = () => {
 
   //   tryRefreshToken();
   // }, [navigate]);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -89,7 +86,7 @@ const Login = () => {
           const trackData = studentTrackResponse.data;
           localStorage.setItem("studentTrack", JSON.stringify(trackData));
           user.setStudentTrack?.(trackData); // Optional chaining
-          
+
           // Fetch attendance statistics for students
           try {
             const attendanceStats = await user.fetchAttendanceStats?.();
@@ -138,12 +135,41 @@ const Login = () => {
         {/* Content with sequenced animations */}
         <div className="relative z-10 flex flex-col items-center justify-center text-center">
           {/* Logo first (slides in from left) */}
-          <div className="flex items-center justify-center mb-8">
+          <div className="flex items-center justify-center mb-8 relative">
+            {/* Show original image only in light mode */}
             <img
               src="/images/trackIt.png"
               alt="ITI Logo"
-              className="login-logo w-110 h-32 object-contain mr-4"
+              className="login-logo w-110 h-32 object-contain mr-4 dark:hidden"
             />
+
+            {/* Add colored text with ITI logo in dark mode */}
+            <div className="login-logo hidden dark:flex items-center justify-center mr-4">
+              <div className="flex items-center">
+                {/* ITI Logo */}
+                <img
+                  src="/images/iti-logo.png"
+                  alt="ITI Logo"
+                  className="h-32 mr-2 mb-4"
+                />
+
+                {/* TrackIt text */}
+                <span className="text-4xl mt-5">
+                  <span
+                    className="text-white font-bold"
+                    style={{ fontFamily: '"Orgon W03 Medium", sans-serif' }}
+                  >
+                    Track
+                  </span>
+                  <span
+                    className="text-primary font-bold"
+                    style={{ fontFamily: '"Orgon W03 Medium", sans-serif' }}
+                  >
+                    It
+                  </span>
+                </span>
+              </div>
+            </div>
           </div>
 
           {/* Knowledge City appears second */}
@@ -153,16 +179,17 @@ const Login = () => {
           >
             Knowledge City
           </h2>
-          
+
           {/* Track name appears third */}
           <p className="login-track text-xl text-muted-foreground mb-6">
             Track Full Stack using Python
           </p>
-          
+
           {/* Description appears last */}
           <p className="login-description text-base text-muted-foreground/90 max-w-md">
-            Streamline your experience with integrated tools for attendance management,
-            lost & found items, leave request handling, insightful dashboards, and more.
+            Streamline your experience with integrated tools for attendance
+            management, lost & found items, leave request handling, insightful
+            dashboards, and more.
           </p>
         </div>
       </div>
@@ -172,13 +199,15 @@ const Login = () => {
         <div className="w-full max-w-md">
           {/* Changed lg:text-left to text-center to keep it centered */}
           <div className="mb-8 text-center">
-             {/* Optional: Smaller logo for mobile/right side */}
-             <div className="flex items-center justify-center lg:hidden w-12 h-12 mx-auto mb-4 rounded-xl text-primary-foreground">
-               <img src="/images/iti-logo.png" alt="logo" className="w-10 h-10"/>
-             </div>
-            <h1 className="text-3xl font-bold tracking-tight">
-              Welcome back
-            </h1>
+            {/* Optional: Smaller logo for mobile/right side */}
+            <div className="flex items-center justify-center lg:hidden w-12 h-12 mx-auto mb-4 rounded-xl text-primary-foreground">
+              <img
+                src="/images/iti-logo.png"
+                alt="logo"
+                className="w-10 h-10"
+              />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
             <p className="mt-2 text-muted-foreground">
               Sign in to your account to continue
             </p>
@@ -204,7 +233,7 @@ const Login = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      className="h-11 pl-10"
+                      className="h-11 pl-10 bg-background dark:bg-background text-foreground dark:text-foreground"
                     />
                   </div>
                 </div>
@@ -233,13 +262,15 @@ const Login = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="current-password"
-                      className="h-11 pl-10 pr-10"
+                      className="h-11 pl-10 pr-10 bg-background dark:bg-background text-foreground dark:text-foreground"
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                      aria-label={showPassword ? "Hide password" : "Show password"}
+                      aria-label={
+                        showPassword ? "Hide password" : "Show password"
+                      }
                     >
                       {showPassword ? (
                         <EyeOff className="h-4 w-4" />

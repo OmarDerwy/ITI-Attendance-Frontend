@@ -87,10 +87,13 @@ const Schedule = () => {
 
   // Track if there are modified events
   const modifiedEvents = events.filter((event) => event.isModified);
-  let onlineForeground = "rgb(254, 230, 231)"; 
-  let offlineForeground = "hsl(var(--accent-foreground))";
+  
+  // Use CSS variables for theme-aware colors instead of hardcoded values
+  let onlineForeground = "hsl(var(--accent))"; 
+  let offlineForeground = "hsl(var(--primary))";
   let offlineTextClass = "text-primary-foreground";
   let onlineTextClass = "text-accent-foreground";
+
   // Effect to set hasUnsavedChanges based on modified events
   useEffect(() => {
     setHasUnsavedChanges(modifiedEvents.length > 0);
@@ -489,8 +492,16 @@ const Schedule = () => {
     // Directly use eventInfo's extendedProps to get accurate isOnline state
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
     const textColor = isOnline ? onlineTextClass : offlineTextClass;
-    const subtextColor = isOnline ? "text-gray-700" : "text-gray-300";
-    const branchColor = isOnline ? "text-gray-700" : "text-gray-100";
+    
+    // Replace hardcoded colors with theme-aware classes for instructor name
+    const subtextColor = isOnline 
+      ? "text-accent-foreground/80 dark:text-accent-foreground/90" 
+      : "text-primary-foreground/80 dark:text-primary-foreground/90";
+    
+    // Replace hardcoded colors with theme-aware classes for branch location
+    const branchColor = isOnline 
+      ? "text-accent-foreground/90 dark:text-accent-foreground" 
+      : "text-primary-foreground/90 dark:text-primary-foreground";
 
     // Check if event is in the past
     const isPastEvent = isDateInPast(eventInfo.event.start);

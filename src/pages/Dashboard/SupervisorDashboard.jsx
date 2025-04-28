@@ -540,13 +540,19 @@ const SupervisorDashboard = () => {
                 }
 
                 return (
-                  <div key={cls.id} className="flex justify-between items-center p-3 rounded-lg border shadow-sm bg-gradient-to-r from-gray-50 to-transparent">
+                  <div key={cls.id} className="flex justify-between items-center p-3 rounded-lg border shadow-sm bg-gradient-to-r from-card to-transparent dark:from-card dark:to-card/80">
                     <div className="flex items-center gap-3">
-                      <div className={`${status === 'active' ? 'bg-emerald-100 text-emerald-700' : status === 'upcoming' ? 'bg-blue-100 text-blue-700' : 'bg-gray-100 text-gray-700'} p-3 rounded-full`}>
+                      <div className={`${
+                        status === 'active' 
+                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' 
+                          : status === 'upcoming' 
+                            ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' 
+                            : 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300'
+                      } p-3 rounded-full`}>
                         {status === 'active' ? <Clock className="h-5 w-5" /> : status === 'upcoming' ? <Clock className="h-5 w-5" /> : <Check className="h-5 w-5" />}
                       </div>
                       <div>
-                        <p className="font-medium">{cls.title}</p>
+                        <p className="font-medium text-foreground">{cls.title}</p>
                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <Clock className="h-3.5 w-3.5" />
                           <span>{startTime.format('HH:mm')} - {endTime.format('HH:mm')}</span>
@@ -691,8 +697,8 @@ const SupervisorDashboard = () => {
 const ClassBadge = ({ status }) => {
   if (status === "active") {
     return (
-      <div className="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700">
-        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 mr-1.5"></span>
+      <div className="inline-flex items-center rounded-full bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+        <span className="h-1.5 w-1.5 rounded-full bg-emerald-600 dark:bg-emerald-400 mr-1.5"></span>
         In Progress
       </div>
     );
@@ -700,14 +706,14 @@ const ClassBadge = ({ status }) => {
 
   if (status === "upcoming") {
     return (
-      <div className="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
+      <div className="inline-flex items-center rounded-full bg-blue-50 dark:bg-blue-900/30 px-2.5 py-1 text-xs font-medium text-blue-700 dark:text-blue-400">
         Upcoming
       </div>
     );
   }
 
   return (
-    <div className="inline-flex items-center rounded-full bg-gray-50 px-2.5 py-1 text-xs font-medium text-gray-600">
+    <div className="inline-flex items-center rounded-full bg-gray-50 dark:bg-gray-800 px-2.5 py-1 text-xs font-medium text-gray-600 dark:text-gray-300">
       <Check className="h-3 w-3 mr-1" />
       Completed
     </div>

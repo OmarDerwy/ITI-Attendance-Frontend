@@ -369,14 +369,14 @@ const AdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <Card className="overflow-hidden border-red-100">
-            <div className="bg-gradient-to-r from-red-50 to-red-100 p-6 border-b border-red-200">
+          <Card className="overflow-hidden border-border dark:border-border/20">
+            <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/20 p-6 border-b border-red-200 dark:border-red-900/30">
               <div className="grid md:grid-cols-2 gap-4 items-center">
                 <div>
-                  <h2 className="text-2xl font-bold mb-2 text-red-800">
+                  <h2 className="text-2xl font-bold mb-2 text-red-800 dark:text-red-400">
                     Admin Dashboard
                   </h2>
-                  <p className="text-red-700 mb-4">
+                  <p className="text-red-700 dark:text-red-300/90 mb-4">
                     Manage tracks, supervisors, and view system-wide analytics
                   </p>
                   <div className="flex space-x-2">
@@ -403,7 +403,7 @@ const AdminDashboard = () => {
                       duration: 5,
                       ease: "easeInOut",
                     }}
-                    className="w-32 h-32 bg-red-200 rounded-full flex items-center justify-center"
+                    className="w-32 h-32 bg-red-200 dark:bg-red-950/40 rounded-full flex items-center justify-center"
                   >
                     <img
                       src="/images/iti-logo.png"
@@ -416,39 +416,43 @@ const AdminDashboard = () => {
             </div>
             <CardContent className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                <div className="bg-white rounded-lg p-4 text-center border border-red-200 shadow-sm">
-                  <p className="text-red-700 text-sm font-medium">
+                <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card dark:bg-card">
+                  <p className="text-primary text-sm font-medium">
                     Total Tracks
                   </p>
-                  <p className="text-2xl font-bold text-red-800">
+                  <p className="text-2xl font-bold text-card-foreground dark:text-card-foreground">
                     {tracksData?.length}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center border border-red-200 shadow-sm">
-                  <p className="text-red-700 text-sm font-medium">Branches</p>
-                  <p className="text-2xl font-bold text-red-800">
+                <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card dark:bg-card">
+                  <p className="text-primary text-sm font-medium">
+                    Branches
+                  </p>
+                  <p className="text-2xl font-bold text-card-foreground dark:text-card-foreground">
                     {branchesData?.length}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center border border-red-200 shadow-sm">
-                  <p className="text-red-700 text-sm font-medium">
+                <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card dark:bg-card">
+                  <p className="text-primary text-sm font-medium">
                     Supervisors
                   </p>
-                  <p className="text-2xl font-bold text-red-800">
+                  <p className="text-2xl font-bold text-card-foreground dark:text-card-foreground">
                     {supervisorsCount}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center border border-red-200 shadow-sm">
-                  <p className="text-red-700 text-sm font-medium">
+                <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card dark:bg-card">
+                  <p className="text-primary text-sm font-medium">
                     Total Students
                   </p>
-                  <p className="text-2xl font-bold text-red-800">
+                  <p className="text-2xl font-bold text-card-foreground dark:text-card-foreground">
                     {studentsCount}
                   </p>
                 </div>
-                <div className="bg-white rounded-lg p-4 text-center border border-red-200 shadow-sm">
-                  <p className="text-red-700 text-sm font-medium">Lost Items</p>
-                  <p className="text-2xl font-bold text-red-800">
+                <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card dark:bg-card">
+                  <p className="text-primary text-sm font-medium">
+                    Lost Items
+                  </p>
+                  <p className="text-2xl font-bold text-card-foreground dark:text-card-foreground">
                     {lostItemsCount}
                   </p>
                 </div>
