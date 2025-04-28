@@ -21,17 +21,31 @@ import {
 } from "@/api/notifications";
 import { toast } from "sonner"; // Import from sonner directly
 import { useTheme } from "@/context/ThemeContext.tsx"; // Import useTheme
+import axios from "axios";
 
 type NavbarProps = {
   toggleSidebar: () => void;
 };
 
 const Navbar = ({ toggleSidebar }: NavbarProps) => {
-  const { userRole, userName, setUserRole, logout } = useUser();
+  const {
+    userRole,
+    userName,
+    userProfilePic,
+    userFullName,
+    setUserRole,
+    logout,
+  } = useUser();
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [notifications, setNotifications] = useState<
-    { id: number; message: string; created_at: string; is_read: boolean; matched_item: number }[]
+    {
+      id: number;
+      message: string;
+      created_at: string;
+      is_read: boolean;
+      matched_item: number;
+    }[]
   >([]);
   const { theme, setTheme } = useTheme(); // Use the theme hook
 
@@ -43,7 +57,9 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   };
 
   if (import.meta.env.VITE_ENABLE_NOTIFICATIONS === "true") {
-    const SOCKET_URL = `${import.meta.env.VITE_API_BASE_WS || 'ws://localhost:8000/'}ws/notifications/?token=${token}`;
+    const SOCKET_URL = `${
+      import.meta.env.VITE_API_BASE_WS || "ws://localhost:8000/"
+    }ws/notifications/?token=${token}`;
     const { lastMessage } = useWebSocket(SOCKET_URL, {
       onOpen: () => console.log("WebSocket Connected"),
       onClose: () => console.log("WebSocket Disconnected"),
@@ -75,12 +91,12 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
         setNotifications(sortedData);
         // console.log("Fetched and sorted notifications:", sortedData);
       } catch (error) {
-        // console.error("Failed to fetch notifications:", error);
+        console.error("Failed to fetch notifications:", error);
       }
     };
 
     useEffect(() => {
-        fetchNotifications();
+      fetchNotifications();
     }, []);
 
     // Handle WebSocket messages
@@ -135,14 +151,14 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             : notification
         )
       );
-      notifications.filter((notification) =>  {
+      notifications.filter((notification) => {
         if (notification.id === id && notification.matched_item) {
           navigate(`/matched-item-details/${notification.matched_item}`);
         }
         return notification;
-      })
+      });
     } catch (error) {
-      // console.error("Failed to mark notification as read:", error);
+      console.error("Failed to mark notification as read:", error);
     }
   };
 
@@ -150,7 +166,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     await logout();
     setProfileOpen(false);
     setNotificationsOpen(false);
-  }
+  };
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background/95 px-4 backdrop-blur supports-[backdrop-filter]:bg-background/60 sm:px-6">
@@ -203,8 +219,8 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                       key={notification.id}
                       className={`border-b p-3 cursor-pointer ${
                         notification.is_read
-                          ? "bg-white hover:bg-muted/50" // read notifications
-                          : "bg-gray-100 hover:bg-gray-200 font-bold" // unread notifications
+                          ? "bg-white hover:bg-muted/50"
+                          : "bg-gray-100 hover:bg-gray-200 font-bold"
                       }`}
                       onClick={() => handleMarkAsRead(notification.id)}
                     >
@@ -213,13 +229,13 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                         {new Date(notification.created_at).toLocaleString(
                           "en-GB",
                           {
-                            timeZone: "Africa/Cairo", // Cairo, Egypt timezone
+                            timeZone: "Africa/Cairo",
                             day: "2-digit",
                             month: "2-digit",
                             year: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
-                            hour12: true, // Use 12-hour format with AM/PM
+                            hour12: true,
                           }
                         )}
                       </p>
@@ -255,10 +271,18 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
               className="flex items-center gap-2 rounded-full hover:bg-muted transition-colors p-1.5"
             >
               <div className="relative h-8 w-8 overflow-hidden rounded-full bg-muted">
-                <User className="h-8 w-8 p-1.5" />
+                {userProfilePic ? (
+                  <img
+                    src={userProfilePic}
+                    alt={userFullName || userName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  <User className="h-8 w-8 p-1.5" />
+                )}
               </div>
               <span className="hidden text-sm font-medium md:block">
-                {userName}
+                {userFullName || userName}
               </span>
               <ChevronDown className="h-4 w-4" />
             </button>
@@ -266,7 +290,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             {profileOpen && (
               <div className="absolute right-0 top-12 w-56 overflow-hidden rounded-md border bg-card shadow-lg animate-in fade-in slide-down">
                 <div className="border-b p-3">
-                  <p className="font-medium">{userName}</p>
+                  <p className="font-medium">{userFullName || userName}</p>
                   <p className="text-xs text-muted-foreground capitalize">
                     {userRole}
                   </p>

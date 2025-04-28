@@ -36,7 +36,14 @@
 
     --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 100%;
+    --navbar-background: 0 0% 90%;
+    /* --navbar-background: 0 0% 100%; */
+    /* --navbar-background: 37 38% 84%; */
+
+    --sidebar-background: 0 0% 90%;
+    /* --sidebar-background: 0 0% 100%;  */
+    /* --sidebar-background: 37 38% 84%; */
+
     --sidebar-foreground: 0 10% 10%;
     --sidebar-primary: 0 72% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -45,6 +52,7 @@
     --sidebar-border: 0 0% 92%;
     --sidebar-ring: 0 72% 51%;
   }
+
 
   .dark {
     --background: 0 10% 10%;
@@ -75,7 +83,7 @@
     --input: 0 10% 20%;
     --ring: 0 72% 51%;
 
-    --sidebar-background: 0 10% 12%;
+    --sidebar-background: 0 10% 15%; /* Darker background for dark mode */
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 0 72% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -115,6 +123,20 @@
 
   .text-balance {
     text-wrap: balance;
+  }
+
+  /* Navbar styling */
+  .navbar-bg {
+    background-color: hsl(var(--navbar-background));
+  }
+
+  .navbar-bg-translucent {
+    background-color: hsl(var(--navbar-background) / 60%);
+  }
+
+  /* Sidebar styling */
+  .sidebar-bg {
+    background-color: hsl(var(--sidebar-background));
   }
 }
 
@@ -171,9 +193,11 @@
 /* Sequenced animations for login page */
 @keyframes slide-in-from-left {
   0% {
+  0% {
     opacity: 0;
     transform: translateX(-60px);
   }
+  100% {
   100% {
     opacity: 1;
     transform: translateX(0);
@@ -182,9 +206,11 @@
 
 @keyframes fade-in-sequence {
   0% {
+  0% {
     opacity: 0;
     transform: translateY(10px);
   }
+  100% {
   100% {
     opacity: 1;
     transform: translateY(0);

@@ -1,19 +1,29 @@
-
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
+import axios from "axios";
 import Layout from "@/components/layout/Layout";
 import PageTitle from "@/components/ui/page-title";
-import { Card, CardHeader, CardContent, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { User, Camera, Save, Key, Eye, EyeOff } from "lucide-react";
+import { User, Key, Eye, EyeOff, Pencil } from "lucide-react";
+
+// Cloudinary configuration
+const CLOUDINARY_CLOUD_NAME = "dha2yp5tj";
+const CLOUDINARY_UPLOAD_PRESET = "my_upload_preset";
 
 const Profile = () => {
-  const { userName, setUserName, userProfilePic, setUserProfilePic } = useUser();
+  const { userName, setUserName, userProfilePic, setUserProfilePic } =
+    useUser();
   const { toast } = useToast();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -23,32 +33,201 @@ const Profile = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [profileName, setProfileName] = useState(userName);
   const [isUploading, setIsUploading] = useState(false);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
 
-  const handleImageUpload = () => {
+  // File input reference to trigger it programmatically
+  const fileInputRef = useRef(null);
+
+  // Fetch the user profile when component mounts
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      setIsLoadingProfile(true);
+      try {
+        const profileEndpoint = import.meta.env.VITE_USER_PROFILE_ENDPOINT;
+        const response = await axios.get(profileEndpoint, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        });
+
+        setUserProfile(response.data);
+
+        // Set the profile name based on first_name and last_name
+        if (response.data.first_name || response.data.last_name) {
+          const fullName = `${response.data.first_name || ""} ${
+            response.data.last_name || ""
+          }`.trim();
+          setProfileName(fullName);
+          // Update the userName in context if needed
+          setUserName(fullName);
+        }
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+        toast({
+          title: "Error",
+          description: "Failed to load your profile information.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, []);
+
+  // Add back the separate useEffect for fetching profile picture
+  useEffect(() => {
+    const fetchProfilePicture = async () => {
+      try {
+        const photoGetEndpoint = import.meta.env
+          .VITE_PROFILE_PHOTO_GET_ENDPOINT;
+        const response = await axios.get(photoGetEndpoint, {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        });
+
+        if (response.data && response.data.photo_url) {
+          // Only update the profile picture in context/avatar
+          setUserProfilePic(response.data.photo_url);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile picture:", error);
+        // Don't show an error toast since this is just initializing the UI
+      }
+    };
+
+    fetchProfilePicture();
+  }, []);
+
+  // Upload image to Cloudinary - adapted from ImageUploadField
+  const uploadToCloudinary = async (file) => {
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", CLOUDINARY_UPLOAD_PRESET);
+      formData.append("cloud_name", CLOUDINARY_CLOUD_NAME);
+
+      const response = await axios.post(
+        `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/upload`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      return response.data.secure_url;
+    } catch (error) {
+      console.error("Error uploading to Cloudinary:", error);
+      throw error;
+    }
+  };
+
+  // Handle file selection
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
     setIsUploading(true);
-    // Simulate upload delay
-    setTimeout(() => {
-      // In a real app, this would handle actual file uploads
-      const mockImageUrl = `https://source.unsplash.com/random/200x200?sig=${Date.now()}`;
-      setUserProfilePic(mockImageUrl);
+
+    try {
+      // Validate file size and type
+      if (file.size > 10 * 1024 * 1024) {
+        // 10MB
+        toast({
+          title: "File Too Large",
+          description: "Please select an image smaller than 10MB.",
+          variant: "destructive",
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        toast({
+          title: "Invalid File Type",
+          description: "Please select an image file.",
+          variant: "destructive",
+        });
+        setIsUploading(false);
+        return;
+      }
+
+      toast({
+        title: "Uploading Profile Picture",
+        description: "Please wait while we upload your image...",
+      });
+
+      // Upload to Cloudinary
+      const cloudinaryUrl = await uploadToCloudinary(file);
+
+      // Now update the profile photo in the backend
+      await handleImageUploaded(cloudinaryUrl);
+    } catch (error) {
+      console.error("Upload failed:", error);
+      toast({
+        title: "Upload Failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
       setIsUploading(false);
-      
+    }
+  };
+
+  // Trigger file input click
+  const openFileSelector = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleImageUploaded = async (cloudinaryUrl) => {
+    if (!cloudinaryUrl) return;
+
+    setIsUploading(true);
+
+    try {
+      const photoUpdateEndpoint = import.meta.env
+        .VITE_PROFILE_PHOTO_UPDATE_ENDPOINT;
+
+      const response = await axios.post(
+        photoUpdateEndpoint,
+        {
+          photo_url: cloudinaryUrl,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+
+      setUserProfilePic(cloudinaryUrl);
+
       toast({
         title: "Profile Picture Updated",
         description: "Your profile picture has been updated successfully.",
       });
-    }, 1500);
+    } catch (error) {
+      console.error("Failed to update profile picture:", error);
+
+      toast({
+        title: "Update Failed",
+        description:
+          error.response?.data?.detail ||
+          "Failed to update profile picture. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleSaveProfile = () => {
-    setUserName(profileName);
-    toast({
-      title: "Profile Updated",
-      description: "Your profile information has been updated successfully.",
-    });
-  };
-
-  const handleChangePassword = () => {
+  const handleChangePassword = async () => {
     if (newPassword !== confirmPassword) {
       toast({
         title: "Passwords Don't Match",
@@ -67,15 +246,46 @@ const Profile = () => {
       return;
     }
 
-    // In a real app, this would send to your backend
-    toast({
-      title: "Password Changed",
-      description: "Your password has been changed successfully.",
-    });
+    setIsChangingPassword(true);
 
-    setCurrentPassword("");
-    setNewPassword("");
-    setConfirmPassword("");
+    try {
+      const passwordChangeEndpoint = import.meta.env
+        .VITE_PASSWORD_CHANGE_ENDPOINT;
+
+      const response = await axios.post(
+        passwordChangeEndpoint,
+        {
+          old_password: currentPassword,
+          new_password: newPassword,
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+
+      toast({
+        title: "Password Changed",
+        description: "Your password has been changed successfully.",
+      });
+
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+    } catch (error) {
+      console.error("Failed to change password:", error);
+
+      toast({
+        title: "Password Change Failed",
+        description:
+          error.response?.data?.detail ||
+          "Please check your current password and try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
   };
 
   return (
@@ -96,37 +306,39 @@ const Profile = () => {
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="flex flex-col items-center space-y-4">
-              <div className="relative">
+              <div className="relative group">
                 <Avatar className="h-24 w-24 border-2 border-border">
                   <img
                     src={userProfilePic}
                     alt={userName}
-                    className="aspect-square h-full w-full"
+                    className="aspect-square h-full w-full object-cover"
                   />
+                  {/* Pen icon appears on hover */}
+                  <div
+                    className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                    onClick={openFileSelector}
+                  >
+                    {isUploading ? (
+                      <div className="h-6 w-6 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                    ) : (
+                      <Pencil className="h-6 w-6 text-white" />
+                    )}
+                  </div>
                 </Avatar>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="absolute bottom-0 right-0 rounded-full h-8 w-8 bg-background"
-                  onClick={handleImageUpload}
-                  disabled={isUploading}
-                >
-                  {isUploading ? (
-                    <div className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
-                  ) : (
-                    <Camera className="h-4 w-4" />
-                  )}
-                </Button>
+
+                {/* Hidden file input */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="mt-2"
-                onClick={handleImageUpload}
-                disabled={isUploading}
-              >
-                {isUploading ? "Uploading..." : "Change Profile Picture"}
-              </Button>
+
+              <p className="text-xs text-center text-muted-foreground">
+                Hover over your picture and click to change it
+              </p>
             </div>
 
             <div className="space-y-2">
@@ -134,29 +346,27 @@ const Profile = () => {
               <Input
                 id="name"
                 value={profileName}
-                onChange={(e) => setProfileName(e.target.value)}
+                disabled
+                className="bg-muted cursor-not-allowed opacity-80"
               />
+              <p className="text-xs text-muted-foreground">
+                Your full name is displayed here.
+              </p>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
-                value="johndoe@example.com"
+                value={userProfile ? userProfile.email : "Loading..."}
                 disabled
-                className="bg-muted"
+                className="bg-muted cursor-not-allowed opacity-80"
               />
               <p className="text-xs text-muted-foreground">
                 Contact an administrator to change your email address.
               </p>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button onClick={handleSaveProfile} className="ml-auto">
-              <Save className="mr-2 h-4 w-4" />
-              Save Changes
-            </Button>
-          </CardFooter>
         </Card>
 
         <Card>
@@ -242,13 +452,27 @@ const Profile = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button 
-              onClick={handleChangePassword} 
+            <Button
+              onClick={handleChangePassword}
               className="ml-auto"
-              disabled={!currentPassword || !newPassword || !confirmPassword}
+              disabled={
+                !currentPassword ||
+                !newPassword ||
+                !confirmPassword ||
+                isChangingPassword
+              }
             >
-              <Key className="mr-2 h-4 w-4" />
-              Change Password
+              {isChangingPassword ? (
+                <>
+                  <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  Changing...
+                </>
+              ) : (
+                <>
+                  <Key className="mr-2 h-4 w-4" />
+                  Change Password
+                </>
+              )}
             </Button>
           </CardFooter>
         </Card>

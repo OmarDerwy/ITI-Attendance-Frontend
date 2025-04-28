@@ -128,19 +128,22 @@ const Sidebar = () => {
     }
   };
 
-  const handleSettingsSave = async (settings: { unexcusedThreshold: number; excusedThreshold: number; programType: string }) => {
+  const handleSettingsSave = async (settings: {
+    unexcusedThreshold: number;
+    excusedThreshold: number;
+    programType: string;
+  }) => {
     try {
       console.log("Saving settings:", settings);
-      const response = await axiosBackendInstance.post("attendance/settings/absence-thresholds/update/", 
+      const response = await axiosBackendInstance.post(
+        "attendance/settings/absence-thresholds/update/",
 
         {
           program_type: settings.programType,
           unexcused_threshold: settings.unexcusedThreshold,
           excused_threshold: settings.excusedThreshold,
-        },
+        }
       );
-
-
 
       return response.data;
     } catch (error) {
@@ -164,7 +167,7 @@ const Sidebar = () => {
       to: "/student-dashboard",
       roles: ["student"],
     },
-    { icon: Home, label: "Dashboard", to: "/", roles: [ "supervisor", "admin"] },
+    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin"] },
 
     {
       icon: CalendarDays,
@@ -187,21 +190,41 @@ const Sidebar = () => {
 
     // Supervisor only
     // { icon: Brain, label: "Attendance Insights", to: "/attendance-insights", roles: ["supervisor"] },
-    { icon: UserCheck, label: "Student Verification", to: "/student-verification", roles: ["supervisor"] },
-    { icon: Clock2, label: "Attendance Status", to: "/attendance-status", roles: ["supervisor"] },
-    {icon: TriangleAlert, label: "Students with Warnings", to: "/students-with-warnings", roles: ["supervisor"]},
-    { icon: HandHeart, label: "Leave Request Center", to: "/leave-request-center", roles: ["supervisor"] },
-    
+    {
+      icon: UserCheck,
+      label: "Student Verification",
+      to: "/student-verification",
+      roles: ["supervisor"],
+    },
+    {
+      icon: Clock2,
+      label: "Attendance Status",
+      to: "/attendance-status",
+      roles: ["supervisor"],
+    },
+    {
+      icon: TriangleAlert,
+      label: "Students with Warnings",
+      to: "/students-with-warnings",
+      roles: ["supervisor"],
+    },
+    {
+      icon: HandHeart,
+      label: "Leave Request Center",
+      to: "/leave-request-center",
+      roles: ["supervisor"],
+    },
+
     { icon: Users, label: "Users", to: "/users", roles: ["admin"] },
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: BookOpen, label: "Tracks", to: "/tracks", roles: ["admin"] },
-  
-    { 
-      icon: Settings, 
-      label: "Settings", 
-      to: "#", 
+
+    {
+      icon: Settings,
+      label: "Settings",
+      to: "#",
       roles: ["admin"],
-      onClick: () => setIsSettingsOpen(true)
+      onClick: () => setIsSettingsOpen(true),
     },
     {
       icon: Flag,

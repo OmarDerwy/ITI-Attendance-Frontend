@@ -77,6 +77,46 @@ const Login = () => {
       const userRole = userResponse.data.groups[0];
       user.setUserRole(userRole);
 
+      // Fetch user profile to get first_name and last_name
+      try {
+        const profileEndpoint = import.meta.env.VITE_USER_PROFILE_ENDPOINT;
+        const profileResponse = await axios.get(profileEndpoint, {
+          headers: {
+            Authorization: `Bearer ${access}`,
+          },
+        });
+
+        // Set user's full name if available
+        if (profileResponse.data.first_name || profileResponse.data.last_name) {
+          const fullName = `${profileResponse.data.first_name || ""} ${
+            profileResponse.data.last_name || ""
+          }`.trim();
+          // Set the full name in context
+          user.setUserFullName(fullName);
+        }
+      } catch (profileError) {
+        console.error("Failed to fetch user profile details:", profileError);
+        // Don't block login flow if profile fetch fails
+      }
+
+      // Fetch user profile picture
+      try {
+        const photoGetEndpoint = import.meta.env
+          .VITE_PROFILE_PHOTO_GET_ENDPOINT;
+        const profilePhotoResponse = await axios.get(photoGetEndpoint, {
+          headers: {
+            Authorization: `Bearer ${access}`,
+          },
+        });
+
+        if (profilePhotoResponse.data && profilePhotoResponse.data.photo_url) {
+          user.setUserProfilePic(profilePhotoResponse.data.photo_url);
+        }
+      } catch (photoError) {
+        console.error("Failed to fetch profile picture:", photoError);
+        // Don't block login flow if photo fetch fails
+      }
+
       //Check if user is a student and fetch track information
       if (userRole === "student") {
         try {
