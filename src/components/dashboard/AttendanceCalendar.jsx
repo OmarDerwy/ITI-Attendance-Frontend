@@ -79,7 +79,7 @@ const AttendanceCalendar = () => {
         "late_excused",
       ].includes(status)
     ) {
-      return "bg-emerald-500 dark:bg-emerald-600";
+      return "bg-emerald-500 dark:bg-emerald-600/90"; // Enhanced dark mode
     } else if (
       [
         "check-in_early-check-out",
@@ -89,21 +89,29 @@ const AttendanceCalendar = () => {
         "check_in_active",
       ].includes(status)
     ) {
-      return "bg-emerald-300 dark:bg-emerald-500";
+      return "bg-emerald-300 dark:bg-emerald-400/90"; // Enhanced dark mode
     } else if (
-      ["late-check-in_early-check-out", "late-check-in_no-check-out"].includes(
-        status
-      )
+      ["late-check-in_early-check-out"].includes(status)
     ) {
-      return "bg-emerald-200 dark:bg-emerald-400";
+      return "bg-emerald-100 dark:bg-emerald-300/90"; // Enhanced dark mode
     }
     // Absent statuses - Red
-    else if (["absent", "excused"].includes(status)) {
-      return "bg-red-400 dark:bg-red-500";
-    } else if (["no-check-out"].includes(status)) {
-      return "bg-green-300 dark:bg-green-500";
-    } else {
-      return "bg-orange-200 dark:bg-orange-500";
+    else if (["absent"].includes(status)) {
+      return "bg-red-400 dark:bg-red-600/90"; // Enhanced dark mode
+    }
+    else if (["excused"].includes(status)) {
+      return "bg-red-200 dark:bg-red-400/90"; // Enhanced dark mode
+    }
+    
+    // Changed orange to yellow for these statuses
+    else if (["late-check-in_no-check-out"].includes(status)) {
+      return "bg-yellow-300 dark:bg-yellow-500/90";
+    }
+    else if (["no-check-out"].includes(status)) {
+      return "bg-yellow-200 dark:bg-yellow-400/90";
+    }
+    else {
+      return "bg-yellow-200 dark:bg-yellow-500/90"; // Default also changed to yellow
     }
   };
 
@@ -174,11 +182,56 @@ const AttendanceCalendar = () => {
     attendanceStats?.attendance_percentage ||
     (totalDays > 0 ? Math.round((present / totalDays) * 100) : 0);
 
+  // New animation helper function to calculate staggered delays
+  const getAnimationDelay = (rowIndex, colIndex, dayIdx) => {
+    // Base delay plus staggered time based on position
+    const baseDelay = 0.1;
+    const rowDelay = rowIndex * 0.05;
+    const colDelay = colIndex * 0.02;
+    const dayDelay = dayIdx * 0.01;
+    return `${baseDelay + rowDelay + colDelay + dayDelay}s`;
+  };
+
   return (
     <Card
-      className="border border-emerald-100 dark:border-emerald-950/30"
-      style={{ backgroundColor: "hsl(var(--card))" }}
+      className="shadow-md overflow-hidden border-2 border-emerald-200/60 dark:border-emerald-800/30 hover:border-emerald-300/70 dark:hover:border-emerald-700/40 transition-colors bg-gradient-to-b from-white to-emerald-50/50 dark:from-gray-900 dark:to-emerald-950/10"
     >
+      <style jsx global>{`
+        @keyframes fadeScale {
+          0% {
+            opacity: 0;
+            transform: scale(0.5);
+          }
+          70% {
+            transform: scale(1.1);
+          }
+          100% {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        
+        .calendar-day {
+          animation: fadeScale 0.5s ease-out forwards;
+          animation-play-state: paused;
+          opacity: 0;
+        }
+        
+        .calendar-loaded .calendar-day {
+          animation-play-state: running;
+        }
+        
+        .month-title {
+          animation: fadeScale 0.4s ease-out forwards;
+          animation-delay: 0.05s;
+          opacity: 0;
+        }
+        
+        .calendar-loaded .month-title {
+          animation-play-state: running;
+        }
+      `}</style>
+
       <CardContent className="pt-4">
         <div className="flex items-center gap-2 mb-3">
           <Calendar className="h-5 w-5 text-primary" />
@@ -193,7 +246,7 @@ const AttendanceCalendar = () => {
             <p className="text-muted-foreground">Loading data...</p>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className={`space-y-2 calendar-loaded transition-opacity duration-300`}>
             {monthRows.map((row, rowIndex) => (
               <div key={rowIndex} className="flex overflow-x-auto">
                 {row.map((month, idx) => (
@@ -201,7 +254,7 @@ const AttendanceCalendar = () => {
                     key={idx}
                     className="flex-1 min-w-0 mr-3 last:mr-0 border border-emerald-100 dark:border-emerald-900/30 rounded-md p-1.5 bg-white dark:bg-gray-900/50 shadow-xs"
                   >
-                    <div className="text-xs font-medium text-center text-emerald-700 dark:text-emerald-400 mb-1">
+                    <div className="text-xs font-medium text-center text-emerald-700 dark:text-emerald-400 mb-1 month-title">
                       {month.name} {month.year}
                     </div>
                     <div className="grid grid-cols-7">
@@ -214,20 +267,21 @@ const AttendanceCalendar = () => {
                           >
                             <div
                               className={cn(
-                                "aspect-square w-3/5 rounded-[3px]",
+                                "aspect-square w-3/5 rounded-[3px] calendar-day",
                                 day?.status && day.status !== "vacation"
                                   ? getStatusClass(day.status)
                                   : "bg-transparent",
                                 isToday(month.year, month.month, day) &&
                                   "border-2 border-yellow-500 dark:border-yellow-400"
                               )}
+                              style={{ 
+                                animationDelay: getAnimationDelay(rowIndex, idx, dayIdx) 
+                              }}
                               title={
                                 day
                                   ? `${day.day.toString().padStart(2, "0")}-${(
                                       month.month + 1
-                                    )
-                                      .toString()
-                                      .padStart(2, "0")}-${month.year}: ${
+                                    ).toString().padStart(2, "0")}-${month.year}: ${
                                       day.status || "No schedule"
                                     }`
                                   : ""
@@ -245,22 +299,22 @@ const AttendanceCalendar = () => {
 
         <div className="mt-4 border-t dark:border-t-gray-800 pt-3">
           <div className="flex flex-wrap justify-between items-start">
-            {/* Legend */}
+            {/* Legend - Updated to match new colors */}
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm">
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-emerald-500 dark:bg-emerald-600"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-500 dark:bg-emerald-600/90"></div>
                 <span>Attended</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-emerald-300 dark:bg-emerald-500"></div>
+                <div className="w-3 h-3 rounded-none bg-emerald-300 dark:bg-emerald-400/90"></div>
                 <span>Late</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-emerald-200 dark:bg-emerald-400"></div>
+                <div className="w-3 h-3 rounded-none bg-yellow-200 dark:bg-yellow-400/90"></div>
                 <span>Missing Checkout</span>
               </div>
               <div className="flex items-center gap-1">
-                <div className="w-3 h-3 rounded-none bg-red-400 dark:bg-red-500"></div>
+                <div className="w-3 h-3 rounded-none bg-red-400 dark:bg-red-600/90"></div>
                 <span>Absent</span>
               </div>
             </div>
@@ -295,54 +349,6 @@ const AttendanceCalendar = () => {
           </div>
         </div>
       </CardContent>
-      <style jsx>{`
-        /* Dark mode specific styles */
-        .dark .fc-button {
-          background-color: rgb(127, 0, 0) !important;
-          border-color: rgb(127, 0, 0) !important;
-          color: white !important;
-        }
-
-        .dark .fc-button:hover {
-          background-color: rgba(127, 0, 0, 0.8) !important;
-          border-color: rgba(127, 0, 0, 0.8) !important;
-        }
-
-        /* Fix for event borders in dark mode */
-        .dark .fc-event {
-          border: 1px solid rgb(124, 124, 124) !important;
-          border-radius: 0 !important;
-        }
-
-        /* Fix for event content borders - remove internal borders */
-        .dark .fc-event-main {
-          border-color: rgb(124, 124, 124) !important;
-          border-width: 0 !important; /* Remove internal borders */
-        }
-
-        .dark .fc-timegrid-event {
-          border-color: rgb(124, 124, 124) !important;
-          padding: 0 !important;
-          margin: 0 !important;
-          border-width: 1px 1px 1px 1px !important; /* Only keep outer border */
-        }
-
-        /* Fix for event container borders - remove internal borders */
-        .dark .fc-h-event,
-        .dark .fc-v-event,
-        .dark .fc-event-main-frame {
-          border-color: rgb(124, 124, 124) !important;
-          border-width: 0 !important; /* Remove internal borders */
-        }
-
-        /* Ensure all borders in dark mode have consistent color */
-        .dark .fc-theme-standard .fc-list-day-cushion,
-        .dark .fc-theme-standard .fc-list-table,
-        .dark .fc .fc-scrollgrid,
-        .dark .fc .fc-scrollgrid-section > * {
-          border-color: rgb(124, 124, 124) !important;
-        }
-      `}</style>
     </Card>
   );
 };
