@@ -21,36 +21,6 @@ const Login = () => {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  // useEffect(() => {
-  //   const tryRefreshToken = async () => {
-  //     if (localStorage.getItem("refresh")) {
-  //       try {
-  //         const refreshToken = localStorage.getItem('refresh');
-  //         if (!refreshToken) {
-  //           throw new Error('No refresh token available');
-  //         }
-
-  //         // Attempt to refresh the token
-  //         const response = await axios.post(
-  //           `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}accounts/auth/jwt/refresh/`,
-  //           { refresh: refreshToken }
-  //         );
-
-  //         // Update the stored access token
-  //         localStorage.setItem('access', response.data.access);
-  //         navigate("/"); // Redirect to the home page if refresh is successful
-  //       } catch (refreshError) {
-  //         // If refresh fails, clear the tokens and call the navigation callback
-  //         localStorage.removeItem('access');
-  //         localStorage.removeItem('refresh');
-  //         return Promise.reject(refreshError);
-  //       }
-  //     }
-  //   };
-
-  //   tryRefreshToken();
-  // }, [navigate]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -162,8 +132,6 @@ const Login = () => {
     }
   };
 
-  // For the red color, assuming `text-primary` uses the desired red shade from your theme.
-
   return (
     <div className="min-h-screen flex bg-background">
       {/* Left Side - Now with updated background effects */}
@@ -176,14 +144,13 @@ const Login = () => {
         {/* Content with sequenced animations */}
         <div className="relative z-10 flex flex-col items-center justify-center text-center">
           {/* Logo first (slides in from left) */}
-          <div className="flex items-center justify-center mb-8 relative">
-            {/* Show original image only in light mode */}
+          <div className="flex items-center justify-center mb-8">
             <img
               src="/images/trackIt.png"
               alt="ITI Logo"
               className="login-logo w-110 h-32 object-contain mr-4 dark:hidden"
             />
-
+            
             {/* Add colored text with ITI logo in dark mode */}
             <div className="login-logo hidden dark:flex items-center justify-center mr-4">
               <div className="flex items-center">
@@ -220,17 +187,16 @@ const Login = () => {
           >
             Knowledge City
           </h2>
-
+          
           {/* Track name appears third */}
           <p className="login-track text-xl text-muted-foreground mb-6">
             Track Full Stack using Python
           </p>
-
+          
           {/* Description appears last */}
           <p className="login-description text-base text-muted-foreground/90 max-w-md">
-            Streamline your experience with integrated tools for attendance
-            management, lost & found items, leave request handling, insightful
-            dashboards, and more.
+            Streamline your experience with integrated tools for attendance management,
+            lost & found items, leave request handling, insightful dashboards, and more.
           </p>
         </div>
       </div>
@@ -274,7 +240,7 @@ const Login = () => {
                       onChange={(e) => setEmail(e.target.value)}
                       required
                       autoComplete="email"
-                      className="h-11 pl-10 bg-background dark:bg-background text-foreground dark:text-foreground"
+                      className="h-11 pl-10"
                     />
                   </div>
                 </div>
@@ -303,7 +269,7 @@ const Login = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="current-password"
-                      className="h-11 pl-10 pr-10 bg-background dark:bg-background text-foreground dark:text-foreground"
+                      className="h-11 pl-10 pr-10"
                     />
                     <button
                       type="button"
