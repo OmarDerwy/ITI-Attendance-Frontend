@@ -345,8 +345,33 @@ const StudentSchedule = () => {
         }
 
         .dark .fc-event {
-          border: 0 !important;
+          border: 1px solid rgb(124, 124, 124) !important;
           border-radius: 0 !important;
+        }
+
+        .dark .fc-timegrid-event {
+          border-color: rgb(124, 124, 124) !important;
+          padding: 0 !important;
+          margin: 0 !important;
+        }
+
+        /* Box shadow for time grid events - only in dark mode */
+        .dark .fc-timegrid-event-harness-inset .fc-timegrid-event,
+        .dark .fc-timegrid-event.fc-event-mirror,
+        .dark .fc-timegrid-more-link {
+          box-shadow: 0 0 0 1px rgb(124, 124, 124) !important;
+        }
+
+        /* Fix for event container borders */
+        .dark .fc-h-event,
+        .dark .fc-v-event,
+        .dark .fc-event-main-frame {
+          border-color: rgb(124, 124, 124) !important;
+        }
+
+        /* Fix for event content borders */
+        .dark .fc-event-main {
+          border-color: rgb(124, 124, 124) !important;
         }
 
         .fc-event-title {
@@ -359,27 +384,7 @@ const StudentSchedule = () => {
           height: auto !important;
         }
 
-        .dark .fc-timegrid-event {
-          border: none !important;
-          padding: 0 !important;
-          margin: 0 !important;
-        }
-
-        .dark .fc td,
-        .dark .fc th {
-          border-style: solid !important;
-          border-color: var(--border) !important;
-        }
-
-        .fc-timegrid-slot {
-          height: 3em !important;
-        }
-
-        .dark .fc-timegrid-col-frame {
-          border: none !important;
-        }
-
-        .fc-timegrid-now-indicator-line {
+        .dark .fc-timegrid-now-indicator-line {
           border-color: #ef4444 !important;
           border-width: 2px !important;
         }

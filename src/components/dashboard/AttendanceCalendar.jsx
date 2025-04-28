@@ -295,6 +295,54 @@ const AttendanceCalendar = () => {
           </div>
         </div>
       </CardContent>
+      <style jsx>{`
+        /* Dark mode specific styles */
+        .dark .fc-button {
+          background-color: rgb(127, 0, 0) !important;
+          border-color: rgb(127, 0, 0) !important;
+          color: white !important;
+        }
+
+        .dark .fc-button:hover {
+          background-color: rgba(127, 0, 0, 0.8) !important;
+          border-color: rgba(127, 0, 0, 0.8) !important;
+        }
+
+        /* Fix for event borders in dark mode */
+        .dark .fc-event {
+          border: 1px solid rgb(124, 124, 124) !important;
+          border-radius: 0 !important;
+        }
+
+        /* Fix for event content borders - remove internal borders */
+        .dark .fc-event-main {
+          border-color: rgb(124, 124, 124) !important;
+          border-width: 0 !important; /* Remove internal borders */
+        }
+
+        .dark .fc-timegrid-event {
+          border-color: rgb(124, 124, 124) !important;
+          padding: 0 !important;
+          margin: 0 !important;
+          border-width: 1px 1px 1px 1px !important; /* Only keep outer border */
+        }
+
+        /* Fix for event container borders - remove internal borders */
+        .dark .fc-h-event,
+        .dark .fc-v-event,
+        .dark .fc-event-main-frame {
+          border-color: rgb(124, 124, 124) !important;
+          border-width: 0 !important; /* Remove internal borders */
+        }
+
+        /* Ensure all borders in dark mode have consistent color */
+        .dark .fc-theme-standard .fc-list-day-cushion,
+        .dark .fc-theme-standard .fc-list-table,
+        .dark .fc .fc-scrollgrid,
+        .dark .fc .fc-scrollgrid-section > * {
+          border-color: rgb(124, 124, 124) !important;
+        }
+      `}</style>
     </Card>
   );
 };

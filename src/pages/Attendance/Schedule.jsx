@@ -1130,9 +1130,16 @@ const Schedule = () => {
           border-color: rgba(127, 0, 0, 0.8) !important;
         }
 
+        /* Fix for event borders in dark mode */
         .dark .fc-event {
-          border: 0 !important;
+          border: 1px solid rgb(124, 124, 124) !important;
           border-radius: 0 !important;
+        }
+
+        /* Fix for event content borders */
+        .dark .fc-event-main {
+          border-color: rgb(124, 124, 124) !important;
+          border-width: 0 !important; /* Remove internal borders */
         }
 
         .fc-event-title {
@@ -1146,28 +1153,109 @@ const Schedule = () => {
         }
 
         .dark .fc-timegrid-event {
-          border: none !important;
+          border-color: rgb(124, 124, 124) !important;
           padding: 0 !important;
           margin: 0 !important;
+          border-width: 1px 1px 1px 1px !important; /* Only keep outer border */
         }
 
-        .dark .fc td,
-        .dark .fc th {
-          border-style: solid !important;
-          border-color: var(--border) !important;
+        /* Box shadow for time grid events - only in dark mode */
+        .dark .fc-timegrid-event-harness-inset .fc-timegrid-event,
+        .dark .fc-timegrid-event.fc-event-mirror,
+        .dark .fc-timegrid-more-link {
+          box-shadow: 0 0 0 1px rgb(124, 124, 124) !important;
         }
 
-        .fc-timegrid-slot {
-          height: 3em !important;
+        /* Fix for event container borders */
+        .dark .fc-h-event,
+        .dark .fc-v-event,
+        .dark .fc-event-main-frame {
+          border-color: rgb(124, 124, 124) !important;
+          border-width: 0 !important; /* Remove internal borders */
         }
 
-        .dark .fc-timegrid-col-frame {
-          border: none !important;
+        /* Comprehensive fix for all borders in dark mode */
+        .dark .fc .fc-scrollgrid,
+        .dark .fc .fc-scrollgrid-section,
+        .dark .fc .fc-scrollgrid-section > *,
+        .dark .fc .fc-scrollgrid-section-header,
+        .dark .fc .fc-scrollgrid-section-header th,
+        .dark .fc .fc-scrollgrid-section-header td,
+        .dark .fc .fc-scrollgrid-section-body,
+        .dark .fc .fc-scrollgrid-section-footer,
+        .dark .fc .fc-daygrid-body,
+        .dark .fc .fc-scrollgrid-sync-table,
+        .dark .fc .fc-timegrid-body,
+        .dark .fc .fc-timegrid-body .fc-timegrid-cols,
+        .dark .fc .fc-timegrid-body .fc-timegrid-cols > table,
+        .dark .fc .fc-timegrid-body .fc-timegrid-col,
+        .dark .fc .fc-timegrid-slots,
+        .dark .fc .fc-timegrid-slots table,
+        .dark .fc .fc-timegrid-slot,
+        .dark .fc .fc-timegrid-slot-lane,
+        .dark .fc .fc-timegrid-slot-minor,
+        .dark .fc .fc-timegrid-axis,
+        .dark .fc .fc-col-header,
+        .dark .fc .fc-col-header-cell,
+        .dark .fc .fc-daygrid-day-frame,
+        .dark .fc .fc-daygrid-day-events,
+        .dark .fc .fc-daygrid-day-bg {
+          border-color: rgb(124, 124, 124) !important;
         }
 
-        .fc-timegrid-now-indicator-line {
-          border-color: #ef4444 !important;
-          border-width: 2px !important;
+        /* Force vertical borders to appear */
+        .dark .fc .fc-scrollgrid-section-body table,
+        .dark .fc .fc-scrollgrid-section-footer table,
+        .dark .fc .fc-timegrid-cols,
+        .dark .fc .fc-timegrid-cols table,
+        .dark .fc .fc-timegrid-cols > table,
+        .dark .fc .fc-daygrid-body > table {
+          border-collapse: separate !important;
+          border-spacing: 0 !important;
+        }
+
+        .dark .fc .fc-timegrid-col,
+        .dark .fc .fc-timegrid-slot-col,
+        .dark .fc .fc-col-header-cell,
+        .dark .fc .fc-daygrid-day {
+          border-left: 1px solid rgb(124, 124, 124) !important;
+          border-right: 1px solid rgb(124, 124, 124) !important;
+        }
+
+        .dark .fc .fc-timegrid-col:first-child,
+        .dark .fc .fc-daygrid-day:first-child {
+          border-left: 1px solid rgb(124, 124, 124) !important;
+        }
+
+        .dark .fc .fc-timegrid-col:last-child,
+        .dark .fc .fc-daygrid-day:last-child {
+          border-right: 1px solid rgb(124, 124, 124) !important;
+        }
+
+        .dark .fc .fc-scrollgrid {
+          border: 1px solid rgb(124, 124, 124) !important;
+          overflow: hidden !important;
+        }
+
+        /* Fix for white corner in dark mode */
+        .dark .fc .fc-scrollgrid-section-header > th,
+        .dark .fc .fc-scrollgrid-section-header > td,
+        .dark .fc .fc-col-header-cell,
+        .dark .fc .fc-timegrid-axis,
+        .dark .fc .fc-timegrid-axis-frame,
+        .dark .fc .fc-timegrid-axis-cushion,
+        .dark .fc .fc-scrollgrid-section > td,
+        .dark .fc .fc-col-header-cell-cushion,
+        .dark .fc .fc-scrollgrid-sync-inner,
+        .dark .fc-theme-standard .fc-scrollgrid,
+        .dark .fc .fc-view-harness,
+        .dark .fc .fc-view-harness-active {
+          background-color: hsl(var(--background)) !important;
+        }
+
+        /* Add border to the header corner cell */
+        .dark .fc-timegrid-axis.fc-scrollgrid-shrink {
+          border: 1px solid rgb(124, 124, 124) !important;
         }
       `}</style>
     </Layout>

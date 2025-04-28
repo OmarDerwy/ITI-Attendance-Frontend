@@ -13,9 +13,10 @@ import {
   ChevronLeft,
   ChevronRight,
   Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Layout from "@/components/layout/Layout.jsx";
 import PageTitle from "@/components/ui/page-title";
 import { Input } from "@/components/ui/input";
@@ -88,7 +89,9 @@ const LostFound = () => {
   const fetchLostItems = async (page = 1, search = "") => {
     console.log("Fetching lost items for page:", page, "search:", search);
     const response = await axios.get(
-      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/lost-items/?page=${page}&search=${search}`,
+      `${
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+      }lost-and-found/lost-items/?page=${page}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -100,7 +103,9 @@ const LostFound = () => {
 
   const fetchFoundItems = async (page = 1, search = "") => {
     const response = await axios.get(
-      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/found-items/?page=${page}&search=${search}`,
+      `${
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+      }lost-and-found/found-items/?page=${page}&search=${search}`,
       {
         headers: {
           Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -112,7 +117,9 @@ const LostFound = () => {
 
   const fetchMatchedItems = async (page = 1, search = "") => {
     const response = await axios.get(
-      `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/?page=${page}${
+      `${
+        import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+      }lost-and-found/matched-items/?page=${page}${
         search ? `&search=${search}` : ""
       }`,
       {
@@ -313,6 +320,21 @@ const LostFound = () => {
     }
   };
 
+  const queryClient = useQueryClient();
+
+  // Add refresh function to refetch all data and reset pagination
+  const handleRefreshAll = () => {
+    // Reset all page states
+    setLostItemsPage(1);
+    setFoundItemsPage(1);
+    setMatchedItemsPage(1);
+
+    // Invalidate and refetch all queries
+    queryClient.invalidateQueries({ queryKey: ["lostItems"] });
+    queryClient.invalidateQueries({ queryKey: ["foundItems"] });
+    queryClient.invalidateQueries({ queryKey: ["matchedItems"] });
+  };
+
   return (
     <Layout>
       <PageTitle
@@ -327,8 +349,8 @@ const LostFound = () => {
         }
       />
 
-      <div className="mb-6">
-        <div className="relative">
+      <div className="mb-6 flex justify-between items-center">
+        <div className="relative flex-1 mr-4">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
             placeholder={
@@ -342,6 +364,14 @@ const LostFound = () => {
             disabled={activeTab === "matched"}
           />
         </div>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={handleRefreshAll}
+          title="Refresh all items"
+        >
+          <RefreshCw className="h-4 w-4" />
+        </Button>
       </div>
 
       <Tabs
