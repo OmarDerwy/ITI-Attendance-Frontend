@@ -79,7 +79,8 @@ const Login = () => {
 
       // Fetch user profile to get first_name and last_name
       try {
-        const profileEndpoint = import.meta.env.VITE_USER_PROFILE_ENDPOINT;
+        const baseApiUrl = import.meta.env.VITE_API_BASE_URL;
+        const profileEndpoint = `${baseApiUrl}accounts/users/profile/`;
         const profileResponse = await axios.get(profileEndpoint, {
           headers: {
             Authorization: `Bearer ${access}`,
@@ -101,8 +102,8 @@ const Login = () => {
 
       // Fetch user profile picture
       try {
-        const photoGetEndpoint = import.meta.env
-          .VITE_PROFILE_PHOTO_GET_ENDPOINT;
+        const baseApiUrl = import.meta.env.VITE_API_BASE_URL;
+        const photoGetEndpoint = `${baseApiUrl}accounts/users/photo/`;
         const profilePhotoResponse = await axios.get(photoGetEndpoint, {
           headers: {
             Authorization: `Bearer ${access}`,

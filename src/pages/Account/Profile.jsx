@@ -45,7 +45,8 @@ const Profile = () => {
     const fetchUserProfile = async () => {
       setIsLoadingProfile(true);
       try {
-        const profileEndpoint = import.meta.env.VITE_USER_PROFILE_ENDPOINT;
+        const baseApiUrl = import.meta.env.VITE_API_BASE_URL;
+        const profileEndpoint = `${baseApiUrl}accounts/users/profile/`;
         const response = await axios.get(profileEndpoint, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -82,8 +83,8 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfilePicture = async () => {
       try {
-        const photoGetEndpoint = import.meta.env
-          .VITE_PROFILE_PHOTO_GET_ENDPOINT;
+        const baseApiUrl = import.meta.env.VITE_API_BASE_URL;
+        const photoGetEndpoint = `${baseApiUrl}accounts/users/photo/`;
         const response = await axios.get(photoGetEndpoint, {
           headers: {
             Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -191,8 +192,8 @@ const Profile = () => {
     setIsUploading(true);
 
     try {
-      const photoUpdateEndpoint = import.meta.env
-        .VITE_PROFILE_PHOTO_UPDATE_ENDPOINT;
+      const baseApiUrl = import.meta.env.VITE_API_BASE_URL;
+      const photoUpdateEndpoint = `${baseApiUrl}accounts/users/update-photo/`;
 
       const response = await axios.post(
         photoUpdateEndpoint,
@@ -249,8 +250,8 @@ const Profile = () => {
     setIsChangingPassword(true);
 
     try {
-      const passwordChangeEndpoint = import.meta.env
-        .VITE_PASSWORD_CHANGE_ENDPOINT;
+      const baseApiUrl = import.meta.env.VITE_API_BASE_URL;
+      const passwordChangeEndpoint = `${baseApiUrl}accounts/users/change-password/`;
 
       const response = await axios.post(
         passwordChangeEndpoint,
