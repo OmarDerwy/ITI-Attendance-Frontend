@@ -6,7 +6,7 @@
 
 @layer base {
   :root {
-    --background: #F9F9F9; /* This is slate-50 in hsl format */
+    --background: 0 0% 98%; /* This is slate-50 in hsl format */
     --foreground: 0 10% 10%;
 
     --card: 0 0% 100%;
