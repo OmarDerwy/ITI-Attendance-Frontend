@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { axiosBackendInstance } from "../api/config";
+import { toast } from 'sonner';
 
 const UserContext = createContext(undefined);
 
@@ -14,6 +15,7 @@ export const UserProvider = ({ children }) => {
   const [readAnnouncements, setReadAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [studentTrack, setStudentTrack] = useState(null);
+  const [attendanceStats, setAttendanceStats] = useState(null);
 
   const addUserItem = (item) => {
     setUserItems([...userItems, item]);
@@ -30,7 +32,24 @@ export const UserProvider = ({ children }) => {
   const deleteUserItem = (id) => {
     setUserItems(userItems.filter((item) => item.id !== id));
   };
-
+  const fetchAttendanceStats = async () => {
+    if (userRole === 'student' && userId) {
+      try {
+        const response = await axiosBackendInstance.get('attendance/attendance-stats/');
+        if (response.data) {
+          setAttendanceStats(response.data);
+          // Optionally store in localStorage if needed
+          localStorage.setItem('attendanceStats', JSON.stringify(response.data));
+        }
+        return response.data;
+      } catch (error) {
+        console.error("Failed to fetch attendance statistics:", error);
+        toast.error("Could not retrieve attendance statistics");
+        return null;
+      }
+    }
+    return null;
+  };
   const addAnnouncement = (announcement) => {
     setUserAnnouncements([announcement, ...userAnnouncements]);
   };
@@ -150,6 +169,9 @@ export const UserProvider = ({ children }) => {
         isLoading,
         logout,
         studentTrack,
+        attendanceStats,
+        setAttendanceStats,
+        fetchAttendanceStats,
         setStudentTrack,
       }}
     >
