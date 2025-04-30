@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const RecentAbsences = ({ absences = [], onViewAll, selectedTrack, onTrackChange, tracks }) => {
   // Limit to 3 absences
   const limitedAbsences = absences.slice(0, 3);
-  console.log("Recent absences:", limitedAbsences);
   const today = new Date().toISOString().split('T')[0];
 
   return (
