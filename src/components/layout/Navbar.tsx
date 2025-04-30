@@ -228,11 +228,9 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                   notifications.map((notification) => (
                     <div
                       key={notification.id}
-                      className={`border-b p-3 cursor-pointer ${
-                        notification.is_read
-                          ? "bg-secondary/100 hover:bg-muted/50"
-                          : "bg-secondary/10 hover:bg-secondary font-bold"
-                      }`}
+                      className={`border-b p-3 cursor-pointer bg-secondary/10 hover:bg-muted/50
+                      ${notification.is_read ? "opacity-50" : ""}
+                      `}
                       onClick={() => handleMarkAsRead(notification.id)}
                     >
                       <p className="text-sm">{notification.message}</p>
