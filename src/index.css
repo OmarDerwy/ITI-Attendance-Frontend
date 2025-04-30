@@ -51,6 +51,19 @@
     --sidebar-accent-foreground: 0 72% 45%;
     --sidebar-border: 0 0% 92%;
     --sidebar-ring: 0 72% 51%;
+
+    --detail-card-bg: 48 100% 96%; /* Light yellowish background */
+    --detail-card-border: 48 100% 90%; /* Light yellow border */
+
+    /* Dashboard card colors (light mode) */
+    --card-attendance-bg: 160 84% 94%;      /* emerald-50 */
+    --card-attendance-text: 160 84% 27%;    /* emerald-700 */
+    --card-weekly-bg: 217 96% 95%;          /* blue-50 */
+    --card-weekly-text: 217 91% 60%;        /* blue-700 */
+    --card-permission-bg: 42 100% 95%;      /* amber-50 */
+    --card-permission-text: 42 100% 40%;    /* amber-700 */
+    --card-warning-bg: 0 85% 95%;           /* red-50 */
+    --card-warning-text: 0 84% 60%;         /* red-700 */
   }
 
   .dark {
@@ -90,6 +103,19 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 0 10% 20%;
     --sidebar-ring: 0 72% 51%;
+
+    --detail-card-bg: 48 15% 18%; /* Muted yellow/dark background */
+    --detail-card-border: 48 15% 28%; /* Muted yellow/dark border */
+
+    /* Dashboard card colors (dark mode) */
+    --card-attendance-bg: 160 84% 15%;      /* emerald-900/30 */
+    --card-attendance-text: 160 84% 60%;    /* emerald-400 */
+    --card-weekly-bg: 217 91% 20%;          /* blue-900/30 */
+    --card-weekly-text: 217 91% 70%;        /* blue-400 */
+    --card-permission-bg: 42 100% 20%;      /* amber-900/30 */
+    --card-permission-text: 42 100% 70%;    /* amber-400 */
+    --card-warning-bg: 0 85% 20%;           /* red-900/30 */
+    --card-warning-text: 0 84% 80%;         /* red-400 */
   }
 }
 

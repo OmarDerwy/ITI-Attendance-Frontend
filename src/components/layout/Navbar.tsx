@@ -52,8 +52,19 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   const token = localStorage.getItem("access");
   const navigate = useNavigate();
 
+  // Helper to get the effective theme (light/dark) if theme is 'system'
+  const getEffectiveTheme = () => {
+    if (theme === "system") {
+      return window.matchMedia("(prefers-color-scheme: dark)").matches
+        ? "dark"
+        : "light";
+    }
+    return theme;
+  };
+
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    const effectiveTheme = getEffectiveTheme();
+    setTheme(effectiveTheme === "dark" ? "light" : "dark");
   };
 
   if (import.meta.env.VITE_ENABLE_NOTIFICATIONS === "true") {
@@ -219,8 +230,8 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                       key={notification.id}
                       className={`border-b p-3 cursor-pointer ${
                         notification.is_read
-                          ? "bg-white hover:bg-muted/50"
-                          : "bg-gray-100 hover:bg-gray-200 font-bold"
+                          ? "bg-secondary/100 hover:bg-muted/50"
+                          : "bg-secondary/10 hover:bg-secondary font-bold"
                       }`}
                       onClick={() => handleMarkAsRead(notification.id)}
                     >
@@ -257,7 +268,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
             onClick={toggleTheme}
             className="rounded-full p-1.5 hover:bg-muted transition-colors"
           >
-            {theme === "dark" ? (
+            {theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches) ? (
               <Sun className="h-5 w-5" />
             ) : (
               <Moon className="h-5 w-5" />
