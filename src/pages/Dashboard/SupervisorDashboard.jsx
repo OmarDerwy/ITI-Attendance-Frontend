@@ -297,59 +297,125 @@ const SupervisorDashboard = () => {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-lg p-4 text-center border border-emerald-200">
+        <Card
+          style={{
+            backgroundColor: "hsl(var(--card-attendance-bg))",
+            color: "hsl(var(--card-attendance-text))",
+            border: "1px solid hsl(var(--border))",
+          }}
+          className="rounded-lg p-4 text-center"
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
-              <div className="h-8 w-8 rounded-full bg-emerald-700 flex items-center justify-center text-white">
+              <div
+                className="h-8 w-8 rounded-full flex items-center justify-center text-white"
+                style={{ backgroundColor: "hsl(var(--card-attendance-text))" }}
+              >
                 <Check className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-emerald-700">
+            <div
+              className="text-2xl font-bold"
+              style={{ color: "hsl(var(--card-attendance-text))" }}
+            >
               {isLoading || todayAttendance == null
-                ? 'Loading...'
+                ? "Loading..."
                 : `${todayAttendance.attendance_percentage ?? 0}%`}
             </div>
-            <CardDescription>Today's Attendance</CardDescription>
+            <CardDescription style={{ color: "hsl(var(--muted-foreground))" }}>
+              Today's Attendance
+            </CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 text-center border border-blue-200">
+        <Card
+          style={{
+            backgroundColor: "hsl(var(--card-weekly-bg))",
+            color: "hsl(var(--card-weekly-text))",
+            border: "1px solid hsl(var(--border))",
+          }}
+          className="rounded-lg p-4 text-center"
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
-              <div className="h-8 w-8 rounded-full bg-blue-700 flex items-center justify-center text-white">
+              <div
+                className="h-8 w-8 rounded-full flex items-center justify-center text-white"
+                style={{ backgroundColor: "hsl(var(--card-weekly-text))" }}
+              >
                 <BarChart3 className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-blue-700">
-              {weeklyLoading || !weeklyAttendance ? 'Loading...' : `${weeklyAttendance?.attendance_percentage ?? 0}%`}
+            <div
+              className="text-2xl font-bold"
+              style={{ color: "hsl(var(--card-weekly-text))" }}
+            >
+              {weeklyLoading || !weeklyAttendance
+                ? "Loading..."
+                : `${weeklyAttendance?.attendance_percentage ?? 0}%`}
             </div>
-            <CardDescription>Weekly Average</CardDescription>
+            <CardDescription style={{ color: "hsl(var(--muted-foreground))" }}>
+              Weekly Average
+            </CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-amber-50 to-amber-100 rounded-lg p-4 text-center border border-amber-200">
+        <Card
+          style={{
+            backgroundColor: "hsl(var(--card-permission-bg))",
+            color: "hsl(var(--card-permission-text))",
+            border: "1px solid hsl(var(--border))",
+          }}
+          className="rounded-lg p-4 text-center"
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
-              <div className="h-8 w-8 rounded-full bg-amber-700 flex items-center justify-center text-white">
+              <div
+                className="h-8 w-8 rounded-full flex items-center justify-center text-white"
+                style={{ backgroundColor: "hsl(var(--card-permission-text))" }}
+              >
                 <HandHeart className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-amber-700">{permissionsLoading || totalPendingPermissions === null ? 'Loading...' : `${totalPendingPermissions}`}</div>
-            <CardDescription>permission Requests</CardDescription>
+            <div
+              className="text-2xl font-bold"
+              style={{ color: "hsl(var(--card-permission-text))" }}
+            >
+              {permissionsLoading || totalPendingPermissions === null
+                ? "Loading..."
+                : `${totalPendingPermissions}`}
+            </div>
+            <CardDescription style={{ color: "hsl(var(--muted-foreground))" }}>
+              permission Requests
+            </CardDescription>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-red-50 to-red-100 rounded-lg p-4 text-center border border-red-200">
+        <Card
+          style={{
+            backgroundColor: "hsl(var(--card-warning-bg))",
+            color: "hsl(var(--card-warning-text))",
+            border: "1px solid hsl(var(--border))",
+          }}
+          className="rounded-lg p-4 text-center"
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-center mb-2">
-              <div className="h-8 w-8 rounded-full bg-red-700 flex items-center justify-center text-white">
+              <div
+                className="h-8 w-8 rounded-full flex items-center justify-center text-white"
+                style={{ backgroundColor: "hsl(var(--card-warning-text))" }}
+              >
                 <AlertTriangle className="h-5 w-5" />
               </div>
             </div>
-            <div className="text-2xl font-bold text-red-700">
-              {isLoading ? 'Loading...' : warningsCount || 0}
+            <div
+              className="text-2xl font-bold"
+              style={{ color: "hsl(var(--card-warning-text))" }}
+            >
+              {isLoading ? "Loading..." : warningsCount || 0}
             </div>
-            <CardDescription>Students with Warnings</CardDescription>
+            <CardDescription style={{ color: "hsl(var(--muted-foreground))" }}>
+              Students with Warnings
+            </CardDescription>
           </CardContent>
         </Card>
       </div>

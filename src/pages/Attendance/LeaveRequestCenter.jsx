@@ -288,7 +288,13 @@ function LeaveRequestCenter() {
                           {selectedRequest === request.id && (
                             <tr>
                               <td colSpan={5} className="p-0 border-0">
-                                <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4 shadow-sm m-2">
+                                <div
+                                  className="rounded-md p-4 shadow-sm m-2"
+                                  style={{
+                                    backgroundColor: "hsl(var(--detail-card-bg))",
+                                    border: "1px solid hsl(var(--detail-card-border))"
+                                  }}
+                                >
                                   <div className="gap-4 mb-4">
                                     <div className="text-right">
                                       <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-sm">
