@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import axios from "axios";
-import { ArrowLeft, Calendar, MapPin, User, Phone } from "lucide-react";
+import { ArrowLeft, Calendar, MapPin, User, Phone, Trash } from "lucide-react";
 import { format } from "date-fns";
 import Layout from "@/components/layout/Layout";
 import PageTitle from "@/components/ui/page-title";
@@ -21,6 +21,7 @@ const ItemDetail = () => {
   const [error, setError] = useState(null);
   const [user, setUser] = useState(null);
   const [showContact, setShowContact] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const { toast } = useToast();
 
   const DEFAULT_IMAGE_URL =
@@ -32,8 +33,14 @@ const ItemDetail = () => {
       try {
         const endpoint =
           type === "lost"
-            ? `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/lost-items/${id}/`
-            : `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/found-items/${id}/`;
+            ? `${
+                import.meta.env.VITE_API_BASE_URL ||
+                "http://localhost:8000/api/v1/"
+              }lost-and-found/lost-items/${id}/`
+            : `${
+                import.meta.env.VITE_API_BASE_URL ||
+                "http://localhost:8000/api/v1/"
+              }lost-and-found/found-items/${id}/`;
 
         const response = await axios.get(endpoint, {
           headers: {
@@ -57,7 +64,9 @@ const ItemDetail = () => {
     const fetchUserDetails = async (userId) => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}accounts/auth/users/${userId}/`,
+          `${
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+          }accounts/auth/users/${userId}/`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -118,6 +127,47 @@ const ItemDetail = () => {
         description: "The phone number has been copied to your clipboard.",
       });
     });
+  };
+
+  const handleDeleteItem = async () => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this item? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      await axios.delete(
+        `${import.meta.env.VITE_API_BASE_URL}lost-and-found/lost-items/${id}/`,
+        {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("access")}`,
+          },
+        }
+      );
+
+      toast({
+        title: "Item Deleted",
+        description: "The item has been successfully deleted.",
+      });
+
+      // Navigate back to the lost and found page
+      navigate("/lost-found");
+    } catch (err) {
+      console.error("Error deleting item:", err);
+      toast({
+        title: "Error",
+        description: `Failed to delete item: ${
+          err.response?.data?.message || err.message
+        }`,
+        variant: "destructive",
+      });
+    } finally {
+      setDeleting(false);
+    }
   };
 
   return (
@@ -242,6 +292,24 @@ const ItemDetail = () => {
                 >
                   Go Back
                 </Button>
+
+                {item.status === "LOST" || item.status === "FOUND" ? (
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleDeleteItem}
+                    disabled={deleting}
+                  >
+                    {deleting ? (
+                      "Deleting..."
+                    ) : (
+                      <>
+                        <Trash className="w-4 h-4 mr-2" />
+                        Delete Item
+                      </>
+                    )}
+                  </Button>
+                ) : null}
               </div>
             </CardContent>
           </Card>
