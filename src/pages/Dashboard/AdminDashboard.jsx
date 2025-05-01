@@ -173,67 +173,98 @@ const AdminDashboard = () => {
   });
 
   useEffect(() => {
-    if (dailyTrendsData) {
+    if (dailyTrendsData?.daily_trends) {
       console.log("Raw Daily Trends Data in useEffect:", dailyTrendsData);
 
       const currentDate = new Date();
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(currentDate.getDate() - 7);
 
-      console.log("Date Range:", {
-        currentDate,
-        sevenDaysAgo,
-      });
+      // First, group by date and sum attended/expected
+      const dailyAggregated = dailyTrendsData.daily_trends.reduce((acc, curr) => {
+        // Skip if track doesn't match selected track (when a track is selected)
+        if (selectedDailyTrendTrack !== "all" && 
+            curr.track !== tracksData?.find(t => t.id.toString() === selectedDailyTrendTrack)?.name) {
+          return acc;
+        }
 
-      // Get total students for percentage calculation
-      const totalStudents = todayAttendance?.total_students || 0;
+        const date = curr.date;
+        if (!acc[date]) {
+          acc[date] = {
+            date: date,
+            attended: 0,
+            expected: 0
+          };
+        }
+        acc[date].attended += curr.attended;
+        acc[date].expected += curr.expected;
+        return acc;
+      }, {});
 
-      // Transform daily trends into percentages
-      const dailyFiltered = dailyTrendsData.daily_trends
+      // Then transform into array with percentages
+      const dailyFiltered = Object.values(dailyAggregated)
         .filter((dayData) => {
           const dayDate = new Date(dayData.date);
           return dayDate >= sevenDaysAgo && dayDate <= currentDate;
         })
         .map((dayData) => ({
-          date: dayData.date,
-          attendance_percentage:
-            totalStudents > 0
-              ? Math.round((dayData.attended / totalStudents) * 100)
-              : 0,
-        }));
+          date: new Date(dayData.date).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric'
+          }),
+          attendance_percentage: dayData.expected > 0
+            ? Math.round((dayData.attended / dayData.expected) * 100 * 100) / 100
+            : 0
+        }))
+        .sort((a, b) => new Date(a.date) - new Date(b.date));
 
       console.log("Transformed Daily Data:", dailyFiltered);
       setDailyTrends(dailyFiltered);
     }
-  }, [dailyTrendsData, todayAttendance]);
+  }, [dailyTrendsData, selectedDailyTrendTrack, tracksData]);
 
   useEffect(() => {
-    if (weeklyTrendsData) {
-      const currentDate = new Date();
-      const fourWeeksAgo = new Date();
-      fourWeeksAgo.setDate(currentDate.getDate() - 28);
+    if (weeklyTrendsData?.weekly_trends) {
+      console.log("Raw Weekly Trends Data in useEffect:", weeklyTrendsData);
+      
+      // Group data by week
+      const weeklyData = weeklyTrendsData.weekly_trends.reduce((acc, curr) => {
+        // Skip if track doesn't match selected track (when a track is selected)
+        if (selectedWeeklyTrendTrack !== "all" && 
+            curr.track !== tracksData?.find(t => t.id.toString() === selectedWeeklyTrendTrack)?.name) {
+          return acc;
+        }
 
-      // Get total students for percentage calculation
-      const totalStudents = todayAttendance?.total_students || 0;
+        const weekNum = curr.week;
+        if (!acc[weekNum]) {
+          acc[weekNum] = {
+            week: `Week ${weekNum}`,
+            attended: 0,
+            expected: 0
+          };
+        }
+        
+        // Sum up attended and expected counts
+        acc[weekNum].attended += curr.attended;
+        acc[weekNum].expected += curr.expected;
+        return acc;
+      }, {});
 
-      // Transform weekly trends into percentages
-      const weeklyFiltered = weeklyTrendsData.weekly_trends
-        .filter((weekData) => {
-          const weekDate = new Date(weekData.week);
-          return weekDate >= fourWeeksAgo && weekDate <= currentDate;
-        })
-        .map((weekData) => ({
-          week: weekData.week,
-          attendance_percentage:
-            totalStudents > 0
-              ? Math.round((weekData.attended / (totalStudents * 5)) * 100)
-              : 0,
+      // Convert to array and calculate percentages with 2 decimal precision
+      const weeklyFiltered = Object.entries(weeklyData)
+        .sort(([weekA], [weekB]) => parseInt(weekA) - parseInt(weekB))
+        .map(([weekNum, data]) => ({
+          week: data.week,
+          attendance_percentage: data.expected > 0 
+            ? Math.round((data.attended / data.expected) * 100 * 100) / 100
+            : 0
         }));
 
+      console.log("Weekly aggregated data:", weeklyData);
       console.log("Transformed Weekly Data:", weeklyFiltered);
       setFilteredData(weeklyFiltered);
     }
-  }, [weeklyTrendsData, todayAttendance]);
+  }, [weeklyTrendsData, selectedWeeklyTrendTrack, tracksData]);
 
   useEffect(() => {
     if (tracksData && tracksData.length > 0 && branchesData) {
@@ -504,14 +535,24 @@ const AdminDashboard = () => {
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={dailyTrends}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="date" />
-                    <YAxis domain={[60, 100]} />
-                    <Tooltip
-                      formatter={(value) => [`${value}%`, "Attendance Rate"]}
+                    <XAxis 
+                      dataKey="date"
+                      tickFormatter={(value) => value}
                     />
+                    <YAxis 
+                      domain={[0, 100]} 
+                      ticks={[0, 25, 50, 75, 100]}
+                      tickFormatter={(value) => `${value}%`}
+                    />
+                    <Tooltip 
+                      formatter={(value) => [`${value}%`, "Attendance Rate"]}
+                      labelFormatter={(label) => `Date: ${label}`}
+                    />
+                    <Legend />
                     <Line
                       type="monotone"
                       dataKey="attendance_percentage"
+                      name="Daily Attendance"
                       stroke="#3b82f6"
                       strokeWidth={2}
                       dot={{ r: 4, fill: "#3b82f6" }}
@@ -567,13 +608,20 @@ const AdminDashboard = () => {
                   <LineChart data={filteredData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis dataKey="week" />
-                    <YAxis domain={[60, 100]} />
-                    <Tooltip
-                      formatter={(value) => [`${value}%`, "Attendance Rate"]}
+                    <YAxis 
+                      domain={[0, 100]} 
+                      ticks={[0, 25, 50, 75, 100]}
+                      tickFormatter={(value) => `${value}%`}
                     />
+                    <Tooltip 
+                      formatter={(value) => [`${value}%`, "Attendance Rate"]}
+                      labelFormatter={(label) => `${label}`}
+                    />
+                    <Legend />
                     <Line
                       type="monotone"
                       dataKey="attendance_percentage"
+                      name="Weekly Attendance"
                       stroke="#3b82f6"
                       strokeWidth={2}
                       dot={{ r: 4, fill: "#3b82f6" }}

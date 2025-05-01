@@ -137,19 +137,30 @@ const SupervisorDashboard = () => {
   });
 
   useEffect(() => {
-    if (weeklyTrendsQueryData && weeklyTrendsQueryData.weekly_trends) { 
-      const today = dayjs(); 
+    if (weeklyTrendsQueryData?.weekly_trends) {
 
-      const processedData = weeklyTrendsQueryData.weekly_trends.filter(item => {
-        const itemDate = dayjs(item.week); 
-        return itemDate.isValid() && itemDate.isSameOrBefore(today, 'day');
-      });
+      
+      const processedData = weeklyTrendsQueryData.weekly_trends
+        .filter(weekData => {
+          if (selectedWeeklyTrendTrack === "all") {
+            return true;
+          }
+          // Compare track name instead of track_id since the data contains track names
+          return weekData.track === tracksData?.find(t => t.id.toString() === selectedWeeklyTrendTrack)?.name;
+        })
+        .map(weekData => ({
+          week: `Week ${weekData.week}`,
+          attendance_percentage: weekData.expected > 0 
+            ? Math.round((weekData.attended / weekData.expected) * 100) 
+            : 0,
+          track: weekData.track
+        }));
 
       setFilteredData(processedData);
     } else {
-      setFilteredData([]); 
+      setFilteredData([]);
     }
-  }, [weeklyTrendsQueryData]); 
+  }, [weeklyTrendsQueryData, selectedWeeklyTrendTrack, tracksData]);
 
   const { data: warningsCount, isLoading: warningsLoading, isError: warningsError, error: warningsErrorData } = useQuery({
     queryKey: ["studentsWithWarningsCount"],
@@ -253,49 +264,7 @@ const SupervisorDashboard = () => {
     }
   }, [recentAbsencesData]);
 
-  useEffect(() => {
-    if (dailyTrendsData) {
-      const currentDate = new Date();
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(currentDate.getDate() - 7);
-
-      const totalStudents = todayAttendance?.total_students || 0;
-
-      const dailyFiltered = dailyTrendsData.daily_trends
-        .filter((dayData) => {
-          const dayDate = new Date(dayData.date);
-          return dayDate >= sevenDaysAgo && dayDate <= currentDate;
-        })
-        .map(dayData => ({
-          date: dayData.date,
-          attendance_percentage: totalStudents > 0 ? Math.round((dayData.attended / totalStudents) * 100) : 0
-        }));
-
-      setDailyTrends(dailyFiltered);
-    }
-  }, [dailyTrendsData, todayAttendance]);
-
-  useEffect(() => {
-    if (weeklyTrendsQueryData) {
-      const currentDate = new Date();
-      const fourWeeksAgo = new Date();
-      fourWeeksAgo.setDate(currentDate.getDate() - 28);
-      const totalStudents = todayAttendance?.total_students || 0;
-
-      const weeklyFiltered = weeklyTrendsQueryData.weekly_trends
-        .filter((weekData) => {
-          const weekDate = new Date(weekData.week);
-          return weekDate >= fourWeeksAgo && weekDate <= currentDate;
-        })
-        .map(weekData => ({
-          week: weekData.week,
-          attendance_percentage: totalStudents > 0 ? Math.round((weekData.attended / (totalStudents * 5)) * 100) : 0
-        }));
-
-      setFilteredData(weeklyFiltered);
-    }
-  }, [weeklyTrendsQueryData, todayAttendance]);
-
+  
   useEffect(() => {
     if (selectedTrack === "all" || selectedTrack === "") {
       setScheduledClasses([]);
@@ -452,18 +421,15 @@ const SupervisorDashboard = () => {
                     ticks={[0, 25, 50, 75, 100]}
                     tickFormatter={(value) => `${value}%`}
                   />
-                  <Tooltip formatter={(value, name, props) => {
-                    if (props?.payload?.isFreeDay) {
-                      return ['Free Day', 'Status'];
-                    }
-                    if (name === 'Present') {
-                      return [`${value}%`, 'Present'];
-                    }
-                    return [`${value}%`, 'Absent'];
-                  }} />
+                  <Tooltip 
+                    formatter={(value) => [`${value}%`, 'Attendance']}
+                    labelFormatter={(label) => label}
+                  />
+                  <Legend />
                   <Line
                     type="monotone"
                     dataKey="attendance_percentage"
+                    name="Attendance"
                     stroke="#3b82f6"
                     strokeWidth={2}
                     dot={{ r: 4, fill: "#3b82f6" }}
