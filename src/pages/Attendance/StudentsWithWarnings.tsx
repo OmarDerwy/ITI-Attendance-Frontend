@@ -30,8 +30,8 @@ interface StudentWithWarning {
   email: string;
   track_name: string;
   warning_type: "excused" | "unexcused";
-  unexcused_absences: number;
-  excused_absences: number;
+  unexcused: number;
+  excused: number;
 }
 
 const StudentsWithWarnings = () => {
@@ -205,7 +205,7 @@ const StudentsWithWarnings = () => {
                             variant="outline"
                             className="font-normal bg-red-50 text-red-700 border-red-200"
                           >
-                            {student.unexcused_absences}
+                            {student.unexcused}
                           </Badge>
                         </div>
                         <div className="col-span-2">
@@ -213,7 +213,7 @@ const StudentsWithWarnings = () => {
                             variant="outline"
                             className="font-normal bg-amber-50 text-amber-700 border-amber-200"
                           >
-                            {student.excused_absences}
+                            {student.excused}
                           </Badge>
                         </div>
                       </div>
