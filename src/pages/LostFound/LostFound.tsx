@@ -379,10 +379,25 @@ const LostFound = () => {
         className="space-y-4"
         onValueChange={handleTabChange} // Use the new handler
       >
-        <TabsList>
-          <TabsTrigger value="lost">Lost</TabsTrigger>
-          <TabsTrigger value="found">Found</TabsTrigger>
-          <TabsTrigger value="matched">Matched</TabsTrigger>
+        <TabsList className="bg-card border">
+          <TabsTrigger 
+            value="lost" 
+            className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
+          >
+            Lost
+          </TabsTrigger>
+          <TabsTrigger 
+            value="found" 
+            className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
+          >
+            Found
+          </TabsTrigger>
+          <TabsTrigger 
+            value="matched" 
+            className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
+          >
+            Matched
+          </TabsTrigger>
         </TabsList>
 
         {isLoading ? (
@@ -403,7 +418,7 @@ const LostFound = () => {
                   {filteredItems.map((item, index) => (
                     <Card
                       key={`lost-${item.item_id || `index-${index}`}`}
-                      className="overflow-hidden"
+                      className="overflow-hidden transition-transform duration-300 hover:scale-105"
                     >
                       {/* Same card content as above */}
                       <div className="relative">
@@ -479,7 +494,7 @@ const LostFound = () => {
                   {filteredItems.map((item, index) => (
                     <Card
                       key={`found-${item.item_id || `index-${index}`}`}
-                      className="overflow-hidden"
+                      className="overflow-hidden transition-transform duration-300 hover:scale-105"
                     >
                       {/* Similar card content as above */}
                       <div className="relative">
@@ -555,7 +570,7 @@ const LostFound = () => {
                   {matchedItems.map((item, index) => (
                     <Card
                       key={`matched-${item.match_id || `index-${index}`}`}
-                      className="overflow-hidden"
+                      className="overflow-hidden transition-transform duration-300 hover:scale-105"
                     >
                       <div className="p-3">
                         {/* Card Header with Match Badge */}

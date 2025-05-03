@@ -34,7 +34,8 @@ const MatchedItemDetail = () => {
   const { toast } = useToast(); // Add this line to get the toast function
   const [lostUser, setLostUser] = useState(null);
   const [foundUser, setFoundUser] = useState(null);
-
+  // get current user from local storage or context
+  const currentUser = JSON.parse(localStorage.getItem("userId"));
   // Add default image URL constant near the top of the component
   const DEFAULT_IMAGE_URL =
     "https://res.cloudinary.com/dha2yp5tj/image/upload/v1743913360/annonymous_photo_ny7plk.png";
@@ -44,14 +45,16 @@ const MatchedItemDetail = () => {
       setLoading(true);
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/${id}/`,
+          `${
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+          }lost-and-found/matched-items/${id}/`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
             },
           }
         );
-
+        console.log("current user:", currentUser);
         setMatchedItem(response.data);
         console.log("Matched item data:", response.data);
       } catch (err) {
@@ -65,7 +68,9 @@ const MatchedItemDetail = () => {
     const fetchLostUserDetails = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}accounts/auth/users/${matchedItem.lost_item_user}/`,
+          `${
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+          }accounts/auth/users/${matchedItem.lost_item_user}/`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -81,7 +86,9 @@ const MatchedItemDetail = () => {
     const fetchFoundUserDetails = async () => {
       try {
         const response = await axios.get(
-          `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}accounts/auth/users/${matchedItem.found_item_user}/`,
+          `${
+            import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+          }accounts/auth/users/${matchedItem.found_item_user}/`,
           {
             headers: {
               Authorization: `Bearer ${localStorage.getItem("access")}`,
@@ -129,7 +136,9 @@ const MatchedItemDetail = () => {
     try {
       setConfirming(true);
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/${id}/update-status/`,
+        `${
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+        }lost-and-found/matched-items/${id}/update-status/`,
         {}, // Empty body, as we're just updating status
         {
           headers: {
@@ -165,7 +174,9 @@ const MatchedItemDetail = () => {
     try {
       setDeclining(true);
       const response = await axios.post(
-        `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000/api/v1/'}lost-and-found/matched-items/${id}/decline-match/`,
+        `${
+          import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
+        }lost-and-found/matched-items/${id}/decline-match/`,
         {}, // Empty body
         {
           headers: {
@@ -265,9 +276,19 @@ const MatchedItemDetail = () => {
 
             <CardContent>
               <Tabs defaultValue="side-by-side" className="space-y-4">
-                <TabsList className="w-full md:w-auto">
-                  <TabsTrigger value="side-by-side">Side by Side</TabsTrigger>
-                  <TabsTrigger value="details">Detailed View</TabsTrigger>
+                <TabsList className="w-full md:w-auto bg-card border">
+                  <TabsTrigger 
+                    value="side-by-side"
+                    className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
+                  >
+                    Side by Side
+                  </TabsTrigger>
+                  <TabsTrigger 
+                    value="details"
+                    className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80"
+                  >
+                    Detailed View
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="side-by-side" className="space-y-6">
@@ -637,14 +658,16 @@ const MatchedItemDetail = () => {
               </Tabs>
 
               <div className="flex flex-col space-y-4 md:flex-row md:space-x-4 md:space-y-0 mt-6">
-                <Button
-                  variant="destructive"
-                  className="w-full"
-                  onClick={handleDeclineMatch}
-                  disabled={declining || confirming}
-                >
-                  {declining ? "Declining..." : "Decline Match"}
-                </Button>
+                {currentUser === matchedItem.lost_item_user && (
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    onClick={handleDeclineMatch}
+                    disabled={declining || confirming}
+                  >
+                    {declining ? "Declining..." : "Decline Match"}
+                  </Button>
+                )}
 
                 {matchedItem.status === "FAILED" ? (
                   <Button

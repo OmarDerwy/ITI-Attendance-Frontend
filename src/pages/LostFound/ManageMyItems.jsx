@@ -181,7 +181,7 @@ const ManageMyItems = () => {
             {filteredItems.length > 0 ? (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                 {filteredItems.map((item) => (
-                  <Card key={item.id} className="overflow-hidden">
+                  <Card key={item.id} className="overflow-hidden transition-transform duration-300 hover:scale-105">
                     <div className="relative">
                       {item.imageUrl && (
                         <div className="aspect-video w-full overflow-hidden">
@@ -383,7 +383,7 @@ const ManageMyItems = () => {
               {filteredItems
                 .filter(item => item.status === 'lost')
                 .map((item) => (
-                  <Card key={item.id} className="overflow-hidden">
+                  <Card key={item.id} className="overflow-hidden transition-transform duration-300 hover:scale-105">
                     <div className="relative">
                       {item.imageUrl && (
                         <div className="aspect-video w-full overflow-hidden">
@@ -437,7 +437,7 @@ const ManageMyItems = () => {
               {filteredItems
                 .filter(item => item.status === 'found')
                 .map((item) => (
-                  <Card key={item.id} className="overflow-hidden">
+                  <Card key={item.id} className="overflow-hidden transition-transform duration-300 hover:scale-105">
                     <div className="relative">
                       {item.imageUrl && (
                         <div className="aspect-video w-full overflow-hidden">
