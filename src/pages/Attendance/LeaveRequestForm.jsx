@@ -65,7 +65,7 @@ function LeaveRequestForm() {
   // Replace useState and useEffect with useQuery
   const fetchSchedules = async () => {
     const response = await axiosBackendInstance.get(
-      "attendance/upcoming-records"
+      "attendance/upcoming-records-gt"
     );
     // Extract schedules from the new response structure
     const records = response.data.data || [];
