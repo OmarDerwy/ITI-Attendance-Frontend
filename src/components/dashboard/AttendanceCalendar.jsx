@@ -142,9 +142,9 @@ const AttendanceCalendar = () => {
     const days = Array(firstDay).fill(null);
 
     // Add the days of the month up to maxDay
-    for (let i = 1; i <= maxDay; i++) {
+    for (let i = 0; i <= maxDay; i++) {
       const dateObj = new Date(year, month, i);
-      const dateString = dateObj.toISOString().split("T")[0]; // Format: YYYY-MM-DD
+      const dateString = dateObj.toLocaleDateString("sv-SE"); // format: YYYY-MM-DD
 
       days.push({
         day: i,
