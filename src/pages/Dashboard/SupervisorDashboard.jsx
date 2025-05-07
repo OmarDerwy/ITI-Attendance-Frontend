@@ -18,6 +18,7 @@ import {
 } from 'recharts';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { getTodaysAttendancePercentage, getWeeklyAttendancePercentage, getAttendanceTrends, getScheduledClasses, get_weekly_attendance_by_track, getRecentAbsentees } from '@/api/attendance';
+import {getAllPermissions} from '@/api/permissions';
 import { usePermissions } from '@/context/PermissionsContext';
 import RecentAbsences from '@/components/dashboard/RecentAbsences';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -37,13 +38,33 @@ const SupervisorDashboard = () => {
   const [selectedDailyTrendTrack, setSelectedDailyTrendTrack] = useState("all");
   const [selectedWeeklyTrendTrack, setSelectedWeeklyTrendTrack] = useState("all");
   const [selectedRecentAbsencesTrack, setSelectedRecentAbsencesTrack] = useState("all");
-  const { totalPendingPermissions, isLoading: permissionsLoading, error } = usePermissions();
   const [scheduledClasses, setScheduledClasses] = useState([]);
   const [weeklyBreakdown, setWeeklyBreakdown] = useState([]);
   const [weeklyBreakdownTrack, setWeeklyBreakdownTrack] = useState("All tracks");
   const [recentAbsences, setRecentAbsences] = useState([]);
+  const [totalPendingPermissions, setTotalPendingPermissions] = useState(0);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { data: permissions = [], isLoading: permissionsLoading, error } = useQuery({
+      queryKey: ['permissions'],
+      queryFn: getAllPermissions,
+      refetchInterval: 60000,
+      refetchIntervalInBackground: false,
+    });
+    useEffect(() => {
+      if (error) {
+        console.error('Error fetching permissions:', error);
+      }
+    }, [error]);
+  
+    useEffect(() => {
+      if (permissions) {
+        const pendingCount = permissions.filter(
+          (permission) => permission.status === 'pending'
+        ).length;
+        setTotalPendingPermissions(pendingCount);
+      }
+    }, [permissions]);
 
   useEffect(() => {
     const fetchInitialData = async () => {
