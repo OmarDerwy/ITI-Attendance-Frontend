@@ -2,6 +2,7 @@ import { Search, Plus, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from '@/components/ui/switch';
 import { 
   Select,
   SelectContent, 
@@ -16,6 +17,8 @@ interface SearchToolbarProps {
   tracksData: any; // Use proper type based on your API response
   onTrackChange: (query: string) => void;
   selectedTrack: string;
+  isActive: boolean;
+  setIsActive: (isActive: boolean) => void;
   onAddStudent: () => void;
   onRefresh: () => void;
   isRefreshing: boolean;
@@ -29,6 +32,8 @@ const SearchToolbar = ({
   tracksData,
   onTrackChange,
   selectedTrack,
+  isActive,
+  setIsActive,
   onAddStudent,
   onRefresh,
   isRefreshing,
@@ -66,6 +71,13 @@ const SearchToolbar = ({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className={`flex items-center gap-2 ${isActive ? "bg-primary" : "bg-background"} p-2 rounded-md`}>
+          <Switch
+            checked={!isActive}
+            onCheckedChange={() => setIsActive(!isActive)}
+          />
+          <span className="font-medium text-sm">{isActive ? "Active" : "Archived"}</span>
         </div>
         <div className="flex gap-2">
           <Button onClick={onAddStudent} className="gap-1">

@@ -26,23 +26,34 @@ const StudentVerification = () => {
   const [studentEntries, setStudentEntries] = useState([]);
   const [nextPageUrl, setNextPageUrl] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isActive, setIsActive] = useState(true); // State to manage the active/inactive toggle
 
   // Real student data from the server using tanstack query
   const fetchStudents = async () => {
     const response = await axiosBackendInstance.get("/accounts/students/", {
-      params: { search: searchQuery, track: selectedTrack },
+      params: { 
+          search: searchQuery,
+          track: selectedTrack,
+          is_active: isActive,
+         },
     });
     return response.data as ApiResponse;
   };
 
   const fetchTracks = async () => {
-    const response = await axiosBackendInstance.get("/attendance/tracks/");
+    const response = await axiosBackendInstance.get("/attendance/tracks/", {
+      params: { 
+        is_active: isActive,
+        // program_type: "some_value", // this is present in the API but there is no use case for it here yet
+      },
+    });
+    console.log("Tracks data:", response.data);
     return response.data;
   };
 
   // Load supervisor tracks as soon as page loads
   const { data: tracksData } = useQuery({
-    queryKey: ["tracks"],
+    queryKey: ["tracks", isActive],
     queryFn: fetchTracks,
     refetchOnWindowFocus: false,
   });
@@ -54,7 +65,7 @@ const StudentVerification = () => {
     error,
     refetch,
   } = useQuery({
-    queryKey: ["students", searchQuery, selectedTrack],
+    queryKey: ["students", searchQuery, selectedTrack, isActive],
     queryFn: fetchStudents,
     refetchOnWindowFocus: false,
   });
@@ -208,6 +219,8 @@ const StudentVerification = () => {
                 onTrackChange={setSelectedTrack}
                 selectedTrack={selectedTrack}
                 onAddStudent={() => setIsAddStudentModalOpen(true)}
+                isActive={isActive}
+                setIsActive={setIsActive}
                 onRefresh={handleRefresh}
                 isRefreshing={isRefreshing}
                 pendingCount={studentsData?.inactive_users}
