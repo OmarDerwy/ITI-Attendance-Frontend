@@ -72,12 +72,12 @@ const SearchToolbar = ({
             </SelectContent>
           </Select>
         </div>
-        <div className={`flex items-center gap-2 ${isActive ? "bg-primary" : "bg-background"} p-2 rounded-md`}>
+        <div className={`flex items-center gap-2 p-2 rounded-md`}>
           <Switch
             checked={!isActive}
             onCheckedChange={() => setIsActive(!isActive)}
           />
-          <span className="font-medium text-sm">{isActive ? "Active" : "Archived"}</span>
+          <span className={`font-medium text-sm rounded-lg p-1 ${isActive ? "text-white bg-destructive":"bg-muted"}`}>{isActive ? "Active" : "Archived"}</span>
         </div>
         <div className="flex gap-2">
           <Button onClick={onAddStudent} className="gap-1">
