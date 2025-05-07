@@ -2,6 +2,7 @@ import { Search, Plus, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from '@/components/ui/switch';
 import { 
   Select,
   SelectContent, 
@@ -66,6 +67,12 @@ const SearchToolbar = ({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div className="flex items-center gap-2 bg-background p-2 rounded-md">
+          <Switch
+            onChange={() => {}}
+          />
+          <span>Archived</span>
         </div>
         <div className="flex gap-2">
           <Button onClick={onAddStudent} className="gap-1">
