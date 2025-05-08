@@ -90,7 +90,6 @@ const CoordinatorForm = () => {
       last_name: lastName,
       email: email,
       phone_number: phoneNumber,
-      groups: ["coordinator"], // Set the user type to coordinator
     };
 
     try {
@@ -104,7 +103,7 @@ const CoordinatorForm = () => {
           description: `Coordinator ${firstName} ${lastName} has been updated successfully.`,
         });
       } else {
-        await axiosBackendInstance.post("/accounts/users/", coordinatorData);
+        await axiosBackendInstance.post("/accounts/coordinators/", coordinatorData);
         toast({
           title: "Coordinator Added",
           description: `Coordinator ${firstName} ${lastName} has been added successfully.`,
