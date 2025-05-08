@@ -1,3 +1,4 @@
+
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -9,19 +10,25 @@ import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { axiosBackendInstance } from "@/api/config";
 import OnlineVsOfflineCard from "@/components/dashboard/OnlineVsOfflineCard";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const BranchManagerDashboard = () => {
   const navigate = useNavigate();
 
+  // Get the branch ID from user context or state management
+  // For now, using a hardcoded value
+  const branchId = 8;
+
   // Queries for dashboard data
-  const { data: tracksData } = useQuery({
-    queryKey: ["tracks"],
+  const { data: tracksStatisticsData, isLoading: isTracksLoading } = useQuery({
+    queryKey: ["tracksStatistics", branchId],
     queryFn: async () => {
-      const response = await axiosBackendInstance.get("attendance/tracks/");
+      const response = await axiosBackendInstance.get(`attendance/tracks/branch_statistics?branch_id=${branchId}&is_active=true`);
       return response.data;
     },
   });
-  const { data: lostItemsCount } = useQuery({
+  
+  const { data: lostItemsCount, isLoading: isLostItemsLoading } = useQuery({
     queryKey: ["lostItems"],
     queryFn: async () => {
       const response = await axiosBackendInstance.get("lost-and-found/lost-items/");
@@ -29,7 +36,7 @@ const BranchManagerDashboard = () => {
     },
   });
 
-  const { data: studentsCount } = useQuery({
+  const { data: studentsCount, isLoading: isStudentsLoading } = useQuery({
     queryKey: ["students"],
     queryFn: async () => {
       const response = await axiosBackendInstance.get("accounts/users/students/");
@@ -37,28 +44,45 @@ const BranchManagerDashboard = () => {
     },
   });
 
-  const { data: supervisorsCount } = useQuery({
-    queryKey: ["supervisors"],
-    queryFn: async () => {
-      const response = await axiosBackendInstance.get("accounts/users/supervisors/");
-      return response.data.length;
-    },
-  });
-
   // Prepare track data for OnlineVsOfflineCard
   const trackAttendanceData = React.useMemo(() => {
-    if (!tracksData) return [];
+    if (!tracksStatisticsData) return [];
     
-    return tracksData.map((track) => ({
-      id: track.id,
-      name: track.name,
-      onlinePercentage: track.online_attendance_percentage || 0,
-      offlinePercentage: track.offline_attendance_percentage || 0,
-      onlineDays: track.online_days || 0,
-      offlineDays: track.offline_days || 0,
-      color: track.color || "#3b82f6",
+    return tracksStatisticsData.map((track) => ({
+      id: track.track_id,
+      name: track.track_name,
+      programType: track.program_type_display,
+      intake: track.intake,
+      startDate: track.start_date,
+      onlinePercentage: track.statistics.online_percentage || 0,
+      offlinePercentage: track.statistics.offline_percentage || 0,
+      onlineDays: track.statistics.online_days || 0,
+      offlineDays: track.statistics.offline_days || 0,
+      color: "#3b82f6", // Default color since it's not in the API response
+      // Adding monthly data for the calendar view
+      monthlyData: track.statistics.monthly_summary.map(month => ({
+        year: month.year,
+        month: month.month - 1, // JavaScript months are 0-indexed
+        monthName: month.month_name,
+        onlineDays: month.online_days,
+        offlineDays: month.offline_days,
+        totalDays: month.total_days,
+        onlinePercentage: month.online_percentage,
+        offlinePercentage: month.offline_percentage
+      })),
+      // Adding daily data for detailed view
+      dailyData: track.daily_data.map(day => ({
+        date: new Date(day.date),
+        isOnline: day.type === "online"
+      }))
     }));
-  }, [tracksData]);
+  }, [tracksStatisticsData]);
+
+  // Count active tracks
+  const activeTracksCount = React.useMemo(() => {
+    if (!tracksStatisticsData) return 0;
+    return tracksStatisticsData.filter(track => track.is_active).length;
+  }, [tracksStatisticsData]);
 
   return (
     <div className="space-y-6 p-6 min-h-screen">
@@ -68,8 +92,8 @@ const BranchManagerDashboard = () => {
         transition={{ duration: 0.5 }}
       >
         <Card className="overflow-hidden border-border dark:border-border/20">
-          <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/20 p-6 border-b border-red-200 dark:border-red-900/30">
-            <div className="grid md:grid-cols-2 gap-4 items-center">
+        <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/20 p-6 border-b border-red-200 dark:border-red-900/30">
+        <div className="grid md:grid-cols-2 gap-4 items-center">
               <div>
                 <h2 className="text-2xl font-bold mb-2 text-red-800 dark:text-red-400">
                   Branch Manager Dashboard
@@ -115,23 +139,35 @@ const BranchManagerDashboard = () => {
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
                 <p className="text-primary text-sm font-medium">Total Tracks</p>
-                <p className="text-2xl font-bold">{tracksData?.length}</p>
+                {isTracksLoading ? (
+                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{tracksStatisticsData?.length || 0}</p>
+                )}
               </div>
               <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
                 <p className="text-primary text-sm font-medium">Active Tracks</p>
-                <p className="text-2xl font-bold">{tracksData?.length}</p>
-              </div>
-              <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
-                <p className="text-primary text-sm font-medium">Supervisors</p>
-                <p className="text-2xl font-bold">{supervisorsCount}</p>
+                {isTracksLoading ? (
+                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{activeTracksCount}</p>
+                )}
               </div>
               <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
                 <p className="text-primary text-sm font-medium">Total Students</p>
-                <p className="text-2xl font-bold">{studentsCount}</p>
+                {isStudentsLoading ? (
+                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{studentsCount || 0}</p>
+                )}
               </div>
               <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
                 <p className="text-primary text-sm font-medium">Lost Items</p>
-                <p className="text-2xl font-bold">{lostItemsCount}</p>
+                {isLostItemsLoading ? (
+                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
+                ) : (
+                  <p className="text-2xl font-bold">{lostItemsCount || 0}</p>
+                )}
               </div>
             </div>
           </CardContent>
@@ -144,7 +180,17 @@ const BranchManagerDashboard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, delay: 0.2 }}
       >
-        <OnlineVsOfflineCard trackData={trackAttendanceData} />
+        {isTracksLoading ? (
+          <Card className="p-6">
+            <Skeleton className="h-8 w-64 mb-4" />
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+              <Skeleton className="h-40" />
+              <Skeleton className="h-40" />
+            </div>
+          </Card>
+        ) : (
+          <OnlineVsOfflineCard trackData={trackAttendanceData} />
+        )}
       </motion.div>
     </div>
   );
