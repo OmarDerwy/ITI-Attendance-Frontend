@@ -32,6 +32,9 @@ import StudentSchedule from './pages/Attendance/StudentSchedule';
 import StudentsWithWarnings from "@/pages/Attendance/StudentsWithWarnings";
 import StudentDashboard from './pages/Dashboard/StudentDashboard';
 import ProtectedRoute from "./components/routing/ProtectedRoute";
+import CoordinatorForm from './pages/Management/CoordinatorForm';
+import CoordinatorManagement from './pages/Management/CoordinatorManagement';
+import TracksView from "./pages/Management/TracksView";
 
 const queryClient = new QueryClient();
 
@@ -90,6 +93,10 @@ const App = () => (
               <Route path="/student-schedule" element={<StudentSchedule />} />
               <Route path="/student-dashboard" element={<StudentDashboard />} />
               <Route path="/students-with-warnings" element={<StudentsWithWarnings />} />
+              <Route path="/coordinators" element={<CoordinatorManagement />} />
+              <Route path="/coordinators/add" element={<CoordinatorForm />} />
+              <Route path="/coordinators/edit/:userId" element={<CoordinatorForm />} />
+              <Route path="/tracks/view" element={<TracksView />} />
             </Route>
             {/* Not found route */}
             <Route path="*" element={<NotFound />} />
