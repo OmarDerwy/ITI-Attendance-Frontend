@@ -36,7 +36,7 @@ interface NavItemProps {
   to: string;
   active?: boolean;
   expanded: boolean;
-  roles?: Array<"student" | "supervisor" | "admin">;
+  roles?: Array<"student" | "supervisor" | "admin" | "branch-manager">;
   onClick?: () => void;
 }
 
@@ -156,7 +156,7 @@ const Sidebar = () => {
     icon: React.ElementType;
     label: string;
     to: string;
-    roles: Array<"student" | "supervisor" | "admin">;
+    roles: Array<"student" | "supervisor" | "admin" | "branch-manager">;
     onClick?: () => void;
   }> = [
     // Student, Supervisor, Admin
@@ -167,7 +167,7 @@ const Sidebar = () => {
       to: "/student-dashboard",
       roles: ["student"],
     },
-    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin"] },
+    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin" , "branch-manager"] },
 
     {
       icon: CalendarDays,
@@ -216,8 +216,11 @@ const Sidebar = () => {
     },
 
     { icon: Users, label: "Users", to: "/users", roles: ["admin"] },
+    { icon: Users, label: "Coordinators", to: "/coordinators", roles: ["branch-manager"] },
+
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: BookOpen, label: "Tracks", to: "/tracks", roles: ["admin"] },
+    { icon: BookOpen, label: "Tracks", to: "/tracks/view", roles: ["branch-manager"] },
 
     {
       icon: Settings,
@@ -230,13 +233,13 @@ const Sidebar = () => {
       icon: Flag,
       label: "Report Item",
       to: "/report-lost-found",
-      roles: ["student", "supervisor", "admin"],
+      roles: ["student", "supervisor", "admin" , "branch-manager"],
     },
     {
       icon: Search,
       label: "Lost & Found",
       to: "/lost-found",
-      roles: ["student", "supervisor", "admin"],
+      roles: ["student", "supervisor", "admin", "branch-manager"],
     },
   ];
 
