@@ -125,14 +125,14 @@ const CsvUpload = ({ onSuccess }: CsvUploadProps) => {
             return;
           }
           
-          let response = await axiosBackendInstance.post('/accounts/bulkcreate/', {
+          let response = await axiosBackendInstance.post('/accounts/students/bulk-create/', {
             users: studentsData.map(student => ({
               email: student.email,
               first_name: student.first_name,
               last_name: student.last_name,
               phone_number: student.phone_number || "",
-              track_id: parseInt(selectedTrack),
             })),
+            track_id: parseInt(selectedTrack),
           });
           
           toast({
