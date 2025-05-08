@@ -1,45 +1,42 @@
-
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { axiosBackendInstance } from "@/api/config";
 import OnlineVsOfflineCard from "@/components/dashboard/OnlineVsOfflineCard";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ArrowRightIcon, UsersIcon, BookOpenIcon, GraduationCapIcon, BarChartIcon } from "lucide-react";
 
 const BranchManagerDashboard = () => {
   const navigate = useNavigate();
-
   // Get the branch ID from user context or state management
   // For now, using a hardcoded value
   const branchId = 8;
-
   // Queries for dashboard data
   const { data: tracksStatisticsData, isLoading: isTracksLoading } = useQuery({
     queryKey: ["tracksStatistics", branchId],
     queryFn: async () => {
-      const response = await axiosBackendInstance.get(`attendance/tracks/branch_statistics?branch_id=${branchId}&is_active=true`);
+      const response = await axiosBackendInstance.get(
+        `attendance/tracks/branch_statistics?branch_id=${branchId}&is_active=true`
+      );
       return response.data;
     },
   });
-  
-  const { data: lostItemsCount, isLoading: isLostItemsLoading } = useQuery({
-    queryKey: ["lostItems"],
-    queryFn: async () => {
-      const response = await axiosBackendInstance.get("lost-and-found/lost-items/");
-      return response.data.count;
-    },
-  });
-
   const { data: studentsCount, isLoading: isStudentsLoading } = useQuery({
     queryKey: ["students"],
     queryFn: async () => {
-      const response = await axiosBackendInstance.get("accounts/users/students/");
+      const response = await axiosBackendInstance.get(
+        "accounts/users/students/"
+      );
+      return response.data.length;
+    },
+  });
+  const { data: tracksCount } = useQuery({
+    queryKey: ["tracks"],
+    queryFn: async () => {
+      const response = await axiosBackendInstance.get("attendance/tracks/");
       return response.data.length;
     },
   });
@@ -47,7 +44,7 @@ const BranchManagerDashboard = () => {
   // Prepare track data for OnlineVsOfflineCard
   const trackAttendanceData = React.useMemo(() => {
     if (!tracksStatisticsData) return [];
-    
+
     return tracksStatisticsData.map((track) => ({
       id: track.track_id,
       name: track.track_name,
@@ -60,7 +57,7 @@ const BranchManagerDashboard = () => {
       offlineDays: track.statistics.offline_days || 0,
       color: "#3b82f6", // Default color since it's not in the API response
       // Adding monthly data for the calendar view
-      monthlyData: track.statistics.monthly_summary.map(month => ({
+      monthlyData: track.statistics.monthly_summary.map((month) => ({
         year: month.year,
         month: month.month - 1, // JavaScript months are 0-indexed
         monthName: month.month_name,
@@ -68,111 +65,131 @@ const BranchManagerDashboard = () => {
         offlineDays: month.offline_days,
         totalDays: month.total_days,
         onlinePercentage: month.online_percentage,
-        offlinePercentage: month.offline_percentage
+        offlinePercentage: month.offline_percentage,
       })),
       // Adding daily data for detailed view
-      dailyData: track.daily_data.map(day => ({
+      dailyData: track.daily_data.map((day) => ({
         date: new Date(day.date),
-        isOnline: day.type === "online"
-      }))
+        isOnline: day.type === "online",
+      })),
     }));
   }, [tracksStatisticsData]);
 
   // Count active tracks
   const activeTracksCount = React.useMemo(() => {
     if (!tracksStatisticsData) return 0;
-    return tracksStatisticsData.filter(track => track.is_active).length;
+    return tracksStatisticsData.length;
   }, [tracksStatisticsData]);
 
   return (
-    <div className="space-y-6 p-6 min-h-screen">
+    <div className="space-y-6 p-4 min-h-screen">
+      {/* Dashboard Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold">Branch Dashboard</h1>
+        <div className="flex space-x-2">
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => navigate("/tracks/view")}
+            className="group"
+          >
+            View Tracks
+            <ArrowRightIcon className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/coordinators")}
+          >
+            Manage Coordinators
+          </Button>
+        </div>
+      </div>
+
+      {/* Statistics Cards */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <Card className="overflow-hidden border-border dark:border-border/20">
-        <div className="bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/30 dark:to-red-900/20 p-6 border-b border-red-200 dark:border-red-900/30">
-        <div className="grid md:grid-cols-2 gap-4 items-center">
-              <div>
-                <h2 className="text-2xl font-bold mb-2 text-red-800 dark:text-red-400">
-                  Branch Manager Dashboard
-                </h2>
-                <p className="text-red-700 dark:text-red-300/90 mb-4">
-                  View tracks, manage coordinators, and view branch analytics
-                </p>
-                <div className="flex space-x-2">
-                  <Button onClick={() => navigate("/tracks/view")}>
-                    View Tracks
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => navigate("/coordinators")}
-                  >
-                    Manage Coordinators
-                  </Button>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Total Tracks Card */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex items-stretch h-full">
+                <div className="bg-primary/10 p-4 flex items-center justify-center">
+                  <BookOpenIcon className="h-8 w-8 text-primary" />
+                </div>
+                <div className="p-4 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Total Tracks</p>
+                  {isTracksLoading ? (
+                    <Skeleton className="h-8 w-16 mt-1" />
+                  ) : (
+                    <div className="flex items-baseline">
+                      <p className="text-3xl font-bold">{tracksCount || 0}</p>
+                      <p className="text-xs text-muted-foreground ml-2">tracks</p>
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="hidden md:flex justify-end">
-                <motion.div
-                  animate={{
-                    rotate: [0, 5, 0, -5, 0],
-                    scale: [1, 1.05, 1],
-                  }}
-                  transition={{
-                    repeat: Infinity,
-                    duration: 5,
-                    ease: "easeInOut",
-                  }}
-                  className="w-32 h-32 bg-red-200 dark:bg-red-950/40 rounded-full flex items-center justify-center"
-                >
-                  <img
-                    src="/images/iti-logo.png"
-                    alt="logo"
-                    className="h-28"
-                  />
-                </motion.div>
+            </CardContent>
+          </Card>
+
+          {/* Active Tracks Card */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex items-stretch h-full">
+                <div className="bg-primary/10 p-4 flex items-center justify-center">
+                  <GraduationCapIcon className="h-8 w-8 text-primary" />
+                </div>
+                <div className="p-4 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Active Tracks</p>
+                  {isTracksLoading ? (
+                    <Skeleton className="h-8 w-16 mt-1" />
+                  ) : (
+                    <div className="flex items-baseline">
+                      <p className="text-3xl font-bold">{activeTracksCount}</p>
+                      <p className="text-xs text-muted-foreground ml-2">active</p>
+                    </div>
+                  )}
+                  {!isTracksLoading && tracksCount > 0 && (
+                    <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                      <div 
+                        className="bg-primary h-1.5 rounded-full" 
+                        style={{ width: `${(activeTracksCount / tracksCount) * 100}%` }}
+                      ></div>
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
-          </div>
-          <CardContent className="p-6">
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-              <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
-                <p className="text-primary text-sm font-medium">Total Tracks</p>
-                {isTracksLoading ? (
-                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
-                ) : (
-                  <p className="text-2xl font-bold">{tracksStatisticsData?.length || 0}</p>
-                )}
+            </CardContent>
+          </Card>
+
+          {/* Students Card */}
+          <Card className="overflow-hidden">
+            <CardContent className="p-0">
+              <div className="flex items-stretch h-full">
+                <div className="bg-primary/10 p-4 flex items-center justify-center">
+                  <UsersIcon className="h-8 w-8 text-primary" />
+                </div>
+                <div className="p-4 flex-1">
+                  <p className="text-sm font-medium text-muted-foreground">Students</p>
+                  {isStudentsLoading ? (
+                    <Skeleton className="h-8 w-16 mt-1" />
+                  ) : (
+                    <div className="flex items-baseline">
+                      <p className="text-3xl font-bold">{studentsCount || 0}</p>
+                      <p className="text-xs text-muted-foreground ml-2">enrolled</p>
+                    </div>
+                  )}
+                </div>
               </div>
-              <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
-                <p className="text-primary text-sm font-medium">Active Tracks</p>
-                {isTracksLoading ? (
-                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
-                ) : (
-                  <p className="text-2xl font-bold">{activeTracksCount}</p>
-                )}
-              </div>
-              <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
-                <p className="text-primary text-sm font-medium">Total Students</p>
-                {isStudentsLoading ? (
-                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
-                ) : (
-                  <p className="text-2xl font-bold">{studentsCount || 0}</p>
-                )}
-              </div>
-              <div className="rounded-lg p-4 text-center border border-border/30 shadow-sm bg-card">
-                <p className="text-primary text-sm font-medium">Lost Items</p>
-                {isLostItemsLoading ? (
-                  <Skeleton className="h-8 w-16 mx-auto mt-1" />
-                ) : (
-                  <p className="text-2xl font-bold">{lostItemsCount || 0}</p>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
       </motion.div>
+
+
 
       {/* Online vs Offline Attendance Card */}
       <motion.div
@@ -191,6 +208,42 @@ const BranchManagerDashboard = () => {
         ) : (
           <OnlineVsOfflineCard trackData={trackAttendanceData} />
         )}
+      </motion.div>
+
+            {/* Quick Actions */}
+            <motion.div
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+      >
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-medium">Quick Actions</h3>
+              <BarChartIcon className="h-5 w-5 text-muted-foreground" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Button 
+                className="w-full justify-start group" 
+                size="lg"
+                onClick={() => navigate("/tracks/view")}
+              >
+                <BookOpenIcon className="mr-2 h-5 w-5" />
+                View All Tracks
+                <ArrowRightIcon className="ml-auto h-4 w-4 group-hover:translate-x-1 transition-transform" />
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full justify-start"
+                size="lg"
+                onClick={() => navigate("/coordinators")}
+              >
+                <UsersIcon className="mr-2 h-5 w-5" />
+                Manage Coordinators
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </motion.div>
     </div>
   );

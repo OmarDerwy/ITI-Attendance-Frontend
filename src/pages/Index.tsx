@@ -41,8 +41,9 @@ const Index = () => {
         {userRole === "admin" && <AdminDashboard />}
         {userRole === "supervisor" && <SupervisorDashboard />}
         {userRole === "branch-manager" && <BranchManagerDashboard />}
+        {userRole === "student" && <StudentDashboard />}
       </Layout>
-      {userRole === "student" && <StudentDashboard />}
+     
     </>
   );
 };

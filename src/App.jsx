@@ -91,7 +91,6 @@ const App = () => (
               <Route path="/leave-request-center" element={<LeaveRequestCenter />} />
               <Route path="/leave-request-form" element={<LeaveRequestForm />} />
               <Route path="/student-schedule" element={<StudentSchedule />} />
-              <Route path="/student-dashboard" element={<StudentDashboard />} />
               <Route path="/students-with-warnings" element={<StudentsWithWarnings />} />
               <Route path="/coordinators" element={<CoordinatorManagement />} />
               <Route path="/coordinators/add" element={<CoordinatorForm />} />

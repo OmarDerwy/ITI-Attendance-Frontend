@@ -301,7 +301,7 @@ const OnlineVsOfflineCard = ({ trackData }) => {
   };
 
   return (
-    <Card className="overflow-hidden border-2 border-primary/20 dark:border-primary/30 dark:border-primary/40 transition-colors bg-gradient-to-b from-white to-primary-50/50 dark:from-gray-900 dark:to-primary/5">
+    <Card className="overflow-hidden border-2 border-primary/20 dark:border-primary/30 transition-colors bg-gradient-to-b from-white to-primary-50/50 dark:from-gray-900 dark:to-primary/5">
       <style jsx global>{`
         @keyframes fadeScale {
           0% {

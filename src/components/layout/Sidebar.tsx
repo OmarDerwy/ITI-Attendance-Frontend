@@ -54,7 +54,7 @@ const NavItem = ({
   // Only show items relevant to current role
   if (
     roles.length > 0 &&
-    !roles.includes(userRole as "student" | "supervisor" | "admin")
+    !roles.includes(userRole as "student" | "supervisor" | "admin" | "branch-manager")
   )
     return null;
 
@@ -159,15 +159,7 @@ const Sidebar = () => {
     roles: Array<"student" | "supervisor" | "admin" | "branch-manager">;
     onClick?: () => void;
   }> = [
-    // Student, Supervisor, Admin
-    // { icon: Home, label: "Dashboard", to: "/", roles: ["student", "supervisor", "admin"] },
-    {
-      icon: Home,
-      label: "Dashboard",
-      to: "/student-dashboard",
-      roles: ["student"],
-    },
-    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin" , "branch-manager"] },
+    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin" ,"student", "branch-manager"] },
 
     {
       icon: CalendarDays,
