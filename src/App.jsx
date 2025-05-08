@@ -29,7 +29,6 @@ import LeaveRequestForm from "./pages/Attendance/LeaveRequestForm";
 import UserForm from "./pages/Management/UserForm";
 import UserManagement from './pages/Management/UserManagement';
 import StudentSchedule from './pages/Attendance/StudentSchedule';
-import { PermissionsProvider } from "@/context/PermissionsContext"; 
 import StudentsWithWarnings from "@/pages/Attendance/StudentsWithWarnings";
 import StudentDashboard from './pages/Dashboard/StudentDashboard';
 import ProtectedRoute from "./components/routing/ProtectedRoute";
@@ -41,7 +40,6 @@ const queryClient = new QueryClient();
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <PermissionsProvider>
       <UserProvider>
         <TooltipProvider>
           <Toaster />
@@ -105,7 +103,6 @@ const App = () => (
           </Routes>
         </TooltipProvider>
       </UserProvider>
-    </PermissionsProvider>
   </QueryClientProvider>
 );
 
