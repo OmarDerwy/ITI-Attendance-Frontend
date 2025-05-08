@@ -73,7 +73,6 @@ const AddStudentForm = ({ onSuccess, onCancel }: AddStudentFormProps) => {
       await axiosBackendInstance.post('/accounts/students/', {
         ...values,
         track_id: parseInt(values.track_id),
-        groups: ["student"],
       });
 
       toast({
