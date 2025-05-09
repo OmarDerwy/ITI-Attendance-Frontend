@@ -254,19 +254,22 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
               </div>
             </div>
           )}
-
-          <Link
-            to="/schedule"
-            className="rounded-full p-1.5 hover:bg-muted transition-colors"
-          >
-            <Calendar className="h-5 w-5" />
-          </Link>
+          {userRole === "supervisor" && (
+            <Link
+              to="/schedule"
+              className="rounded-full p-1.5 hover:bg-muted transition-colors"
+            >
+              <Calendar className="h-5 w-5" />
+            </Link>
+          )}
 
           <button
             onClick={toggleTheme}
             className="rounded-full p-1.5 hover:bg-muted transition-colors"
           >
-            {theme === "dark" || (theme === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches) ? (
+            {theme === "dark" ||
+            (theme === "system" &&
+              window.matchMedia("(prefers-color-scheme: dark)").matches) ? (
               <Sun className="h-5 w-5" />
             ) : (
               <Moon className="h-5 w-5" />
@@ -353,14 +356,16 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                     <User className="h-4 w-4" />
                     Profile
                   </Link>
-                  <Link
-                    to="/schedule"
-                    className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted"
-                    onClick={() => setProfileOpen(false)}
-                  >
-                    <Calendar className="h-4 w-4" />
-                    Calendar
-                  </Link>
+                  {userRole === "supervisor" && (
+                    <Link
+                      to="/schedule"
+                      className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted"
+                      onClick={() => setProfileOpen(false)}
+                    >
+                      <Calendar className="h-4 w-4" />
+                      Calendar
+                    </Link>
+                  )}
                   <Link
                     to="/lost-found"
                     className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted"

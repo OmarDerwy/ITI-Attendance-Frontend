@@ -194,7 +194,7 @@ const AttendanceCalendar = () => {
 
   return (
     <Card
-      className="shadow-md overflow-hidden border-2 border-emerald-200/60 dark:border-emerald-800/30 hover:border-emerald-300/70 dark:hover:border-emerald-700/40 transition-colors bg-gradient-to-b from-white to-emerald-50/50 dark:from-gray-900 dark:to-emerald-950/10"
+    className="shadow-md overflow-hidden border border-gray-200/40 dark:border-gray-800/20 hover:border-gray-300/50 dark:hover:border-gray-700/30 transition-colors bg-gradient-to-b from-white to-emerald-50/30 dark:from-gray-900 dark:to-emerald-950/5"
     >
       <style jsx global>{`
         @keyframes fadeScale {
