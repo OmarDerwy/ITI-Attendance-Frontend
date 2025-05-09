@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react"; // Removed UserCheck as it wasn't used
+import { Eye, EyeOff, LogIn, Mail, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -118,7 +119,6 @@ const Login = () => {
       user.setUserId(userResponse.data.id);
       localStorage.setItem("userId", userData.id.toString());
       queryClient.refetchQueries();
-      // console.log("User ID stored in localStorage:", userData.id); // Keep console logs minimal for production
       navigate("/");
       
     } catch (error) {
@@ -131,11 +131,23 @@ const Login = () => {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Left Side - Now with updated background effects */}
-      <div className="hidden lg:flex min-h-screen w-1/2 items-center justify-center bg-gradient-to-b from-primary/5 to-background p-4 border-r border-border/20">
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-[40%] -left-[10%] w-[70%] h-[70%] bg-primary/5 rounded-full blur-3xl opacity-60" />
-          <div className="absolute -bottom-[30%] -right-[10%] w-[60%] h-[60%] bg-primary/5 rounded-full blur-3xl opacity-60" />
+      {/* Left Side - Improved smooth gradient background */}
+      <div className="hidden lg:flex min-h-screen w-1/2 items-center justify-center border-r border-border/20 relative overflow-hidden">
+        {/* Enhanced smooth gradient background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-background via-primary/5 to-background"></div>
+        
+        {/* Multiple subtle gradient layers for depth and smoothness */}
+        <div className="absolute inset-0">
+          <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-br from-primary/10 to-transparent opacity-40 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-0 right-0 w-full h-1/2 bg-gradient-to-tl from-primary/10 to-transparent opacity-40 rounded-full blur-3xl"></div>
+          
+          {/* Additional subtle gradient layers */}
+          <div className="absolute top-1/4 left-1/4 w-1/2 h-1/2 bg-gradient-to-br from-primary/5 to-transparent opacity-30 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/4 right-1/4 w-1/2 h-1/2 bg-gradient-to-tl from-primary/5 to-transparent opacity-30 rounded-full blur-3xl"></div>
+          
+          {/* Dark mode specific enhancements */}
+          <div className="hidden dark:block absolute top-0 left-0 w-full h-full bg-gradient-to-br from-primary/5 via-transparent to-background/80 opacity-50 blur-3xl"></div>
+          <div className="hidden dark:block absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-primary/5 via-transparent to-transparent opacity-60"></div>
         </div>
 
         {/* Content with sequenced animations */}
@@ -148,27 +160,27 @@ const Login = () => {
               className="login-logo w-110 h-32 object-contain mr-4 dark:hidden"
             />
             
-            {/* Add colored text with ITI logo in dark mode */}
-            <div className="login-logo hidden dark:flex items-center justify-center mr-4">
+            {/* Enhanced dark mode logo with better styling */}
+            <div className="login-logo hidden dark:flex items-center justify-center">
               <div className="flex items-center">
-                {/* ITI Logo */}
+                {/* ITI Logo with improved visibility */}
                 <img
                   src="/images/iti-logo.png"
                   alt="ITI Logo"
-                  className="h-32 mr-2 mb-4"
+                  className="h-32 mr-2 mb-4 filter brightness-110"
                 />
 
-                {/* TrackIt text */}
+                {/* TrackIt text with enhanced contrast */}
                 <span className="text-4xl mt-5">
                   <span
                     className="text-white font-bold"
-                    style={{ fontFamily: '"Orgon W03 Medium", sans-serif' }}
+                    style={{ fontFamily: '"Orgon W03 Medium", sans-serif', textShadow: '0 0 10px rgba(255,255,255,0.2)' }}
                   >
                     Track
                   </span>
                   <span
                     className="text-primary font-bold"
-                    style={{ fontFamily: '"Orgon W03 Medium", sans-serif' }}
+                    style={{ fontFamily: '"Orgon W03 Medium", sans-serif', textShadow: '0 0 10px rgba(239,68,68,0.3)' }}
                   >
                     It
                   </span>
@@ -177,21 +189,21 @@ const Login = () => {
             </div>
           </div>
 
-          {/* Knowledge City appears second */}
+          {/* Knowledge City appears second - enhanced for dark mode */}
           <h2
-            className="login-title text-4xl font-medium text-primary mb-4"
+            className="login-title text-4xl font-medium text-primary mb-4 dark:text-primary dark:drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]"
             style={{ fontFamily: '"Orgon W03 Medium", sans-serif' }}
           >
             Knowledge City
           </h2>
           
-          {/* Track name appears third */}
-          <p className="login-track text-xl text-muted-foreground mb-6">
+          {/* Track name appears third - enhanced for dark mode */}
+          <p className="login-track text-xl text-muted-foreground mb-6 dark:text-gray-300">
             Track Full Stack using Python
           </p>
           
           {/* Description appears last */}
-          <p className="login-description text-base text-muted-foreground/90 max-w-md">
+          <p className="login-description text-base text-muted-foreground/90 max-w-md dark:text-gray-400">
             Streamline your experience with integrated tools for attendance management,
             lost & found items, leave request handling, insightful dashboards, and more.
           </p>
@@ -201,32 +213,32 @@ const Login = () => {
       {/* Right Side - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-8 lg:p-12">
         <div className="w-full max-w-md">
-          {/* Changed lg:text-left to text-center to keep it centered */}
           <div className="mb-8 text-center">
-            {/* Optional: Smaller logo for mobile/right side */}
+            {/* Optional: Smaller logo for mobile/right side with dark mode enhancement */}
             <div className="flex items-center justify-center lg:hidden w-12 h-12 mx-auto mb-4 rounded-xl text-primary-foreground">
               <img
                 src="/images/iti-logo.png"
                 alt="logo"
-                className="w-10 h-10"
+                className="w-10 h-10 dark:filter dark:brightness-110"
               />
             </div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome back</h1>
-            <p className="mt-2 text-muted-foreground">
+            <h1 className="text-3xl font-bold tracking-tight dark:text-gray-100">Welcome back</h1>
+            <p className="mt-2 text-muted-foreground dark:text-gray-400">
               Sign in to your account to continue
             </p>
           </div>
 
-          <Card className="overflow-hidden border shadow-lg">
-            <div className="h-1 bg-gradient-to-r from-primary to-primary/80" />
+          {/* Enhanced card for dark mode */}
+          <Card className="overflow-hidden border shadow-lg dark:shadow-lg dark:shadow-black/20 dark:border-gray-800">
+            <div className="h-1 bg-gradient-to-r from-primary to-primary/80 dark:from-primary dark:to-primary/70" />
             <div className="p-6 sm:p-8">
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-sm font-medium">
+                  <Label htmlFor="email" className="text-sm font-medium dark:text-gray-300">
                     Email
                   </Label>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-gray-400">
                       <Mail className="h-4 w-4" />
                     </div>
                     <Input
@@ -244,18 +256,18 @@ const Login = () => {
 
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-sm font-medium">
+                    <Label htmlFor="password" className="text-sm font-medium dark:text-gray-300">
                       Password
                     </Label>
                     <Link
                       to="/forget-password"
-                      className="text-xs text-primary hover:underline"
+                      className="text-xs text-primary hover:underline dark:text-primary/90"
                     >
                       Forgot password?
                     </Link>
                   </div>
                   <div className="relative">
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground dark:text-gray-400">
                       <Lock className="h-4 w-4" />
                     </div>
                     <Input
@@ -271,7 +283,7 @@ const Login = () => {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground dark:text-gray-400 dark:hover:text-gray-300"
                       aria-label={
                         showPassword ? "Hide password" : "Show password"
                       }
@@ -285,11 +297,12 @@ const Login = () => {
                   </div>
                 </div>
 
+                {/* Enhanced button for dark mode */}
                 <Button
                   type="submit"
                   className={cn(
-                    "w-full h-11 font-medium transition-all duration-200 bg-primary hover:bg-primary/90",
-                    isLoading && "opacity-90 cursor-not-allowed" // Added cursor style for disabled state
+                    "w-full h-11 font-medium transition-all duration-200 bg-primary hover:bg-primary/90 dark:bg-primary dark:hover:bg-primary/90 dark:text-white dark:shadow-md dark:shadow-primary/20",
+                    isLoading && "opacity-90 cursor-not-allowed"
                   )}
                   disabled={isLoading}
                 >
