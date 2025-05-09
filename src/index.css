@@ -56,14 +56,14 @@
     --detail-card-border: 48 100% 90%; /* Light yellow border */
 
     /* Dashboard card colors (light mode) */
-    --card-attendance-bg: 160 84% 94%;      /* emerald-50 */
-    --card-attendance-text: 160 84% 27%;    /* emerald-700 */
-    --card-weekly-bg: 217 96% 95%;          /* blue-50 */
-    --card-weekly-text: 217 91% 60%;        /* blue-700 */
-    --card-permission-bg: 42 100% 95%;      /* amber-50 */
-    --card-permission-text: 42 100% 40%;    /* amber-700 */
-    --card-warning-bg: 0 85% 95%;           /* red-50 */
-    --card-warning-text: 0 84% 60%;         /* red-700 */
+    --card-attendance-bg: 160 84% 94%; /* emerald-50 */
+    --card-attendance-text: 160 84% 27%; /* emerald-700 */
+    --card-weekly-bg: 217 96% 95%; /* blue-50 */
+    --card-weekly-text: 217 91% 60%; /* blue-700 */
+    --card-permission-bg: 42 100% 95%; /* amber-50 */
+    --card-permission-text: 42 100% 40%; /* amber-700 */
+    --card-warning-bg: 0 85% 95%; /* red-50 */
+    --card-warning-text: 0 84% 60%; /* red-700 */
   }
 
   .dark {
@@ -108,14 +108,14 @@
     --detail-card-border: 220 7% 25%; /* Darker grey border */
 
     /* Dashboard card colors (dark mode) */
-    --card-attendance-bg: 160 84% 15%;      /* emerald-900/30 */
-    --card-attendance-text: 160 84% 60%;    /* emerald-400 */
-    --card-weekly-bg: 217 91% 20%;          /* blue-900/30 */
-    --card-weekly-text: 217 91% 70%;        /* blue-400 */
-    --card-permission-bg: 42 100% 20%;      /* amber-900/30 */
-    --card-permission-text: 42 100% 70%;    /* amber-400 */
-    --card-warning-bg: 0 85% 20%;           /* red-900/30 */
-    --card-warning-text: 0 84% 80%;         /* red-400 */
+    --card-attendance-bg: 160 84% 15%; /* emerald-900/30 */
+    --card-attendance-text: 160 84% 60%; /* emerald-400 */
+    --card-weekly-bg: 217 91% 20%; /* blue-900/30 */
+    --card-weekly-text: 217 91% 70%; /* blue-400 */
+    --card-permission-bg: 42 100% 20%; /* amber-900/30 */
+    --card-permission-text: 42 100% 70%; /* amber-400 */
+    --card-warning-bg: 0 85% 20%; /* red-900/30 */
+    --card-warning-text: 0 84% 80%; /* red-400 */
   }
 }
 
@@ -299,15 +299,17 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/40;
 }
-
 .fc-button {
-  background-color: #ef4444 !important;
-  border-color: #ef4444 !important;
-  color: white !important;
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  border-color: hsl(var(--primary)) !important;
 }
 .fc-button:hover {
-  background-color: #dc2626 !important;
-  border-color: #dc2626 !important;
+  background-color: hsl(var(--destructive)) !important;
+  border-color: hsl(var(--destructive)) !important;
+}
+.fc-button:active {
+  background-color: hsl(var(--primary-active)) !important;
 }
 .fc-event {
   cursor: pointer;
@@ -315,18 +317,16 @@
   font-weight: 500;
   transition: transform 0.2s ease;
 }
-.fc-event:hover {
+/* .fc-event:hover {
   transform: scale(1.02);
-}
+} */
 .fc-event-title {
   white-space: normal !important;
   overflow: visible !important;
   text-overflow: clip !important;
   word-wrap: break-word !important;
 }
-.fc-daygrid-event {
-  height: auto !important;
-}
+
 .fc-today-button {
   font-weight: bold !important;
 }
@@ -337,15 +337,87 @@
 .fc-day-today {
   background-color: rgba(239, 68, 68, 0.05) !important;
 }
-/* Day header styling to match root background */
-.fc-col-header-cell,
-.fc-day-header {
-  background-color: hsl(var(--background)) !important; /* Use variable */
-}
+
 
 /* List view background styling */
 .fc-list-table,
 .fc-list-day-cushion,
 .fc-list-empty {
   background-color: hsl(var(--background)) !important; /* Use variable */
+}
+
+.fc-event {
+  cursor: pointer;
+  font-size: 1.1rem;
+  font-weight: 500;
+}
+/* Day header styling to match root background */
+.fc-col-header-cell,
+.fc-day-header {
+  background-color: hsl(var(--background)) !important; /* Use variable */
+  
+}
+/* Dark mode styles with less contrast borders */
+.dark .fc {
+  /* Using more subtle border colors that are closer to background */
+  --fc-border-color: rgba(50, 50, 50, 0.8);
+  --fc-non-business-color: rgba(40, 40, 40, 0.3);
+  --fc-today-bg-color: rgba(239, 68, 68, 0.07);
+  --fc-list-event-hover-bg-color: rgba(60, 60, 60, 0.4);
+}
+
+.dark .fc-timegrid-axis {
+  background-color: hsl(var(--background)) !important; /* Use variable */
+}
+/* Subtle borders for events */
+.dark .fc-event {
+  box-shadow: none !important;
+}
+/* Fix for event title text wrapping */
+.fc-event-title {
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  word-wrap: break-word !important;
+}
+.fc-daygrid-event {
+  height: auto !important;
+}
+
+
+.fc .fc-scrollgrid-section-sticky > * {
+  /* background: var(--fc-page-bg-color); */
+  /* position: sticky; */
+  z-index: 3;
+}
+.dark .fc {
+  color: rgba(220, 220, 220, 0.85) !important; /* Slightly darker than pure white */
+}
+
+.dark .fc-col-header-cell-cushion,
+.dark .fc-timegrid-slot-label-cushion,
+.dark .fc-timegrid-axis-cushion,
+.dark .fc-daygrid-day-number,
+.dark .fc-toolbar-title,
+.dark .fc-button-primary {
+  color: rgba(220, 220, 220, 0.85) !important; /* Slightly darker than pure white */
+}
+
+/* Make date numbers slightly darker in dark mode */
+.dark .fc-daygrid-day-number {
+  color: rgba(220, 220, 220, 0.85) !important;
+}
+
+/* Make toolbar buttons text slightly darker in dark mode */
+.dark .fc-button-primary:not(:disabled) {
+  color: rgba(220, 220, 220, 0.9) !important;
+}
+/* Fix for button active state (when pressing mouse button) */
+.fc-button:active,
+.fc-button-primary:active,
+.fc-button.fc-button-primary:active {
+  background-color: hsl(var(--destructive)) !important;
+  border-color: hsl(var(--destructive)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  transform: translateY(1px);
 }

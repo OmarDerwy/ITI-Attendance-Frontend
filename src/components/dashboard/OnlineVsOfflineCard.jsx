@@ -387,8 +387,7 @@ const OnlineVsOfflineCard = ({ trackData }) => {
           {/* Track cards container */}
           <div
             ref={containerRef}
-            className="flex space-x-4 overflow-hidden pb-4"
-          >
+            className="flex space-x-4 justify-center items-center overflow-hidden pb-4 ">
             {visibleTracks.length > 0 ? (
               visibleTracks.map((track, index) => (
                 <motion.div

@@ -90,7 +90,7 @@ const Schedule = () => {
 
   // Color variables with dark mode variants
   const onlineForeground = "rgb(254, 230, 231)"; // Light red for light mode (unchanged)
-  const onlineForegroundDark = "#4C1B1B"; // Darker specific red for dark mode
+  const onlineForegroundDark = "hsl(var(--muted))"; 
   const offlineForeground = "hsl(var(--primary))";
   const offlineForegroundDark = "rgb(127, 0, 0)";
   const offlineTextClass = "text-primary-foreground";
@@ -1101,122 +1101,6 @@ const Schedule = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <style jsx global>{`
-        .fc-button {
-          background-color: #ef4444 !important;
-          border-color: #ef4444 !important;
-          color: white !important;
-        }
-        .fc-button:hover {
-          background-color: #dc2626 !important;
-          border-color: #dc2626 !important;
-        }
-
-        .fc-event {
-          cursor: pointer;
-          font-size: 1.1rem;
-          font-weight: 500;
-        }
-
-        /* Dark mode specific styles */
-        .dark .fc-button {
-          background-color: rgb(127, 0, 0) !important;
-          border-color: rgb(127, 0, 0) !important;
-          color: white !important;
-        }
-
-        .dark .fc-button:hover {
-          background-color: rgba(127, 0, 0, 0.8) !important;
-          border-color: rgba(127, 0, 0, 0.8) !important;
-        }
-        
-        /* Dark mode styles with less contrast borders */
-        .dark .fc {
-          /* Using more subtle border colors that are closer to background */
-          --fc-border-color: rgba(50, 50, 50, 0.8);
-          --fc-event-border-color: rgba(60, 60, 60, 0.8);
-          --fc-non-business-color: rgba(40, 40, 40, 0.3);
-          --fc-today-bg-color: rgba(239, 68, 68, 0.07);
-          
-          /* Button styles - unchanged */
-          --fc-button-bg-color: rgb(127, 0, 0);
-          --fc-button-border-color: rgb(127, 0, 0);
-          --fc-button-hover-bg-color: rgba(127, 0, 0, 0.8);
-          --fc-button-hover-border-color: rgba(127, 0, 0, 0.8);
-          --fc-button-active-bg-color: rgba(127, 0, 0, 0.9);
-          
-          /* List view styles */
-          --fc-list-event-hover-bg-color: rgba(60, 60, 60, 0.4);
-        }
-        
-        /* Enhanced borders for dark mode - more subtle */
-        .dark .fc th,
-        .dark .fc td,
-        .dark .fc .fc-divider,
-        .dark .fc .fc-list-table {
-          border-color: rgba(50, 50, 50, 0.8) !important;
-        }
-        
-        /* Extra highlight for key borders - still subtle */
-        .dark .fc .fc-scrollgrid,
-        .dark .fc .fc-scrollgrid-section,
-        .dark .fc .fc-col-header-cell,
-        .dark .fc .fc-list-day-cushion {
-          border-color: rgba(60, 60, 60, 0.8) !important;
-        }
-        
-        /* Subtle borders for events */
-        .dark .fc-event {
-          border: 1px solid rgba(60, 60, 60, 0.8) !important;
-          box-shadow: none !important;
-        }
-        
-        /* Enforce visibility of lines but keep subtle */
-        .dark .fc-timegrid-slot,
-        .dark .fc-timegrid-axis,
-        .dark .fc-scrollgrid-sync-inner {
-          border-color: rgba(45, 45, 45, 0.8) !important;
-        }
-        
-        /* Make list view items more subtle */
-        .dark .fc-list-event td {
-          border-color: rgba(50, 50, 50, 0.8) !important;
-        }
-        
-        /* Remove box shadows */
-        .dark .fc-timegrid-event-harness-inset .fc-timegrid-event,
-        .dark .fc-timegrid-event.fc-event-mirror,
-        .dark .fc-timegrid-more-link {
-          box-shadow: none !important;
-        }
-
-        /* Fix for event title text wrapping */
-        .fc-event-title {
-          white-space: normal !important;
-          overflow: visible !important;
-          text-overflow: clip !important;
-          word-wrap: break-word !important;
-        }
-        
-        .fc-daygrid-event {
-          height: auto !important;
-        }
-
-
-
-        /* Consistent border for all calendar elements */
-        .dark .fc .fc-scrollgrid,
-        .dark .fc .fc-scrollgrid-section, 
-        .dark .fc .fc-scrollgrid-section > *,
-        .dark .fc .fc-timegrid-col,
-        .dark .fc .fc-timegrid-slot-col,
-        .dark .fc .fc-col-header-cell,
-        .dark .fc .fc-daygrid-day,
-        .dark .fc-timegrid-axis.fc-scrollgrid-shrink {
-          border-color: rgba(50, 50, 50, 0.8) !important;
-          border-width: 1px !important;
-        }
-      `}</style>
     </Layout>
   );
 };
