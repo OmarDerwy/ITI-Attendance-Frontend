@@ -102,7 +102,7 @@ const Login = () => {
           try {
             const attendanceStats = await user.fetchAttendanceStats?.();
             if (attendanceStats) {
-              console.log("Attendance statistics loaded successfully");
+              // console.log("Attendance statistics loaded successfully");
             }
           } catch (statsError) {
             console.error("Failed to fetch attendance statistics:", statsError);
@@ -119,11 +119,8 @@ const Login = () => {
       localStorage.setItem("userId", userData.id.toString());
       queryClient.refetchQueries();
       // console.log("User ID stored in localStorage:", userData.id); // Keep console logs minimal for production
-      if (userRole === "student") {
-        navigate("/student-dashboard");
-      } else {
-        navigate("/");
-      }
+      navigate("/");
+      
     } catch (error) {
       console.error("Login failed:", error);
       toast.error("Login failed. Wrong credentials or inactive user.");

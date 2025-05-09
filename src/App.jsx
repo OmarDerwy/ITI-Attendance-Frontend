@@ -30,7 +30,6 @@ import UserForm from "./pages/Management/UserForm";
 import UserManagement from './pages/Management/UserManagement';
 import StudentSchedule from './pages/Attendance/StudentSchedule';
 import StudentsWithWarnings from "@/pages/Attendance/StudentsWithWarnings";
-import StudentDashboard from './pages/Dashboard/StudentDashboard';
 import ProtectedRoute from "./components/routing/ProtectedRoute";
 import CoordinatorForm from './pages/Management/CoordinatorForm';
 import CoordinatorManagement from './pages/Management/CoordinatorManagement';
