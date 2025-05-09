@@ -94,7 +94,7 @@ const App = () => (
               <Route path="/students-with-warnings" element={<StudentsWithWarnings />} />
               <Route path="/coordinators" element={<CoordinatorManagement />} />
               <Route path="/coordinators/add" element={<CoordinatorForm />} />
-              <Route path="/coordinators/edit/:userId" element={<CoordinatorForm />} />
+              <Route path="/coordinators/edit/:coordinatorId" element={<CoordinatorForm />} />
               <Route path="/tracks/view" element={<TracksView />} />
             </Route>
             {/* Not found route */}
