@@ -11,15 +11,11 @@ import { ArrowRightIcon, UsersIcon, BookOpenIcon, GraduationCapIcon, BarChartIco
 
 const BranchManagerDashboard = () => {
   const navigate = useNavigate();
-  // Get the branch ID from user context or state management
-  // For now, using a hardcoded value
-  const branchId = 8;
   // Queries for dashboard data
   const { data: tracksStatisticsData, isLoading: isTracksLoading } = useQuery({
-    queryKey: ["tracksStatistics", branchId],
     queryFn: async () => {
       const response = await axiosBackendInstance.get(
-        `attendance/tracks/branch_statistics?branch_id=${branchId}&is_active=true`
+        `attendance/tracks/branch_statistics?is_active=true`
       );
       return response.data;
     },
@@ -152,14 +148,7 @@ const BranchManagerDashboard = () => {
                       <p className="text-xs text-muted-foreground ml-2">active</p>
                     </div>
                   )}
-                  {!isTracksLoading && tracksCount > 0 && (
-                    <div className="mt-1 w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                      <div 
-                        className="bg-primary h-1.5 rounded-full" 
-                        style={{ width: `${(activeTracksCount / tracksCount) * 100}%` }}
-                      ></div>
-                    </div>
-                  )}
+   
                 </div>
               </div>
             </CardContent>

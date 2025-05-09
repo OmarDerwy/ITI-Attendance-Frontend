@@ -8,7 +8,7 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { Calendar, ChartPie, ChevronLeft, ChevronRight } from "lucide-react";
+import { Calendar, ChartPie, ChevronLeft, ChevronRight, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const OnlineVsOfflineCard = ({ trackData }) => {
@@ -110,6 +110,11 @@ const OnlineVsOfflineCard = ({ trackData }) => {
     { name: "Online Days", value: track.onlineDays, color: onlineColor },
     { name: "Offline Days", value: track.offlineDays, color: offlineColor },
   ];
+
+  // Check if pie chart has data
+  const hasPieData = (track) => {
+    return track.onlineDays > 0 || track.offlineDays > 0;
+  };
 
   // Generate yearly calendar data from track's daily data
   const generateYearlyCalendar = () => {
@@ -300,6 +305,14 @@ const OnlineVsOfflineCard = ({ trackData }) => {
     }
   };
 
+  // Render empty pie chart state
+  const renderEmptyPieChart = () => (
+    <div className="h-36 w-36 mx-auto flex flex-col items-center justify-center text-muted-foreground">
+      <AlertCircle className="h-10 w-10 mb-2 opacity-70" />
+      <p className="text-xs text-center">No Schedules data available</p>
+    </div>
+  );
+
   return (
     <Card className="overflow-hidden border-2 border-primary/20 dark:border-primary/30 transition-colors bg-gradient-to-b from-white to-primary-50/50 dark:from-gray-900 dark:to-primary/5">
       <style jsx global>{`
@@ -406,32 +419,39 @@ const OnlineVsOfflineCard = ({ trackData }) => {
                     </h4>
                     {/* Small text under track name */}
                     <p className="text-[0.65rem] text-muted-foreground mb-3">
-                      {selectedTrack.programType} ({selectedTrack.intake})
+                      {track.programType} ({track.intake})
                     </p>
-                    <div className="h-36 w-36 mx-auto">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={getPieData(track)}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={40}
-                            outerRadius={55}
-                            paddingAngle={2}
-                            dataKey="value"
-                            activeShape={null} // This removes any special active shape
-                            onMouseEnter={null} // Remove any hover handlers
-                            onMouseLeave={null}
-                            isAnimationActive={true}
-                            activeIndex={[]} // This will prevent any active state
-                          >
-                            {getPieData(track).map((entry, i) => (
-                              <Cell key={`cell-${i}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
+                    
+                    {/* Pie chart or empty state */}
+                    {hasPieData(track) ? (
+                      <div className="h-36 w-36 mx-auto">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={getPieData(track)}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={40}
+                              outerRadius={55}
+                              paddingAngle={2}
+                              dataKey="value"
+                              activeShape={null} // This removes any special active shape
+                              onMouseEnter={null} // Remove any hover handlers
+                              onMouseLeave={null}
+                              isAnimationActive={true}
+                              activeIndex={[]} // This will prevent any active state
+                            >
+                              {getPieData(track).map((entry, i) => (
+                                <Cell key={`cell-${i}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    ) : (
+                      renderEmptyPieChart()
+                    )}
+                    
                     <div className="mt-4 text-sm">
                       <div className="flex justify-between items-center mb-2">
                         <span className="flex items-center">
