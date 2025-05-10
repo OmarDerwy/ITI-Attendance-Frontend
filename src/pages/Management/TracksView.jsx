@@ -51,7 +51,7 @@ const TracksView = () => {
   };
 
   useEffect(() => {
-    if (userRole !== "branch-manager") {
+    if (!["branch-manager", "coordinator"].includes(userRole)){
       navigate("/");
       return;
     }
