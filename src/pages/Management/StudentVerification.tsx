@@ -116,6 +116,7 @@ const StudentVerification = () => {
 
   // Helper function to get status (you may need to adjust based on actual data structure)
   const getStatus = (user: User) => {
+    if (user.is_banned) return "Banned";
     if (user.is_active === undefined) return "pending";
     return user.is_active ? "verified" : "pending";
   };
@@ -136,7 +137,6 @@ const StudentVerification = () => {
       toast({
         title: "Student Revoked",
         description: "The student verification has been revoked.",
-        variant: "destructive",
       });
       setSelectedStudent(null);
       refetch();
@@ -152,7 +152,7 @@ const StudentVerification = () => {
 
   const handleResendActivation = async (studentId: number) => {
     try {
-      await axiosBackendInstance.get(
+      await axiosBackendInstance.patch(
         `/accounts/students/${studentId}/resend-activation/`
       );
       toast({
