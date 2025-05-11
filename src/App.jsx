@@ -34,6 +34,7 @@ import ProtectedRoute from "./components/routing/ProtectedRoute";
 import CoordinatorForm from './pages/Management/CoordinatorForm';
 import CoordinatorManagement from './pages/Management/CoordinatorManagement';
 import TracksView from "./pages/Management/TracksView";
+import EventsReport from "./pages/Reports/EventsReport";
 
 const queryClient = new QueryClient();
 
@@ -95,6 +96,7 @@ const App = () => (
               <Route path="/coordinators/add" element={<CoordinatorForm />} />
               <Route path="/coordinators/edit/:coordinatorId" element={<CoordinatorForm />} />
               <Route path="/tracks/view" element={<TracksView />} />
+              <Route path="/events-report" element={<EventsReport />} />
             </Route>
             {/* Not found route */}
             <Route path="*" element={<NotFound />} />

@@ -24,6 +24,7 @@ import {
   HandHeart,
   TriangleAlert,
   BookOpen,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
@@ -213,7 +214,7 @@ const Sidebar = () => {
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: BookOpen, label: "Tracks", to: "/tracks", roles: ["admin"] },
     { icon: BookOpen, label: "Tracks", to: "/tracks/view", roles: ["branch-manager", "coordinator"] },
-
+    { icon: Calendar, label: "Events Report", to: "/events-report", roles: ["coordinator"] },
     {
       icon: Settings,
       label: "Settings",
