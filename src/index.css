@@ -1,3 +1,4 @@
+@import url(https://db.onlinewebfonts.com/c/ede5905d909313904bc26c008669b3c1?family=Orgon+W03+Medium);
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -60,7 +61,7 @@
     /* Calendar event colors - updated for better compatibility */
     --event-online-bg: rgb(254, 230, 231); /* Light red for online events */
     --event-online-text: rgb(155, 28, 28); /* Dark red text for online events */
-    --event-offline-bg: hsl(var(--primary)); /* Primary color for offline events */
+    --event-offline-bg: hsl(355deg 61.79% 39.91%); /* Primary color for offline events */
     --event-offline-text: hsl(var(--primary-foreground)); /* White text for offline events */
   }
 
@@ -116,10 +117,10 @@
     --card-warning-text: 0 84% 80%; /* red-400 */
     
     /* Calendar event colors - updated for dark mode */
-    --event-online-bg: rgb(161, 105, 105); /* Darker red for online events in dark mode */
-    --event-online-text: rgb(254, 226, 226); /* Light red text for online events in dark mode */
-    --event-offline-bg: rgb(76, 29, 29); /* Primary color for offline events */
-    --event-offline-text: hsl(var(--primary-foreground)); /* White text for offline events */
+    --event-online-bg: rgb(78 73 73); /* Darker red for online events in dark mode */
+    --event-online-text:rgb(216, 210, 210); /* Light red text for online events in dark mode */
+    --event-offline-bg: rgb(82, 33, 33) ; /* Primary color for offline events */
+    --event-offline-text: rgb(216, 210, 210); /* White text for offline events */
   }
 }
 
@@ -457,4 +458,56 @@
   border-color: hsl(var(--destructive)) !important;
   color: hsl(var(--primary-foreground)) !important;
   transform: translateY(1px);
+}
+
+
+/* stu calender related */
+/* Add these rules at the end of your index.css file */
+
+/* Fix for list view hover in light mode */
+.fc-list-event:hover td {
+  /* Override FullCalendar's default hover background */
+  background-color: rgba(0, 0, 0, 0.05) !important;
+}
+
+/* Ensure text remains visible on hover in list view */
+.fc-list-event:hover .event-online-text,
+.fc-list-event:hover .event-offline-text,
+.fc-list-event:hover .event-branch-online,
+.fc-list-event:hover .event-branch-offline {
+  /* Preserve the original text colors on hover */
+  color: inherit !important;
+}
+
+/* Specific fix for dark mode list hover */
+.dark .fc-list-event:hover td {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Make sure the event dot color stays consistent */
+.fc-list-event-dot {
+  border-color: currentColor !important;
+}
+
+/* Fix for the list view event hover that makes text disappear */
+.fc-theme-standard .fc-list-event:hover td {
+  /* Override FullCalendar's white text on hover */
+  color: inherit !important;
+}
+
+/* Ensure the event content maintains its styling on hover */
+.fc-theme-standard .fc-list-event:hover .fc-list-event-title,
+.fc-theme-standard .fc-list-event:hover .fc-list-event-time {
+  color: inherit !important;
+}
+
+/* Legend dot styles */
+.legend-dot-online {
+  background-color: var(--event-online-bg);
+  border: 1px solid var(--event-online-bg);
+}
+
+.legend-dot-offline {
+  background-color: var(--event-offline-bg);
+  border: 1px solid var(--event-offline-bg);
 }
