@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -41,7 +41,6 @@ import { axiosBackendInstance } from "@/api/config";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useBeforeUnload } from "react-router-dom";
 import { toast } from "sonner";
-import { getDate } from "date-fns";
 
 const Schedule = () => {
   const navigate = useNavigate();
@@ -87,19 +86,6 @@ const Schedule = () => {
 
   // Track if there are modified events
   const modifiedEvents = events.filter((event) => event.isModified);
-
-  // Color variables with dark mode variants
-  const onlineForeground = "rgb(254, 230, 231)"; // Light red for light mode (unchanged)
-  const onlineForegroundDark = "hsl(var(--muted))"; 
-  const offlineForeground = "hsl(var(--primary))";
-  const offlineForegroundDark = "rgb(127, 0, 0)";
-  const offlineTextClass = "text-primary-foreground";
-  const onlineTextClass = "text-accent-foreground dark:text-red-100";
-
-  // Function to determine whether to use dark mode colors
-  const isDarkMode = () => {
-    return document.documentElement.classList.contains("dark");
-  };
 
   // Effect to set hasUnsavedChanges based on modified events
   useEffect(() => {
@@ -177,21 +163,6 @@ const Schedule = () => {
         schedule_date: event.schedule_date,
         schedule_id: event.schedule_id,
         branch: event.branch,
-        backgroundColor: event.is_online
-          ? isDarkMode()
-            ? onlineForegroundDark
-            : onlineForeground
-          : isDarkMode()
-          ? offlineForegroundDark
-          : offlineForeground,
-        borderColor: event.is_online
-          ? isDarkMode()
-            ? onlineForegroundDark
-            : onlineForeground
-          : isDarkMode()
-          ? offlineForegroundDark
-          : offlineForeground,
-        textColor: event.is_online ? onlineTextClass : offlineTextClass,
       }));
       setEvents(fetchedEvents);
     } catch (error) {
@@ -308,21 +279,6 @@ const Schedule = () => {
         isOnline: newEvent.isOnline,
         trackId: selectedTrack,
         branch: newEvent.branch,
-        backgroundColor: newEvent.isOnline
-          ? isDarkMode()
-            ? onlineForegroundDark
-            : onlineForeground
-          : isDarkMode()
-          ? offlineForegroundDark
-          : offlineForeground,
-        borderColor: newEvent.isOnline
-          ? isDarkMode()
-            ? onlineForegroundDark
-            : onlineForeground
-          : isDarkMode()
-          ? offlineForegroundDark
-          : offlineForeground,
-        textColor: newEvent.isOnline ? onlineTextClass : offlineTextClass,
         isModified: true, // Mark as modified
       };
       setEvents((prev) => [...prev, newEventData]); // Update events state
@@ -407,25 +363,6 @@ const Schedule = () => {
     setSelectedEvent((prev) => ({
       ...prev,
       [field]: value,
-      ...(field === "isOnline"
-        ? {
-            backgroundColor: value
-              ? isDarkMode()
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDarkMode()
-              ? offlineForegroundDark
-              : offlineForeground,
-            borderColor: value
-              ? isDarkMode()
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDarkMode()
-              ? offlineForegroundDark
-              : offlineForeground,
-            textColor: value ? onlineTextClass : offlineTextClass,
-          }
-        : {}),
     }));
   };
   const toggleEventType = (e, eventId) => {
@@ -446,21 +383,6 @@ const Schedule = () => {
           return {
             ...event,
             isOnline,
-            backgroundColor: isOnline
-              ? isDarkMode()
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDarkMode()
-              ? offlineForegroundDark
-              : offlineForeground,
-            borderColor: isOnline
-              ? isDarkMode()
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDarkMode()
-              ? offlineForegroundDark
-              : offlineForeground,
-            textColor: isOnline ? onlineTextClass : offlineTextClass,
             isModified: true,
           };
         }
@@ -543,43 +465,31 @@ const Schedule = () => {
     setSelectedDay(day);
     setIsBranchModalOpen(true);
   };
+
   const renderEventContent = (eventInfo) => {
     // Directly use eventInfo's extendedProps to get accurate isOnline state
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
-    const isDark = isDarkMode();
-    const textColor = isOnline ? onlineTextClass : offlineTextClass;
-
-    // Theme-aware colors for instructor name
-    const subtextColor = isOnline
-      ? "text-gray-700 dark:text-red-300"
-      : "text-primary-foreground/80 dark:text-primary-foreground/90";
-
-    // Theme-aware colors for branch location
-    const branchColor = isOnline
-      ? "text-gray-700 dark:text-red-300"
-      : "text-primary-foreground/90 dark:text-primary-foreground";
-
-    // Check if event is in the past
     const isPastEvent = isDateInPast(eventInfo.event.start);
-
+    
+    // Apply the correct CSS classes based on online/offline status
+    const eventClassName = isOnline ? "event-online" : "event-offline";
+    const textClassName = isOnline ? "event-online-text" : "event-offline-text";
+    const branchClassName = isOnline ? "event-branch-online" : "event-branch-offline";
+    
+    // Safely apply classes to the event element if it exists
+    if (eventInfo.el) {
+      eventInfo.el.classList.add(eventClassName);
+    }
+    
     return (
       <div
-        className={`flex items-center justify-between p-1 ${textColor} rounded w-full h-full ${
+        className={`flex items-center justify-between p-1 ${textClassName} rounded w-full h-full ${
           isPastEvent ? "opacity-75" : ""
         }`}
-        style={{
-          backgroundColor: isOnline
-            ? isDark
-              ? onlineForegroundDark
-              : onlineForeground
-            : isDark
-            ? offlineForegroundDark
-            : offlineForeground,
-        }}
       >
         {currentView !== "dayGridMonth" && (
           <div
-            className={`flex space-x-1 absolute left-1 bottom-1 items-center text-xs italic ${branchColor}`}
+            className={`flex space-x-1 absolute left-1 bottom-1 items-center text-xs italic ${branchClassName}`}
           >
             {isOnline ? (
               <>
@@ -600,7 +510,7 @@ const Schedule = () => {
           <div className="whitespace-normal pr-6 truncate-multiline">
             {eventInfo.event.title}
           </div>
-          <div className={`text-xs ${subtextColor}`}>
+          <div className={`text-xs ${branchClassName}`}>
             {eventInfo.event.extendedProps.instructor || ""}
           </div>
         </div>
@@ -611,7 +521,7 @@ const Schedule = () => {
                 e.preventDefault(); // Ensure event doesn't bubble
                 toggleEventType(e, eventInfo.event.id);
               }}
-              className={`${textColor} hover:opacity-80 flex items-center justify-center`}
+              className={`${textClassName} hover:opacity-80 flex items-center justify-center`}
               title={isOnline ? "Switch to Offline" : "Switch to Online"}
             >
               <div
@@ -626,7 +536,7 @@ const Schedule = () => {
                 setEventToDelete(eventInfo.event.id);
                 setIsDeleteConfirmOpen(true);
               }}
-              className={`${textColor} hover:opacity-80`}
+              className={`${textClassName} hover:opacity-80`}
               title="Delete"
             >
               <X size={16} />
@@ -636,9 +546,8 @@ const Schedule = () => {
       </div>
     );
   };
-  const renderDayHeaderContent = (headerInfo) => {
-    // Check if day is in the past
 
+  const renderDayHeaderContent = (headerInfo) => {
     return (
       <div className="flex items-center justify-between">
         <span>{headerInfo.text}</span>
@@ -682,61 +591,6 @@ const Schedule = () => {
     );
     setIsBranchModalOpen(false);
   };
-
-  // Effect to update colors when theme changes
-  useEffect(() => {
-    const handleThemeChange = () => {
-      if (!calendarRef.current) return;
-
-      const api = calendarRef.current.getApi();
-      events.forEach((event) => {
-        const isDark = isDarkMode();
-        const eventObj = api.getEventById(event.id);
-        if (eventObj) {
-          eventObj.setProp(
-            "backgroundColor",
-            event.isOnline
-              ? isDark
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDark
-              ? offlineForegroundDark
-              : offlineForeground
-          );
-          eventObj.setProp(
-            "borderColor",
-            event.isOnline
-              ? isDark
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDark
-              ? offlineForegroundDark
-              : offlineForeground
-          );
-        }
-      });
-    };
-
-    // Listen for dark mode changes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === "class") {
-          handleThemeChange();
-        }
-      });
-    });
-
-    observer.observe(document.documentElement, { attributes: true });
-
-    return () => observer.disconnect();
-  }, [
-    events,
-    onlineForeground,
-    onlineForegroundDark,
-    offlineForeground,
-    offlineForegroundDark,
-  ]);
-
   return (
     <Layout>
       {isLoading ? (
@@ -784,6 +638,9 @@ const Schedule = () => {
                 )}
               </div>
               <FullCalendar
+                eventClassNames={(info) => {
+                  return [info.event.extendedProps.isOnline ? 'event-online' : 'event-offline'];
+                }}
                 ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
                 initialView="timeGridWeek"
