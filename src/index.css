@@ -1,5 +1,3 @@
-@import url(https://db.onlinewebfonts.com/c/ede5905d909313904bc26c008669b3c1?family=Orgon+W03+Medium);
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -37,13 +35,7 @@
     --radius: 0.75rem;
 
     --navbar-background: 355 5% 92%; /* Slightly darker than background */
-    /* --navbar-background: 0 0% 100%; */
-    /* --navbar-background: 37 38% 84%; */
-
     --sidebar-background: 355 5% 92%; /* Matching navbar */
-    /* --sidebar-background: 0 0% 100%;  */
-    /* --sidebar-background: 37 38% 84%; */
-
     --sidebar-foreground: 0 10% 10%;
     --sidebar-primary: 355 70% 42%; /* Matching primary */
     --sidebar-primary-foreground: 0 0% 100%;
@@ -64,6 +56,12 @@
     --card-permission-text: 42 100% 40%; /* amber-700 */
     --card-warning-bg: 0 85% 95%; /* red-50 */
     --card-warning-text: 0 84% 60%; /* red-700 */
+    
+    /* Calendar event colors - updated for better compatibility */
+    --event-online-bg: rgb(254, 230, 231); /* Light red for online events */
+    --event-online-text: rgb(155, 28, 28); /* Dark red text for online events */
+    --event-offline-bg: hsl(var(--primary)); /* Primary color for offline events */
+    --event-offline-text: hsl(var(--primary-foreground)); /* White text for offline events */
   }
 
   .dark {
@@ -116,6 +114,12 @@
     --card-permission-text: 42 100% 70%; /* amber-400 */
     --card-warning-bg: 0 85% 20%; /* red-900/30 */
     --card-warning-text: 0 84% 80%; /* red-400 */
+    
+    /* Calendar event colors - updated for dark mode */
+    --event-online-bg: rgb(161, 105, 105); /* Darker red for online events in dark mode */
+    --event-online-text: rgb(254, 226, 226); /* Light red text for online events in dark mode */
+    --event-offline-bg: rgb(76, 29, 29); /* Primary color for offline events */
+    --event-offline-text: hsl(var(--primary-foreground)); /* White text for offline events */
   }
 }
 
@@ -162,6 +166,47 @@
   /* Sidebar styling */
   .sidebar-bg {
     background-color: hsl(var(--sidebar-background));
+  }
+  
+  /* Calendar event styling - improved selectors for better specificity */
+  .fc .event-online,
+  .fc .fc-event.event-online {
+    background-color: var(--event-online-bg) !important;
+    border-color: var(--event-online-bg) !important;
+    color: var(--event-online-text) !important;
+  }
+  
+  .fc .event-offline,
+  .fc .fc-event.event-offline {
+    background-color: var(--event-offline-bg) !important;
+    border-color: var(--event-offline-bg) !important;
+    color: var(--event-offline-text) !important;
+  }
+  
+  .event-online-text {
+    color: var(--event-online-text) !important;
+  }
+  
+  .event-offline-text {
+    color: var(--event-offline-text) !important;
+  }
+  
+  .event-subtext-online {
+    @apply text-gray-700 dark:text-red-300;
+  }
+  
+  .event-subtext-offline {
+    @apply text-primary-foreground/80 dark:text-primary-foreground/90;
+  }
+  
+  .event-branch-online {
+    color: var(--event-online-text) !important;
+    opacity: 0.8;
+  }
+  
+  .event-branch-offline {
+    color: var(--event-offline-text) !important;
+    opacity: 0.9;
   }
 }
 
@@ -299,6 +344,8 @@
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-muted-foreground/40;
 }
+
+/* FullCalendar specific styles with improved specificity */
 .fc-button {
   background-color: hsl(var(--primary)) !important;
   color: hsl(var(--primary-foreground)) !important;
@@ -317,9 +364,6 @@
   font-weight: 500;
   transition: transform 0.2s ease;
 }
-/* .fc-event:hover {
-  transform: scale(1.02);
-} */
 .fc-event-title {
   white-space: normal !important;
   overflow: visible !important;
@@ -338,25 +382,19 @@
   background-color: rgba(239, 68, 68, 0.05) !important;
 }
 
-
 /* List view background styling */
 .fc-list-table,
 .fc-list-day-cushion,
 .fc-list-empty {
-  background-color: hsl(var(--background)) !important; /* Use variable */
+  background-color: hsl(var(--background)) !important;
 }
 
-.fc-event {
-  cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 500;
-}
 /* Day header styling to match root background */
 .fc-col-header-cell,
 .fc-day-header {
-  background-color: hsl(var(--background)) !important; /* Use variable */
-  
+  background-color: hsl(var(--background)) !important;
 }
+
 /* Dark mode styles with less contrast borders */
 .dark .fc {
   /* Using more subtle border colors that are closer to background */
@@ -367,12 +405,14 @@
 }
 
 .dark .fc-timegrid-axis {
-  background-color: hsl(var(--background)) !important; /* Use variable */
+  background-color: hsl(var(--background)) !important;
 }
+
 /* Subtle borders for events */
 .dark .fc-event {
   box-shadow: none !important;
 }
+
 /* Fix for event title text wrapping */
 .fc-event-title {
   white-space: normal !important;
@@ -384,10 +424,7 @@
   height: auto !important;
 }
 
-
 .fc .fc-scrollgrid-section-sticky > * {
-  /* background: var(--fc-page-bg-color); */
-  /* position: sticky; */
   z-index: 3;
 }
 .dark .fc {
