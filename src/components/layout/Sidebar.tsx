@@ -24,6 +24,7 @@ import {
   HandHeart,
   TriangleAlert,
   BookOpen,
+  Calendar,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUser } from "@/context/UserContext";
@@ -36,7 +37,7 @@ interface NavItemProps {
   to: string;
   active?: boolean;
   expanded: boolean;
-  roles?: Array<"student" | "supervisor" | "admin" | "branch-manager">;
+  roles?: Array<"student" | "supervisor" | "admin" | "coordinator" |"branch-manager">;
   onClick?: () => void;
 }
 
@@ -54,7 +55,7 @@ const NavItem = ({
   // Only show items relevant to current role
   if (
     roles.length > 0 &&
-    !roles.includes(userRole as "student" | "supervisor" | "admin" | "branch-manager")
+    !roles.includes(userRole as "student" | "supervisor" | "admin" | "coordinator" | "branch-manager")
   )
     return null;
 
@@ -156,22 +157,22 @@ const Sidebar = () => {
     icon: React.ElementType;
     label: string;
     to: string;
-    roles: Array<"student" | "supervisor" | "admin" | "branch-manager">;
+    roles: Array<"student" | "supervisor" | "admin" | "coordinator" | "branch-manager">;
     onClick?: () => void;
   }> = [
-    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin" ,"student", "branch-manager"] },
+    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin" ,"student", "branch-manager", "coordinator"] },
 
     {
       icon: CalendarDays,
       label: "Schedule",
       to: "/schedule",
-      roles: ["supervisor"],
+      roles: ["supervisor" ],
     },
     {
       icon: CalendarDays,
       label: "Schedule",
       to: "/student-schedule",
-      roles: ["student"],
+      roles: ["student","coordinator"],
     },
     {
       icon: HandHeart,
@@ -186,25 +187,25 @@ const Sidebar = () => {
       icon: UserCheck,
       label: "Student Verification",
       to: "/student-verification",
-      roles: ["supervisor"],
+      roles: ["supervisor","coordinator"],
     },
     {
       icon: Clock2,
       label: "Attendance Status",
       to: "/attendance-status",
-      roles: ["supervisor"],
+      roles: ["supervisor","coordinator"],
     },
     {
       icon: TriangleAlert,
       label: "Students with Warnings",
       to: "/students-with-warnings",
-      roles: ["supervisor"],
+      roles: ["supervisor", "coordinator"],
     },
     {
       icon: HandHeart,
       label: "Leave Request Center",
       to: "/leave-request-center",
-      roles: ["supervisor"],
+      roles: ["supervisor", "coordinator"],
     },
 
     { icon: Users, label: "Users", to: "/users", roles: ["admin"] },
@@ -212,8 +213,8 @@ const Sidebar = () => {
 
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
     { icon: BookOpen, label: "Tracks", to: "/tracks", roles: ["admin"] },
-    { icon: BookOpen, label: "Tracks", to: "/tracks/view", roles: ["branch-manager"] },
-
+    { icon: BookOpen, label: "Tracks", to: "/tracks/view", roles: ["branch-manager", "coordinator"] },
+    { icon: Calendar, label: "Events Report", to: "/events-report", roles: ["coordinator"] },
     {
       icon: Settings,
       label: "Settings",
@@ -225,13 +226,13 @@ const Sidebar = () => {
       icon: Flag,
       label: "Report Item",
       to: "/report-lost-found",
-      roles: ["student", "supervisor", "admin" , "branch-manager"],
+      roles: ["student", "supervisor", "admin" , "branch-manager","coordinator"],
     },
     {
       icon: Search,
       label: "Lost & Found",
       to: "/lost-found",
-      roles: ["student", "supervisor", "admin", "branch-manager"],
+      roles: ["student", "supervisor", "admin", "branch-manager", "coordinator"],
     },
   ];
 

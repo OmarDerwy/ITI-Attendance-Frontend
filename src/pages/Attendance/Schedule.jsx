@@ -89,12 +89,19 @@ const Schedule = () => {
   const modifiedEvents = events.filter((event) => event.isModified);
 
   // Color variables with dark mode variants
-  const onlineForeground = "rgb(254, 230, 231)"; // Light red for light mode (unchanged)
-  const onlineForegroundDark = "hsl(var(--muted))"; 
-  const offlineForeground = "hsl(var(--primary))";
-  const offlineForegroundDark = "rgb(127, 0, 0)";
-  const offlineTextClass = "text-primary-foreground";
-  const onlineTextClass = "text-accent-foreground dark:text-red-100";
+const onlineForeground = "rgb(254, 230, 231)"; // Light red for light mode (unchanged)
+
+const offlineForeground = "hsl(var(--primary))";
+const offlineTextClass = "text-primary-foreground";
+
+const onlineForegroundDark = "hsl(345.59deg 10.01% 42.23%)"; 
+const offlineForegroundDark = "#542125";
+
+const onlineTextClass = "text-accent-foreground dark:text-red-100"; //this appears on offline 
+const onlineSubtextColor = "text-gray-700 dark:text-red-100" ;
+const offlineSubtextColor = "text-primary-foreground/80 dark:text-red-100";
+const onlineBranchColor =  "text-gray-700 dark:text-red-100"
+const offlineBranchColor = "text-primary-foreground/90 dark:text-red-100";
 
   // Function to determine whether to use dark mode colors
   const isDarkMode = () => {
@@ -548,17 +555,8 @@ const Schedule = () => {
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
     const isDark = isDarkMode();
     const textColor = isOnline ? onlineTextClass : offlineTextClass;
-
-    // Theme-aware colors for instructor name
-    const subtextColor = isOnline
-      ? "text-gray-700 dark:text-red-300"
-      : "text-primary-foreground/80 dark:text-primary-foreground/90";
-
-    // Theme-aware colors for branch location
-    const branchColor = isOnline
-      ? "text-gray-700 dark:text-red-300"
-      : "text-primary-foreground/90 dark:text-primary-foreground";
-
+    const subtextColor = isOnline ? onlineSubtextColor : offlineSubtextColor;
+    const branchColor = isOnline ? onlineBranchColor : offlineBranchColor;
     // Check if event is in the past
     const isPastEvent = isDateInPast(eventInfo.event.start);
 

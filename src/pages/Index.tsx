@@ -39,7 +39,7 @@ const Index = () => {
     <>
       <Layout>
         {userRole === "admin" && <AdminDashboard />}
-        {userRole === "supervisor" && <SupervisorDashboard />}
+        {(userRole === "supervisor" || userRole === "coordinator") && <SupervisorDashboard />}
         {userRole === "branch-manager" && <BranchManagerDashboard />}
         {userRole === "student" && <StudentDashboard />}
       </Layout>

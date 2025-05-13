@@ -213,7 +213,7 @@ const StudentDetail = ({
                 variant="outline"
                 className="w-full text-wrap"
                 onClick={() => {onResendActivation(student.id)}}
-                disabled={status !== "pending"}
+                disabled={status == "verified"}
               >
                 Resend Activation
               </Button>
@@ -222,7 +222,7 @@ const StudentDetail = ({
                 variant="destructive"
                 className="w-full text-wrap"
                 onClick={() => {onRevoke(student.id)}}
-                disabled={status == "pending"}
+                disabled={status != "banned"}
               >
                 Revoke Verification
               </Button>

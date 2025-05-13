@@ -77,7 +77,7 @@ const StudentsWithWarnings = () => {
     }
   }, [searchQuery, selectedTrack, students]);
 
-  if (userRole !== "admin" && userRole !== "supervisor") {
+  if (userRole !== "coordinator" && userRole !== "supervisor") {
     return (
       <Layout>
         <Card className="p-8 text-center">

@@ -10,6 +10,7 @@ export interface User {
   is_active?: boolean;
   tracks?: string;
   date_joined: string;
+  is_banned: boolean;
 }
 
 export interface ApiResponse {
