@@ -32,24 +32,17 @@ const SessionsBulkCreateUpdate = ({ events, onSaveSuccess }) => {
 
     try {
       // reset newEvents IDs to null
-      newEvents.forEach((event) => {
-        event.id = null;
-      });
-
-      const combinedEvents = [...newEvents, ...updatedEvents];
-      console.log(
-        JSON.stringify({
-          combinedEvents,
-        })
-      );
-      console.log("combinedEvents", combinedEvents);
+      const eventsToSubmit = [
+        ...newEvents.map(event => ({...event, id: null})),
+        ...updatedEvents
+      ];
+      
       const response = await axiosBackendInstance.post(
         "/attendance/sessions/bulk-create-or-update/",
         {
-          combinedEvents,
+          combinedEvents: eventsToSubmit,
         }
       );
-      console.log("response", response);
       
       // Properly handle the success response from axios
       if (response.status >= 200 && response.status < 300) {

@@ -359,17 +359,34 @@
 .fc-button:active {
   background-color: hsl(var(--primary-active)) !important;
 }
-.fc-event {
+ .fc-event {
   cursor: pointer;
   font-size: 1.1rem;
   font-weight: 500;
-  transition: transform 0.2s ease;
 }
 .fc-event-title {
   white-space: normal !important;
   overflow: visible !important;
   text-overflow: clip !important;
   word-wrap: break-word !important;
+  /* line-height: 1.3 !important; */
+}
+
+/* Ensure event content has proper padding */
+.fc-event-main-frame {
+  padding: 2px 4px !important;
+}
+
+/* Improve event height handling */
+.fc-daygrid-event {
+  height: auto !important;
+  max-height: none !important;
+}
+
+/* Ensure event content expands properly */
+.fc-event-main {
+  flex: 1 !important;
+  min-height: 0 !important;
 }
 
 .fc-today-button {
@@ -510,4 +527,23 @@
 .legend-dot-offline {
   background-color: var(--event-offline-bg);
   border: 1px solid var(--event-offline-bg);
+}
+
+.fc .fc-timegrid-slot { height: 2.5em; }
+
+.fc .fc-scrollgrid-section-header {
+  position: sticky;
+  /* Adjust this value to be just below your navbar height */
+  top: var(--navbar-height, 64px); /* Default to 64px if variable not defined */
+  z-index: 4; /* Keep below navbar but above other calendar elements */
+  background-color: hsl(var(--background)); /* Match your background color */
+  /* Fix for blurriness */
+  transform: translateZ(0);
+  will-change: transform;
+  /* Ensure clean edges */
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+}
+/* Fix for potential blurriness in webkit browsers */
+.fc-scroller {
+  -webkit-overflow-scrolling: touch;
 }

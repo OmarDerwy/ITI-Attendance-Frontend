@@ -5,7 +5,6 @@ import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import Layout from "@/components/layout/Layout";
 import {
-  Calendar,
   MapPin,
   Trash2,
   AlertTriangle,
@@ -14,7 +13,6 @@ import {
   Loader2,
 } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import PageTitle from "@/components/ui/page-title";
 import { useUser } from "@/context/UserContext";
 import TrackDropdown from "@/components/schedule/TrackDropdown";
 import SessionsBulkCreateUpdate from "@/components/schedule/SessionsBulkCreateUpdate";
@@ -41,6 +39,7 @@ import { axiosBackendInstance } from "@/api/config";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useBeforeUnload } from "react-router-dom";
 import { toast } from "sonner";
+import { Textarea } from '@/components/ui/textarea';
 
 const Schedule = () => {
   const navigate = useNavigate();
@@ -470,52 +469,28 @@ const Schedule = () => {
     // Directly use eventInfo's extendedProps to get accurate isOnline state
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
     const isPastEvent = isDateInPast(eventInfo.event.start);
-    
+
     // Apply the correct CSS classes based on online/offline status
     const eventClassName = isOnline ? "event-online" : "event-offline";
     const textClassName = isOnline ? "event-online-text" : "event-offline-text";
-    const branchClassName = isOnline ? "event-branch-online" : "event-branch-offline";
-    
+    const branchClassName = isOnline
+      ? "event-branch-online"
+      : "event-branch-offline";
+
     // Safely apply classes to the event element if it exists
     if (eventInfo.el) {
       eventInfo.el.classList.add(eventClassName);
     }
-    
+
     return (
       <div
-        className={`flex items-center justify-between p-1 ${textClassName} rounded w-full h-full ${
+        className={`flex flex-col justify-between p-1 ${textClassName} rounded w-full h-full ${
           isPastEvent ? "opacity-75" : ""
         }`}
       >
-        {currentView !== "dayGridMonth" && (
-          <div
-            className={`flex space-x-1 absolute left-1 bottom-1 items-center text-xs italic ${branchClassName}`}
-          >
-            {isOnline ? (
-              <>
-                <MapPin size={12} className="mr-1" />
-                <span className="text-[12px]">Home</span>
-              </>
-            ) : (
-              <>
-                <MapPin size={12} className="mr-1" />
-                <span className="text-[12px]">
-                  {eventInfo.event.extendedProps.branch?.name}
-                </span>
-              </>
-            )}
-          </div>
-        )}
-        <div className="p-1 flex-col">
-          <div className="whitespace-normal pr-6 truncate-multiline">
-            {eventInfo.event.title}
-          </div>
-          <div className={`text-xs ${branchClassName}`}>
-            {eventInfo.event.extendedProps.instructor || ""}
-          </div>
-        </div>
+        {/* Top section with controls */}
         {!isPastEvent && (
-          <div className="flex space-x-1 absolute right-1 top-1 items-center">
+          <div className="flex justify-end space-x-1 mb-1">
             <button
               onClick={(e) => {
                 e.preventDefault(); // Ensure event doesn't bubble
@@ -541,6 +516,36 @@ const Schedule = () => {
             >
               <X size={16} />
             </button>
+          </div>
+        )}
+
+        <div className="flex-grow flex flex-col min-h-0">
+          <div className="overflow-hidden text-ellipsis">
+            {eventInfo.event.title}
+          </div>
+          <div className={`text-xs ${branchClassName} truncate mt-1`}>
+            {eventInfo.event.extendedProps.instructor || ""}
+          </div>
+        </div>
+
+        {/* Bottom section with branch info - moved to absolute bottom */}
+        {currentView !== "dayGridMonth" && (
+          <div
+            className={`flex items-center text-xs italic mt-auto ${branchClassName}`}
+          >
+            {isOnline ? (
+              <>
+                <MapPin size={12} className="flex-shrink-0 mr-1" />
+                <span className="truncate">Home</span>
+              </>
+            ) : (
+              <>
+                <MapPin size={12} className="flex-shrink-0 mr-1" />
+                <span className="truncate max-w-[calc(100%-20px)]">
+                  {eventInfo.event.extendedProps.branch?.name}
+                </span>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -600,16 +605,6 @@ const Schedule = () => {
         </div>
       ) : (
         <>
-          <PageTitle
-            title="Schedule"
-            subtitle={
-              userRole === "student"
-                ? "View your class schedule"
-                : "Manage class schedules"
-            }
-            icon={<Calendar />}
-          />
-
           {tracks.length === 0 ? (
             <p className="text-gray-500 text-center">No tracks assigned.</p>
           ) : (
@@ -639,7 +634,11 @@ const Schedule = () => {
               </div>
               <FullCalendar
                 eventClassNames={(info) => {
-                  return [info.event.extendedProps.isOnline ? 'event-online' : 'event-offline'];
+                  return [
+                    info.event.extendedProps.isOnline
+                      ? "event-online"
+                      : "event-offline",
+                  ];
                 }}
                 ref={calendarRef}
                 plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
@@ -681,7 +680,9 @@ const Schedule = () => {
                 viewDidMount={(view) => {
                   const newViewType = view.view.type;
                   setCurrentView(newViewType);
-                  fetchEvents(selectedTrack); // Fetch events for the updated view period
+                  if (!hasUnsavedChanges) {
+                    fetchEvents(selectedTrack);
+                  }
                 }}
                 dayHeaderContent={renderDayHeaderContent}
                 eventDrop={handleEventDrop} // Add this prop to handle event dragging
@@ -725,19 +726,22 @@ const Schedule = () => {
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-title" className="text-right">
+               <Label htmlFor="event-title" className="text-right pt-2">
                 Title
               </Label>
-              <Input
-                id="event-title"
-                value={selectedEvent ? selectedEvent.title : newEvent.title}
-                onChange={(e) =>
-                  selectedEvent
-                    ? updateSelectedEvent("title", e.target.value)
-                    : setNewEvent({ ...newEvent, title: e.target.value })
-                }
-                className="col-span-3 truncate"
-              />
+              <div className="col-span-3">
+                <Textarea
+                  id="event-title"
+                  value={selectedEvent ? selectedEvent.title : newEvent.title}
+                  onChange={(e) =>
+                    selectedEvent
+                      ? updateSelectedEvent("title", e.target.value)
+                      : setNewEvent({ ...newEvent, title: e.target.value })
+                  }
+                  className="min-h-[80px] resize-y"
+                  placeholder="Enter session title"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="event-instructor" className="text-right">
