@@ -6,8 +6,6 @@ import interactionPlugin from "@fullcalendar/interaction";
 import Layout from "@/components/layout/Layout";
 import {
   MapPin,
-  Trash2,
-  AlertTriangle,
   X,
   MapPinned,
   Loader2,
@@ -16,30 +14,13 @@ import { Card } from "@/components/ui/card";
 import { useUser } from "@/context/UserContext";
 import TrackDropdown from "@/components/schedule/TrackDropdown";
 import SessionsBulkCreateUpdate from "@/components/schedule/SessionsBulkCreateUpdate";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectItem,
-  SelectContent,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogHeader,
-  DialogFooter,
-  DialogDescription,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
 import { axiosBackendInstance } from "@/api/config";
 import { v4 as uuidv4 } from "uuid";
 import { useNavigate, useBeforeUnload } from "react-router-dom";
 import { toast } from "sonner";
-import { Textarea } from '@/components/ui/textarea';
+import EventDialog from '../../components/schedule/EventDialog';
+import BranchSelectionDialog from '../../components/schedule/BranchSelectionDialog';
+import LeaveConfirmationDialog from '../../components/schedule/LeaveConfirmationDialog';
 
 const Schedule = () => {
   const navigate = useNavigate();
@@ -56,18 +37,18 @@ const Schedule = () => {
   const [selectedTrack, setSelectedTrack] = useState("");
   const [tracks, setTracks] = useState([]);
   const [defaultBranch, setDefaultBranch] = useState({ name: "", id: "" });
-  // Add state for tracking unsaved changes
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
-  const [navigationPath, setNavigationPath] = useState("");
-  // Add state for pending track change
   const [pendingTrackId, setPendingTrackId] = useState(null);
-  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-  const [eventToDelete, setEventToDelete] = useState(null);
+  const [navigationPath, setNavigationPath] = useState("");
+  const [deletedEventIds, setDeletedEventIds] = useState([]);
+  const [deletedEvents, setDeletedEvents] = useState([]);
 
+  // Filter events to only show those for the selected track
   const filteredEvents = events.filter(
     (event) => event.trackId === selectedTrack
   );
+  
   const [newEvent, setNewEvent] = useState({
     id: "react" + uuidv4(),
     title: "",
@@ -75,21 +56,20 @@ const Schedule = () => {
     branch: defaultBranch,
     instructor: "",
   });
+  
   const isDateInPast = (date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0); // Set time to the start of the day
     const inputDate = new Date(date);
     return inputDate < today; // Check if the input date is before today
   };
+  
   const [branches, setFetchedBranches] = useState([]);
-
-  // Track if there are modified events
   const modifiedEvents = events.filter((event) => event.isModified);
-
-  // Effect to set hasUnsavedChanges based on modified events
+  
   useEffect(() => {
-    setHasUnsavedChanges(modifiedEvents.length > 0);
-  }, [modifiedEvents.length]);
+    setHasUnsavedChanges(modifiedEvents.length > 0 || deletedEventIds.length > 0);
+  }, [modifiedEvents.length, deletedEventIds.length]);
 
   // Prompt when user tries to leave with unsaved changes
   useBeforeUnload(
@@ -121,20 +101,6 @@ const Schedule = () => {
     };
   }, [hasUnsavedChanges]);
 
-  // Mark changes as saved
-  const handleChangesSaved = useCallback(() => {
-    setHasUnsavedChanges(false);
-    // Reset isModified flag on all events
-    setEvents((prevEvents) =>
-      prevEvents.map((event) => ({
-        ...event,
-        isModified: false,
-      }))
-    );
-    // Refresh calendar data after saving
-    fetchEvents(selectedTrack);
-  }, [selectedTrack]);
-
   const updateTrackAndBranch = (trackId, tracks) => {
     const selectedTrackData = tracks.find((track) => track.id === trackId);
     if (selectedTrackData) {
@@ -148,10 +114,11 @@ const Schedule = () => {
 
   const fetchEvents = async (trackId) => {
     try {
+      setIsLoading(true);
       const response = await axiosBackendInstance.get(
         `attendance/sessions/calendar-data/?track_id=${trackId}`
       );
-      const fetchedEvents = response.data.map((event) => ({
+      const fetchedEvents = response?.data?.map((event) => ({
         id: event.id,
         title: event.title,
         instructor: event.instructor,
@@ -163,13 +130,21 @@ const Schedule = () => {
         schedule_id: event.schedule_id,
         branch: event.branch,
       }));
+      
+      // Replace all events with the newly fetched ones for this track
       setEvents(fetchedEvents);
+      
+      // Clear any deleted events since we're loading fresh data
+      setDeletedEventIds([]);
+      setDeletedEvents([]);
     } catch (error) {
-      console.error("Error fetching events:", error); // DEV DEBUG
+      console.error("Error fetching events:", error);
+      toast.warning("No sessions found for the given track");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Modify handleTrackChange to check for unsaved changes
   const handleTrackChange = (trackId) => {
     if (hasUnsavedChanges) {
       setPendingTrackId(trackId);
@@ -188,13 +163,10 @@ const Schedule = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Fetch branches first
         const branchesResponse = await axiosBackendInstance.get(
           "attendance/branches/"
         );
         setFetchedBranches(branchesResponse.data);
-
-        // Fetch tracks after branches
         const tracksResponse = await axiosBackendInstance.get(
           "attendance/tracks/"
         );
@@ -207,7 +179,8 @@ const Schedule = () => {
           await fetchEvents(initialTrackId); // Fetch events for the initial track
         }
       } catch (error) {
-        console.error("Error fetching data:", error); // DEV DEBUG
+        console.error("Error fetching data:", error);
+        toast.error("Failed to load initial data");
       } finally {
         setIsLoading(false);
       }
@@ -246,7 +219,8 @@ const Schedule = () => {
     }
 
     // Validate that the event does not overlap with existing events
-    const isOverlapping = events.some((event) => {
+    // Only check against events from the current track
+    const isOverlapping = filteredEvents.some((event) => {
       if (selectedEvent && event.id === selectedEvent.id) return false; // Skip the current event in edit mode
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
@@ -266,7 +240,7 @@ const Schedule = () => {
     if (!selectedEvent) {
       // Add mode
       if (!newEvent.title) {
-        alert("Title is required.");
+        toast.error("Title is required.");
         return;
       }
       const newEventData = {
@@ -297,44 +271,53 @@ const Schedule = () => {
     setSelectedEvent(null); // Reset selectedEvent after submission
   };
 
-  const handleDeleteEvent = async () => {
-    if (eventToDelete) {
-      const event = events.find((e) => String(e.id) === String(eventToDelete));
+  // Function to handle direct deletion without confirmation
+  const handleDeleteEvent = (eventId) => {
+    const event = events.find((e) => String(e.id) === String(eventId));
 
-      // Check if event is in the past
-      if (event && isDateInPast(event.start)) {
-        toast.error("Cannot delete sessions from past dates");
-        setEventToDelete(null);
-        setIsDeleteConfirmOpen(false);
-        return;
-      }
+    // Check if event is in the past
+    if (event && isDateInPast(event.start)) {
+      toast.error("Cannot delete sessions from past dates");
+      return;
+    }
 
-      // Continue with the existing delete logic
-      if (!event || !event.schedule_id) {
-        // If the event is not saved (no schedule_id), remove it locally
-        setEvents((prev) =>
-          prev.filter((e) => String(e.id) !== String(eventToDelete))
-        );
-        toast.success("You have cancelled the event.");
-        setEventToDelete(null);
-        setIsDeleteConfirmOpen(false);
-        return;
-      }
+    // If the event is not saved (no schedule_id), remove it locally
+    if (!event || String(event.id).startsWith("react")) {
+      setEvents((prev) =>
+        prev.filter((e) => String(e.id) !== String(eventId))
+      );
+      toast.success("Event cancelled.");
+      setIsDialogOpen(false);
+      return;
+    }
 
-      try {
-        // Call API to delete the session
-        await axiosBackendInstance.delete(
-          `attendance/sessions/${eventToDelete}/`
-        );
-        setEvents((prev) =>
-          prev.filter((e) => String(e.id) !== String(eventToDelete))
-        );
-        toast.success("Event deleted successfully.");
-      } catch (error) {
-        toast.error("Failed to delete the event. Please try again.");
-      }
-      setEventToDelete(null);
-      setIsDeleteConfirmOpen(false);
+    // Store the event details before removing it
+    setDeletedEvents(prev => [...prev, event]);
+    
+    // Add to deletedEventIds for bulk deletion
+    setDeletedEventIds(prev => [...prev, Number(eventId)]);
+    
+    // Remove from events array
+    setEvents((prev) =>
+      prev.filter((e) => String(e.id) !== String(eventId))
+    );
+    
+    setHasUnsavedChanges(true);
+    toast.success("Event marked for deletion. Save changes to confirm.");
+    setIsDialogOpen(false);
+  };
+
+  // Function to handle leave confirmation
+  const handleLeaveConfirm = () => {
+    setHasUnsavedChanges(false);
+    setIsLeaveConfirmOpen(false);
+
+    if (pendingTrackId) {
+      // Apply track change if that was the trigger
+      applyTrackChange(pendingTrackId);
+    } else if (navigationPath) {
+      // Navigate away if that was the trigger
+      navigate(navigationPath);
     }
   };
 
@@ -358,12 +341,14 @@ const Schedule = () => {
       )
     );
   };
+
   const updateSelectedEvent = (field, value) => {
     setSelectedEvent((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
+
   const toggleEventType = (e, eventId) => {
     e.stopPropagation();
 
@@ -390,6 +375,7 @@ const Schedule = () => {
       return updatedEvents;
     });
   };
+
   const handleEventDrop = (dropInfo) => {
     // Prevent dropping to a past date
     if (isDateInPast(dropInfo.event.start)) {
@@ -410,6 +396,30 @@ const Schedule = () => {
       )
     );
   };
+
+  // Function to handle save success
+  const handleSaveSuccess = async () => {
+    try {
+      // Show a subtle loading indicator if needed
+      setIsLoading(true);
+      
+      // Fetch fresh events for the current track
+      await fetchEvents(selectedTrack);
+      
+      // Reset all modified flags and deleted events
+      setDeletedEventIds([]);
+      setDeletedEvents([]);
+      setHasUnsavedChanges(false);
+      
+      toast.success("Changes saved successfully");
+    } catch (error) {
+      console.error("Error refreshing events:", error);
+      toast.error("Failed to refresh events");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleOpenAddDialog = (selectInfo) => {
     if (currentView === "dayGridMonth") {
       return;
@@ -423,12 +433,14 @@ const Schedule = () => {
     setSelectedEvent(null);
 
     // Check for events on the same day and use their branch if available
-    const eventsOnSameDay = events.filter((event) => {
+    // Only check events from the current track
+    const eventsOnSameDay = filteredEvents.filter((event) => {
       return (
         new Date(event.start).toLocaleDateString() ===
         selectInfo.start.toLocaleDateString()
       );
     });
+    
     setNewEvent({
       id: "react" + uuidv4(),
       title: "",
@@ -439,6 +451,7 @@ const Schedule = () => {
       start: selectInfo.startStr,
       end: selectInfo.endStr,
       schedule_date: selectInfo.startStr.slice(0, 10),
+      trackId: selectedTrack, // Ensure the new event has the current track ID
     });
 
     setIsDialogOpen(true);
@@ -460,7 +473,6 @@ const Schedule = () => {
       toast.info("Cannot change branch for past dates");
       return;
     }
-
     setSelectedDay(day);
     setIsBranchModalOpen(true);
   };
@@ -508,8 +520,7 @@ const Schedule = () => {
             <button
               onClick={(e) => {
                 e.stopPropagation(); // Prevent dialog from opening
-                setEventToDelete(eventInfo.event.id);
-                setIsDeleteConfirmOpen(true);
+                handleDeleteEvent(eventInfo.event.id);
               }}
               className={`${textClassName} hover:opacity-80`}
               title="Delete"
@@ -584,7 +595,7 @@ const Schedule = () => {
     setEvents((prev) =>
       prev.map((event) => {
         const eventDate = new Date(event.start).toLocaleDateString();
-        if (eventDate === selectedDayString && !event.isOnline) {
+        if (eventDate === selectedDayString && !event.isOnline && event.trackId === selectedTrack) {
           return {
             ...event,
             branch: selectedBranchData,
@@ -596,6 +607,7 @@ const Schedule = () => {
     );
     setIsBranchModalOpen(false);
   };
+
   return (
     <Layout>
       {isLoading ? (
@@ -625,9 +637,10 @@ const Schedule = () => {
                 {userRole === "supervisor" && (
                   <div className="md:order-3">
                     <SessionsBulkCreateUpdate
-                      events={[...events.filter((event) => event.isModified)]}
-                      track={selectedTrack}
-                      onSaveSuccess={handleChangesSaved}
+                      events={[...events.filter((event) => event.isModified && event.trackId === selectedTrack)]}
+                      deletedEventIds={deletedEventIds}
+                      deletedEvents={deletedEvents}
+                      onSaveSuccess={handleSaveSuccess}
                     />
                   </div>
                 )}
@@ -666,7 +679,6 @@ const Schedule = () => {
                   right: "dayGridMonth,timeGridWeek,timeGridDay",
                 }}
                 height="auto"
-                // validRange={{ start: new Date() }}
                 timeZone="local"
                 nowIndicator={true}
                 now={new Date()}
@@ -680,9 +692,6 @@ const Schedule = () => {
                 viewDidMount={(view) => {
                   const newViewType = view.view.type;
                   setCurrentView(newViewType);
-                  if (!hasUnsavedChanges) {
-                    fetchEvents(selectedTrack);
-                  }
                 }}
                 dayHeaderContent={renderDayHeaderContent}
                 eventDrop={handleEventDrop} // Add this prop to handle event dragging
@@ -708,8 +717,8 @@ const Schedule = () => {
           )}
         </>
       )}
-      <Dialog
-        open={isDialogOpen}
+      <EventDialog 
+        isOpen={isDialogOpen}
         onOpenChange={(open) => {
           if (!open) {
             // Reset selectedEvent when dialog closes
@@ -717,251 +726,31 @@ const Schedule = () => {
           }
           setIsDialogOpen(open);
         }}
-      >
-        <DialogContent className="sm:max-w-[600px]">
-          <DialogHeader>
-            <DialogTitle>
-              {selectedEvent ? "Edit Event" : "Add Event"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-               <Label htmlFor="event-title" className="text-right pt-2">
-                Title
-              </Label>
-              <div className="col-span-3">
-                <Textarea
-                  id="event-title"
-                  value={selectedEvent ? selectedEvent.title : newEvent.title}
-                  onChange={(e) =>
-                    selectedEvent
-                      ? updateSelectedEvent("title", e.target.value)
-                      : setNewEvent({ ...newEvent, title: e.target.value })
-                  }
-                  className="min-h-[80px] resize-y"
-                  placeholder="Enter session title"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-instructor" className="text-right">
-                Instructor
-              </Label>
-              <Input
-                id="event-instructor"
-                value={
-                  selectedEvent ? selectedEvent.instructor : newEvent.instructor
-                }
-                onChange={(e) =>
-                  selectedEvent
-                    ? updateSelectedEvent("instructor", e.target.value)
-                    : setNewEvent({ ...newEvent, instructor: e.target.value })
-                }
-                className="col-span-3 truncate" // Allow long text
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-online" className="text-right">
-                Online
-              </Label>
-              <div className="flex items-center space-x-2 col-span-3">
-                <Switch
-                  id="event-online"
-                  checked={
-                    selectedEvent ? selectedEvent.isOnline : newEvent.isOnline
-                  }
-                  onCheckedChange={(checked) =>
-                    selectedEvent
-                      ? updateSelectedEvent("isOnline", checked)
-                      : setNewEvent((prev) => ({
-                          ...prev,
-                          isOnline: checked,
-                        }))
-                  }
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="event-dates" className="text-right">
-                Dates
-              </Label>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 col-span-3 w-full">
-                <div className="space-y-1">
-                  <Label
-                    htmlFor="event-start"
-                    className="text-xs text-gray-500"
-                  >
-                    Start
-                  </Label>
-                  <Input
-                    id="event-start"
-                    type="datetime-local"
-                    value={
-                      selectedEvent
-                        ? selectedEvent.start?.slice(0, 16)
-                        : newEvent.start?.slice(0, 16)
-                    }
-                    onChange={(e) =>
-                      selectedEvent
-                        ? updateSelectedEvent("start", e.target.value)
-                        : setNewEvent({ ...newEvent, start: e.target.value })
-                    }
-                    className="w-full"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label htmlFor="event-end" className="text-xs text-gray-500">
-                    End
-                  </Label>
-                  <Input
-                    id="event-end"
-                    type="datetime-local"
-                    value={
-                      selectedEvent
-                        ? selectedEvent.end?.slice(0, 16)
-                        : newEvent.end?.slice(0, 16)
-                    }
-                    onChange={(e) =>
-                      selectedEvent
-                        ? updateSelectedEvent("end", e.target.value)
-                        : setNewEvent({ ...newEvent, end: e.target.value })
-                    }
-                    className="w-full"
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
-          <DialogFooter className="flex justify-between">
-            {selectedEvent && (
-              <Button
-                variant="destructive"
-                onClick={() =>
-                  selectedEvent && handleDeleteEvent(selectedEvent.id)
-                }
-              >
-                <Trash2 className="h-4 w-4 mr-2" /> Delete
-              </Button>
-            )}
-            <div className="space-x-2">
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleEventSubmit}>
-                {selectedEvent ? "Update Event" : "Add Event"}
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isBranchModalOpen} onOpenChange={setIsBranchModalOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Select Branch</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <p className="text-sm text-gray-500">
-              Select a branch for{" "}
-              {selectedDay ? new Date(selectedDay).toDateString() : ""}
-            </p>
-            <Select onValueChange={handleBranchSelection}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select branch" />
-              </SelectTrigger>
-              <SelectContent>
-                {branches.map((branch) => (
-                  <SelectItem key={branch.id} value={branch.id}>
-                    {branch.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsBranchModalOpen(false)}
-            >
-              Cancel
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isLeaveConfirmOpen} onOpenChange={setIsLeaveConfirmOpen}>
-        <DialogContent>
-          <DialogHeader className="flex flex-col items-center space-y-2">
-            <AlertTriangle className="h-12 w-12 text-amber-500" />
-            <DialogTitle>Unsaved Changes</DialogTitle>
-            <DialogDescription>
-              {pendingTrackId
-                ? "You have unsaved changes. Changing tracks will lose these changes."
-                : "You have unsaved changes to the schedule. What would you like to do?"}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsLeaveConfirmOpen(false);
-                setPendingTrackId(null); // Reset pending track ID
-              }}
-            >
-              Cancel
-            </Button>
-            <div className="space-x-2">
-              {!pendingTrackId && (
-                <Button
-                  onClick={() => {
-                    setIsLeaveConfirmOpen(false);
-                  }}
-                >
-                  Stay on Page
-                </Button>
-              )}
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  setHasUnsavedChanges(false);
-                  setIsLeaveConfirmOpen(false);
-
-                  if (pendingTrackId) {
-                    // Apply track change if that was the trigger
-                    applyTrackChange(pendingTrackId);
-                  } else if (navigationPath) {
-                    // Navigate away if that was the trigger
-                    navigate(navigationPath);
-                  }
-                }}
-              >
-                {pendingTrackId ? "Change Track" : "Leave Without Saving"}
-              </Button>
-            </div>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
-        <DialogContent>
-          <DialogHeader className="flex flex-col items-center space-y-2">
-            <AlertTriangle className="h-12 w-12 text-amber-500" />
-            <DialogTitle>Confirm Deletion</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this event? This action cannot be
-              undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteConfirmOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="destructive" onClick={handleDeleteEvent}>
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        selectedEvent={selectedEvent}
+        newEvent={newEvent}
+        onEventUpdate={updateSelectedEvent}
+        onNewEventChange={setNewEvent}
+        onSubmit={handleEventSubmit}
+        onDelete={handleDeleteEvent}
+      />
+      <BranchSelectionDialog 
+        isOpen={isBranchModalOpen}
+        onOpenChange={setIsBranchModalOpen}
+        selectedDay={selectedDay}
+        branches={branches}
+        onBranchSelection={handleBranchSelection}
+      />
+      <LeaveConfirmationDialog 
+        isOpen={isLeaveConfirmOpen}
+        onOpenChange={setIsLeaveConfirmOpen}
+        pendingTrackId={pendingTrackId}
+        onCancel={() => {
+          setIsLeaveConfirmOpen(false);
+          setPendingTrackId(null);
+        }}
+        onStay={() => setIsLeaveConfirmOpen(false)}
+        onLeave={handleLeaveConfirm}
+      />
     </Layout>
   );
 };
