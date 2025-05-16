@@ -70,8 +70,9 @@ const App = () => (
             </Route>
             {/* Authenticated-only routes */}
             <Route element={<ProtectedRoute requireAuth={true} />}>
-              <Route path="/" element={<Index />} />
-              <Route path="supervisor-schedule" element={<Schedule />} />
+              <Route index element={<Navigate to="/dashboard" replace />} />
+              <Route path="/dashboard" element={<Index />} />
+              <Route path="/supervisor-schedule" element={<Schedule />} />
               {/* Schedule Tabs */}
               <Route path="/schedule" element={<ScheduleTabs />}>
                 <Route path="student" element={<StudentSchedulePage />} />

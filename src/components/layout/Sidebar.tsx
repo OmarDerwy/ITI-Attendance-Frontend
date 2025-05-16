@@ -160,7 +160,7 @@ const Sidebar = () => {
     roles: Array<"student" | "supervisor" | "admin" | "coordinator" | "branch-manager">;
     onClick?: () => void;
   }> = [
-    { icon: Home, label: "Dashboard", to: "/", roles: ["supervisor", "admin" ,"student", "branch-manager", "coordinator"] },
+    { icon: Home, label: "Dashboard", to: "/dashboard", roles: ["supervisor", "admin" ,"student", "branch-manager", "coordinator"] },
 
     {
       icon: CalendarDays,
@@ -299,7 +299,7 @@ const Sidebar = () => {
                 icon={item.icon}
                 label={item.label}
                 to={item.to}
-                active={location.pathname === item.to}
+                active={location.pathname.startsWith(item.to)}
                 expanded={expanded}
                 roles={item.roles}
                 onClick={item.onClick}

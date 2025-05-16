@@ -23,9 +23,9 @@ const ScheduleTabs = () => {
 			<div className="">
 				{['coordinator'].includes(userRole) && 
                 <Tabs value={String(currentTab)} onValueChange={(val) => handleTabChange(Number(val))} className="mb-5">
-					<TabsList className="">
+					<TabsList className="bg-card border">
 						{tabRoutes.map((tab, idx) => (
-							<TabsTrigger key={tab.path} value={String(idx)} className="">
+							<TabsTrigger key={tab.path} value={String(idx)} className="transition-all duration-200 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground hover:bg-muted/80">
 								<span className="">{tab.label}</span>
 							</TabsTrigger>
 						))}
