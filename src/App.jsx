@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { UserProvider } from "./context/UserContext";
 import Index from "./pages/Index";
 import Login from "./pages/Auth/Login";
@@ -35,6 +35,9 @@ import CoordinatorForm from './pages/Management/CoordinatorForm';
 import CoordinatorManagement from './pages/Management/CoordinatorManagement';
 import TracksView from "./pages/Management/TracksView";
 import EventsReport from "./pages/Reports/EventsReport";
+import ScheduleTabs from "./pages/Attendance/ScheduleTabs";
+import StudentSchedulePage from "./pages/Attendance/StudentSchedulePage";
+import EventsPage from "./pages/Attendance/EventsPage";
 
 const queryClient = new QueryClient();
 
@@ -68,7 +71,14 @@ const App = () => (
             {/* Authenticated-only routes */}
             <Route element={<ProtectedRoute requireAuth={true} />}>
               <Route path="/" element={<Index />} />
-              <Route path="/schedule" element={<Schedule />} />
+              <Route path="supervisor-schedule" element={<Schedule />} />
+              {/* Schedule Tabs */}
+              <Route path="/schedule" element={<ScheduleTabs />}>
+                <Route path="student" element={<StudentSchedulePage />} />
+                <Route path="events" element={<EventsPage />} />
+                {/* Redirect /schedule to /schedule/student with path change */}
+                <Route index element={<Navigate to="student" replace />} />
+              </Route>
               <Route path="/lost-found" element={<LostFound />} />
               <Route path="/student-verification" element={<StudentVerification />} />
               <Route path="/report-lost-found" element={<ReportLostFound />} />

@@ -165,13 +165,13 @@ const Sidebar = () => {
     {
       icon: CalendarDays,
       label: "Schedule",
-      to: "/schedule",
+      to: "/supervisor-schedule",
       roles: ["supervisor" ],
     },
     {
       icon: CalendarDays,
       label: "Schedule",
-      to: "/student-schedule",
+      to: "/schedule",
       roles: ["student","coordinator"],
     },
     {
