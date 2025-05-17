@@ -609,7 +609,7 @@ const Schedule = () => {
   };
 
   return (
-    <>
+    <Layout>
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
@@ -751,7 +751,7 @@ const Schedule = () => {
         onStay={() => setIsLeaveConfirmOpen(false)}
         onLeave={handleLeaveConfirm}
       />
-    </>
+    </Layout>
   );
 };
 
