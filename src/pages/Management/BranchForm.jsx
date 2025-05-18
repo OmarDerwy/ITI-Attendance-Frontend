@@ -9,6 +9,9 @@ import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/layout/Layout";
 import PageTitle from "@/components/ui/page-title";
 import { axiosBackendInstance } from "@/api/config";
+import { Popover, PopoverTrigger, PopoverContent } from "@/components/ui/popover";
+import { Search } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
 
 const BranchFormPage = () => {
   const { branchId } = useParams();
@@ -108,6 +111,30 @@ const BranchForm = ({ branch, onSave, isLoading }) => {
   const [useCoordinates, setUseCoordinates] = useState(
     Boolean((branch?.latitude && branch?.longitude) || !branch?.mapUrl)
   );
+  const [branchManager, setBranchManager] = useState(branch?.branch_manager || null);
+  const [branchManagerSearchTerm, setBranchManagerSearchTerm] = useState("");
+
+  // Fetch branch managers using tanstack query
+  const { data: branchManagers = [], isLoading: isLoadingBranchManagers } = useQuery({
+    queryKey: ["branchManagers"],
+    queryFn: async () => {
+      const response = await axiosBackendInstance.get("/accounts/users/branch-managers", {
+        params: {
+          available: true, // only get branch managers that aren't attached to a branch
+        }
+      });
+      return response.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: 2,
+  });
+
+  // Filter branch managers by search term
+  const filteredBranchManagers = branchManagers.filter((manager) => {
+    const name = `${manager.first_name} ${manager.last_name}`.toLowerCase();
+    return name.includes(branchManagerSearchTerm.toLowerCase()) ||
+      manager.email.toLowerCase().includes(branchManagerSearchTerm.toLowerCase());
+  });
 
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -191,13 +218,18 @@ const BranchForm = ({ branch, onSave, isLoading }) => {
       latitude: Number(finalLatitude),
       longitude: Number(finalLongitude),
       ...(useCoordinates ? {} : { mapUrl: mapUrl.trim() }),
+      branch_manager_id: branchManager,
     };
-
+    console.log("Branch Data:", branchData);
     onSave(branchData);
   };
 
   const handleCancel = () => {
     navigate("/branches");
+  };
+
+  const handleBranchManagerSelect = (id) => {
+    setBranchManager(id);
   };
 
   return (
@@ -303,6 +335,52 @@ const BranchForm = ({ branch, onSave, isLoading }) => {
             placeholder="e.g. 500"
             disabled={isLoading}
           />
+        </div>
+        <div className="grid gap-2">
+          <Label htmlFor="branch-manager">Branch Manager</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                role="combobox"
+                className="w-full justify-between"
+                disabled={isLoading || isLoadingBranchManagers}
+              >
+                {branchManagers.find((m) => m.id === branchManager)
+                  ? `${branchManagers.find((m) => m.id === branchManager).first_name} ${branchManagers.find((m) => m.id === branchManager).last_name}`
+                  : "Select branch manager"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0">
+              <div className="flex items-center border-b px-3 py-2">
+                <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
+                <Input
+                  placeholder="Search branch managers..."
+                  className="border-0 bg-transparent p-1 shadow-none focus-visible:ring-0"
+                  value={branchManagerSearchTerm}
+                  onChange={(e) => setBranchManagerSearchTerm(e.target.value)}
+                />
+              </div>
+              <div className="max-h-60 overflow-y-auto">
+                {isLoadingBranchManagers ? (
+                  <p className="p-3 text-muted-foreground">Loading branch managers...</p>
+                ) : filteredBranchManagers.length > 0 ? (
+                  filteredBranchManagers.map((m) => (
+                    <Button
+                      key={m.id}
+                      variant={m.id === branchManager ? "default" : "ghost"}
+                      className={`w-full justify-start font-normal ${m.id === branchManager ? "bg-primary text-white" : ""}`}
+                      onClick={() => handleBranchManagerSelect(m.id)}
+                    >
+                      {m.first_name} {m.last_name} ({m.email})
+                    </Button>
+                  ))
+                ) : (
+                  <p className="p-3 text-muted-foreground">No branch managers found.</p>
+                )}
+              </div>
+            </PopoverContent>
+          </Popover>
         </div>
         <div className="flex justify-end gap-2 pt-4">
           <Button variant="outline" onClick={handleCancel} disabled={isLoading}>
