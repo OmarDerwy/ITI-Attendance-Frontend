@@ -212,8 +212,8 @@ const Sidebar = () => {
     { icon: Users, label: "Coordinators", to: "/coordinators", roles: ["branch-manager"] },
 
     { icon: Building, label: "Branches", to: "/branches", roles: ["admin"] },
-    { icon: BookOpen, label: "Tracks", to: "/tracks", roles: ["admin", "coordinator"] },
-    { icon: BookOpen, label: "Tracks", to: "/tracks/view", roles: ["branch-manager"] },
+    { icon: BookOpen, label: "Tracks", to: "/tracks", roles: ["coordinator"] },
+    { icon: BookOpen, label: "Tracks", to: "/tracks/view", roles: ["admin","branch-manager"] },
     { icon: Calendar, label: "Events Report", to: "/events-report", roles: ["coordinator"] },
     {
       icon: Settings,

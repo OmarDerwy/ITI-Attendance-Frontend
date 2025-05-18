@@ -102,7 +102,6 @@ const App = () => (
 
             </Route>
             <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["branch-manager"]} />}>
-              <Route path="/tracks/view" element={<TracksView />} />
               <Route path="/coordinators/edit/:coordinatorId" element={<CoordinatorForm />} />
               <Route path="/coordinators/add" element={<CoordinatorForm />} />
               <Route path="/coordinators" element={<CoordinatorManagement />} />
@@ -114,7 +113,10 @@ const App = () => (
               <Route path="/branches/edit/:branchId" element={<BranchForm />} />
               <Route path="/branches/add" element={<BranchForm />} />
               <Route path="/branches" element={<BranchManagement />} />
-
+            </Route>
+            <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["admin", "branch-manager"]} />}>
+              <Route path="/tracks/view" element={<TracksView />} />
+              
             </Route>
             {/* Not found route */}
             {/* <Route path="/unautherized" element={<NotFound />} /> pending creatiion */}
