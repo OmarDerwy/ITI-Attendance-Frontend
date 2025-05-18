@@ -161,18 +161,11 @@ const Sidebar = () => {
     onClick?: () => void;
   }> = [
     { icon: Home, label: "Dashboard", to: "/dashboard", roles: ["supervisor", "admin" ,"student", "branch-manager", "coordinator"] },
-
-    {
-      icon: CalendarDays,
-      label: "Schedule",
-      to: "/supervisor-schedule",
-      roles: ["supervisor" ],
-    },
     {
       icon: CalendarDays,
       label: "Schedule",
       to: "/schedule",
-      roles: ["student","coordinator"],
+      roles: ["student","supervisor","coordinator"],
     },
     {
       icon: HandHeart,

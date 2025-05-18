@@ -72,13 +72,11 @@ const App = () => (
             <Route element={<ProtectedRoute requireAuth={true} />}>
               <Route index element={<Navigate to="/dashboard" replace />} />
               <Route path="/dashboard" element={<Index />} />
-              <Route path="/supervisor-schedule" element={<Schedule />} />
               {/* Schedule Tabs */}
               <Route path="/schedule" element={<ScheduleTabs />}>
                 <Route path="student" element={<StudentSchedulePage />} />
                 <Route path="events" element={<EventsPage />} />
-                {/* Redirect /schedule to /schedule/student with path change */}
-                <Route index element={<Navigate to="student" replace />} />
+                <Route path="lectures" element={<Schedule />} />
               </Route>
               <Route path="/lost-found" element={<LostFound />} />
               <Route path="/student-verification" element={<StudentVerification />} />

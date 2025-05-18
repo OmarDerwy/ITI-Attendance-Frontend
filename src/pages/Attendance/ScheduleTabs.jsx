@@ -2,9 +2,10 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useNavigate, useLocation, Outlet } from "react-router-dom";
 import Layout from "@/components/layout/Layout";
 import { useUser } from "@/context/UserContext";
+import { useEffect } from "react";
 
 const tabRoutes = [
-	{ label: "Student", path: "/schedule/student" },
+	{ label: "Lectures", path: "/schedule/lectures" },
 	{ label: "Events", path: "/schedule/events" },
 ];
 
@@ -13,6 +14,19 @@ const ScheduleTabs = () => {
 	const location = useLocation();
     const { userRole } = useUser();
 	const currentTab = tabRoutes.findIndex((tab) => location.pathname.startsWith(tab.path));
+
+    // Redirect logic for /schedule root
+    useEffect(() => {
+        if (location.pathname === "/schedule/" || location.pathname === "/schedule") {
+            if (userRole === "student") {
+                navigate("/schedule/student", { replace: true });
+            } else if (["coordinator", "supervisor"].includes(userRole)) {
+                navigate("/schedule/lectures", { replace: true });
+            } else {
+                navigate("/404", { replace: true });
+            }
+        }
+    }, [location.pathname, userRole, navigate]);
 
 	const handleTabChange = (index) => {
 		navigate(tabRoutes[index].path);
