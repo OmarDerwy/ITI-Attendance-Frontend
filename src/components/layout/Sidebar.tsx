@@ -166,13 +166,13 @@ const Sidebar = () => {
       icon: CalendarDays,
       label: "Schedule",
       to: "/schedule",
-      roles: ["supervisor" ],
+      roles: ["supervisor", "coordinator"],
     },
     {
       icon: CalendarDays,
       label: "Schedule",
       to: "/student-schedule",
-      roles: ["student","coordinator"],
+      roles: ["student"],
     },
     {
       icon: HandHeart,
