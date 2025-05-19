@@ -35,6 +35,7 @@ import CoordinatorForm from './pages/Management/CoordinatorForm';
 import CoordinatorManagement from './pages/Management/CoordinatorManagement';
 import TracksView from "./pages/Management/TracksView";
 import EventsReport from "./pages/Reports/EventsReport";
+import Unauthorized from "./pages/Unauthorized"; // Import the Unauthorized component
 
 const queryClient = new QueryClient();
 
@@ -74,6 +75,7 @@ const App = () => (
               <Route path="/matched-item-details/:id" element={<MatchedItemDetail />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/my-items" element={<ManageMyItems />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
 
             </Route>
             {/* Student-only routes */}
@@ -119,7 +121,6 @@ const App = () => (
               
             </Route>
             {/* Not found route */}
-            {/* <Route path="/unautherized" element={<NotFound />} /> pending creatiion */}
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>

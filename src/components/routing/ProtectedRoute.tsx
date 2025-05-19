@@ -17,6 +17,11 @@ const ProtectedRoute = ({ requireAuth = true, allowedRoles = null }: { requireAu
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  if (requireAuth && userRole === "guest" && location.pathname !== "/unauthorized") {
+    // If user is a guest and trying to access a protected route, redirect to login
+    return <Navigate to="/unauthorized" state={{ from: location }} replace />;
+  }
+
   if (requireAuth && allowedRoles && !allowedRoles.includes(userRole)) {
     // If user role is not allowed, redirect to unauthorized page
     return <Navigate to="/unauthorized" state={{ from: location }} replace />;
