@@ -57,7 +57,7 @@ const TrackFormPage = () => {
     const fetchData = async () => {
       try {
         const [branchesRes, supervisorsRes] = await Promise.all([
-          axiosBackendInstance.get("/attendance/branches/"),
+          axiosBackendInstance.get("/attendance/branches/own-branch/"),
           axiosBackendInstance.get("/accounts/users/supervisors/"),
         ]);
 
