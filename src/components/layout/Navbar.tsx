@@ -10,6 +10,7 @@ import {
   Search,
   Sun,
   Moon,
+  LoaderCircle,
 } from "lucide-react";
 import { useUser } from "@/context/UserContext";
 import { Badge } from "@/components/ui/badge";
@@ -22,6 +23,7 @@ import {
 import { toast } from "sonner"; // Import from sonner directly
 import { useTheme } from "@/context/ThemeContext.tsx"; // Import useTheme
 import axios from "axios";
+import { Button } from "../ui/button";
 
 type NavbarProps = {
   toggleSidebar: () => void;
@@ -48,6 +50,7 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
     }[]
   >([]);
   const { theme, setTheme } = useTheme(); // Use the theme hook
+  const [isLoggingOut, setIsLoggingOut] = useState(false); // New state for logging out
 
   const token = localStorage.getItem("access");
   const navigate = useNavigate();
@@ -174,9 +177,11 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
   };
 
   const handleLogout = async () => {
+    setIsLoggingOut(true);
     await logout();
     setProfileOpen(false);
     setNotificationsOpen(false);
+    setIsLoggingOut(false);
   };
 
   return (
@@ -376,13 +381,21 @@ const Navbar = ({ toggleSidebar }: NavbarProps) => {
                   </Link>
                 </div>
                 <div className="border-t p-1">
-                  <Link
-                    to="/login"
-                    className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted"
+                  <Button
+                    className="flex items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-muted w-full"
                     onClick={handleLogout}
+                    variant="outline"
+                    disabled={isLoggingOut}
                   >
-                    Logout
-                  </Link>
+                    {isLoggingOut ? (
+                      <span className="flex items-center gap-2">
+                        <LoaderCircle className="animate-spin h-4 w-4 mr-1 text-muted-foreground" />
+                        Logging out...
+                      </span>
+                    ) : (
+                      <>Logout</>
+                    )}
+                  </Button>
                 </div>
               </div>
             )}
