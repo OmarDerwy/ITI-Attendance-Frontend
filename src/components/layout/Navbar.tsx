@@ -22,7 +22,6 @@ import {
 } from "@/api/notifications";
 import { toast } from "sonner"; // Import from sonner directly
 import { useTheme } from "@/context/ThemeContext.tsx"; // Import useTheme
-import axios from "axios";
 import { Button } from "../ui/button";
 
 type NavbarProps = {
