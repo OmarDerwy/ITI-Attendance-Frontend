@@ -584,6 +584,22 @@ const Event = () => {
     }));
   }, []);
 
+  // Handle dialog state changes
+  const handleDialogStateChange = useCallback((open) => {
+    setIsDialogOpen(open);
+    if (!open) {
+      // Reset dialog state
+      setSelectedEvent(null);
+      setIsDialogDocked(false);
+      // Force calendar resize after dialog closes
+      setTimeout(() => {
+        if (calendarRef.current) {
+          calendarRef.current.getApi().updateSize();
+        }
+      }, 350); // Wait for transition to complete
+    }
+  }, []);
+
   // Render functions
   const renderEventContent = useCallback(
     (eventInfo) => {
@@ -852,13 +868,7 @@ const Event = () => {
         </div>
         <EventDialog
           isOpen={isDialogOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedEvent(null);
-              setIsDialogDocked(false);
-            }
-            setIsDialogOpen(open);
-          }}
+          onOpenChange={handleDialogStateChange}
           selectedEvent={selectedEvent}
           newEvent={newEvent}
           onEventUpdate={updateSelectedEvent}

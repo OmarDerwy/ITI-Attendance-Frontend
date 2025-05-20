@@ -1,20 +1,3 @@
-/**
- * Utility for handling dialog positioning, docking, and transitions
- */
-
-/**
- * Position a dialog based on its docking state and click position
- * 
- * @param {Object} params Configuration parameters
- * @param {React.RefObject} params.dialogRef Reference to the dialog element
- * @param {boolean} params.isDocked Whether the dialog is docked
- * @param {boolean} params.isOpen Whether the dialog is open
- * @param {Object} params.position Click position {x, y}
- * @param {Object} params.lastUndockedPosition Last position before docking
- * @param {boolean} params.isUndocking Whether we're transitioning from docked to undocked
- * @param {Object} params.currentEvent Current event data (for time-based positioning)
- * @returns {void}
- */
 export const positionDialog = ({
   dialogRef,
   isDocked,
@@ -146,7 +129,7 @@ export const positionDialog = ({
   // Apply position
   dialog.style.left = `${x}px`;
   dialog.style.top = `${y}px`;
-  dialog.style.width = "360px"; // Reset width to default
+  dialog.style.width = "400px"; // Reset width to default
 
   // Check bottom visibility after render
   setTimeout(() => {
@@ -179,16 +162,6 @@ export const saveDialogPosition = (dialogRef) => {
   };
 };
 
-/**
- * Set up event handlers for dialog interactions
- * 
- * @param {Object} params Configuration parameters
- * @param {boolean} params.isOpen Whether the dialog is open
- * @param {React.RefObject} params.dialogRef Reference to the dialog element
- * @param {Function} params.onOpenChange Callback to change open state
- * @param {Function} params.positionCallback Callback to position the dialog
- * @returns {Function} Cleanup function
- */
 export const setupDialogEventHandlers = ({
   isOpen,
   dialogRef,
@@ -217,11 +190,9 @@ export const setupDialogEventHandlers = ({
     }
   };
 
-  // Add event listeners
   document.addEventListener("contextmenu", handleRightClick);
   document.addEventListener("mousedown", handleClickOutside);
 
-  // Return cleanup function
   return () => {
     document.removeEventListener("contextmenu", handleRightClick);
     document.removeEventListener("mousedown", handleClickOutside);

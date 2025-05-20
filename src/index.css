@@ -566,3 +566,42 @@
 .docked-dialog input[type="checkbox"]:checked + label {
   transition: none;
 }
+
+/* EventDialog styles (global override for theming and dark mode) */
+.event-dialog {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--card-foreground));
+}
+.event-dialog--docked {
+  background: hsl(var(--card));
+  border-left: 1px solid hsl(var(--border));
+}
+.event-dialog--undocked {
+  background: hsl(var(--card));
+  border-radius: var(--radius);
+}
+.event-dialog__header,
+.event-dialog__footer {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+}
+
+.dark .event-dialog {
+  background: hsl(var(--card));
+  border: 1px solid hsl(var(--border));
+  color: hsl(var(--card-foreground));
+}
+.dark .event-dialog--docked {
+  background: hsl(var(--card));
+  border-left: 1px solid hsl(var(--border));
+}
+.dark .event-dialog--undocked {
+  background: hsl(var(--card));
+  border-radius: var(--radius);
+}
+.dark .event-dialog__header,
+.dark .event-dialog__footer {
+  background: hsl(var(--card));
+  border-color: hsl(var(--border));
+}
