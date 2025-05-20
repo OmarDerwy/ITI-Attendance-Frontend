@@ -568,7 +568,7 @@
 }
 
 /* EventDialog styles (global override for theming and dark mode) */
-.event-dialog {
+/* .event-dialog {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
   color: hsl(var(--card-foreground));
@@ -585,7 +585,7 @@
 .event-dialog__footer {
   background: hsl(var(--card));
   border-color: hsl(var(--border));
-}
+} */
 
 .dark .event-dialog {
   background: hsl(var(--card));
@@ -604,4 +604,25 @@
 .dark .event-dialog__footer {
   background: hsl(var(--card));
   border-color: hsl(var(--border));
+}
+
+/* Add styles for the time picker */
+.time-picker-container {
+  @apply bg-muted rounded-lg border border-border p-4;
+}
+
+.time-picker-handle {
+  @apply bg-primary/40 hover:bg-primary/60 transition-colors cursor-ew-resize;
+}
+
+.time-picker-handle:hover {
+  @apply bg-primary/60;
+}
+
+.time-picker-text {
+  @apply text-primary font-medium;
+}
+
+.time-picker-label {
+  @apply text-muted-foreground text-xs;
 }

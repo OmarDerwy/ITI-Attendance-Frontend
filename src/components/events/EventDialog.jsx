@@ -362,7 +362,7 @@ const EventDialog = ({
 
                 {/* Time Selection for Sub-events */}
                 {isSubEvent && (
-                  <div className="border rounded-lg p-4 bg-gray-50">
+                  <div >
                     <h3 className="text-sm font-medium mb-2">Time Selection</h3>
                     <SimpleTimePicker
                       parentEvent={currentParentEvent}

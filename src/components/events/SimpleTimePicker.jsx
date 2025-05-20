@@ -9,7 +9,7 @@ const VisualEventTimePicker = ({ parentEvent, value, onChange }) => {
   const [initialTime, setInitialTime] = useState({ start: null, end: null });
 
   if (!parentEvent || !parentEvent.start || !parentEvent.end) {
-    return <div className="text-red-500">Parent event times not available</div>;
+    return <div className="text-destructive">Parent event times not available</div>;
   }
 
   const parentStart = new Date(parentEvent.start);
@@ -126,27 +126,20 @@ const VisualEventTimePicker = ({ parentEvent, value, onChange }) => {
 
   return (
     <div className="space-y-4">
-      <div className="text-sm">
-        <div className="flex justify-between mb-1">
-          <div>Parent: {formatTimeDisplay(parentStart)} - {formatTimeDisplay(parentEnd)}</div>
-          <div>Duration: {format(currentEnd - currentStart, 'h:mm')}</div>
-        </div>
-      </div>
-      
       <div 
         ref={containerRef}
-        className="h-16 bg-gray-100 rounded relative cursor-pointer border"
+        className="h-16 bg-muted rounded relative cursor-pointer border border-border"
         onMouseDown={(e) => handleMouseDown(e, 'move')}
       >
         {/* Parent event timeline */}
-        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2 text-xs text-gray-500">
+        <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2 text-xs text-muted-foreground">
           <span>{formatTimeDisplay(parentStart)}</span>
           <span>{formatTimeDisplay(parentEnd)}</span>
         </div>
         
         {/* Sub event indicator */}
         <div 
-          className="absolute top-0 bottom-0 bg-blue-500 rounded opacity-70"
+          className="absolute top-0 bottom-0 bg-primary/20 rounded border border-primary/30"
           style={{ 
             left: `${startPct}%`, 
             width: `${durationPct}%` 
@@ -156,30 +149,26 @@ const VisualEventTimePicker = ({ parentEvent, value, onChange }) => {
             handleMouseDown(e, 'move');
           }}
         >
-          <div className="h-full flex items-center justify-center text-white text-xs font-medium">
+          <div className="h-full flex items-center justify-center text-primary text-xs font-medium">
             {formatTimeDisplay(currentStart)} - {formatTimeDisplay(currentEnd)}
           </div>
           
           {/* Drag handles */}
           <div 
-            className="absolute inset-y-0 left-0 w-2 bg-blue-700 rounded-l cursor-ew-resize"
+            className="absolute inset-y-0 left-0 w-2 bg-primary/40 rounded-l cursor-ew-resize hover:bg-primary/60 transition-colors"
             onMouseDown={(e) => {
               e.stopPropagation();
               handleMouseDown(e, 'start');
             }}
           />
           <div 
-            className="absolute inset-y-0 right-0 w-2 bg-blue-700 rounded-r cursor-ew-resize"
+            className="absolute inset-y-0 right-0 w-2 bg-primary/40 rounded-r cursor-ew-resize hover:bg-primary/60 transition-colors"
             onMouseDown={(e) => {
               e.stopPropagation();
               handleMouseDown(e, 'end');
             }}
           />
         </div>
-      </div>
-      
-      <div className="text-sm text-center text-gray-500">
-        Drag to position • Drag edges to resize
       </div>
     </div>
   );

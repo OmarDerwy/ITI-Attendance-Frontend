@@ -471,16 +471,25 @@ const Event = () => {
         return;
       }
 
+      // Check if start and end dates are on the same day
+      if (selectInfo.start.toDateString() !== selectInfo.end.toDateString()) {
+        toast.error("Events must be on the same day");
+        return;
+      }
+
       setSelectedEvent(null);
       setIsSubEvent(false);
       setParentEventId(null);
+
+      const startDate = new Date(selectInfo.start);
+      const endDate = new Date(selectInfo.end);
 
       setNewEvent({
         id: "react" + uuidv4(),
         title: "",
         description: "",
-        start: selectInfo.startStr,
-        end: selectInfo.endStr,
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
         parentId: null,
         audience_type: "both",
         is_mandatory: false,
@@ -617,7 +626,7 @@ const Event = () => {
 
       return (
         <div
-          className={`flex flex-col justify-between p-1 bg-blue-100 text-blue-800 border-blue-300 rounded w-full h-full ${
+          className={`flex flex-col justify-between p-1 bg-primary/10 event-offline-text border-primary/20 rounded w-full h-full ${
             isPastEvent ? "opacity-75" : ""
           } border`}
         >
@@ -628,7 +637,7 @@ const Event = () => {
                   e.stopPropagation();
                   toggleEventExpansion(eventId);
                 }}
-                className="hover:bg-blue-200 rounded p-0.5"
+                className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
                 title={isExpanded ? "Collapse" : "Expand"}
               >
                 {isExpanded ? (
@@ -648,7 +657,7 @@ const Event = () => {
                     e.stopPropagation();
                     addSubEvent(event, e);
                   }}
-                  className="hover:bg-blue-200 rounded p-0.5"
+                  className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
                   title="Add Sub-Event"
                 >
                   +
@@ -658,7 +667,7 @@ const Event = () => {
                     e.stopPropagation();
                     handleDeleteEvent(eventId);
                   }}
-                  className="hover:bg-blue-200 rounded p-0.5"
+                  className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
                   title="Delete"
                 >
                   <X size={14} />
@@ -668,24 +677,26 @@ const Event = () => {
           </div>
 
           <div className="flex-grow flex flex-col min-h-0">
-            <div className="font-medium overflow-hidden text-ellipsis">
+            <div className="font-medium overflow-hidden text-ellipsis event-offline-text">
               {eventInfo.event.title}
             </div>
             {currentView !== "dayGridMonth" &&
               currentView !== "multiMonthYear" && (
-                <div className="text-xs truncate mt-1">
+                <div className="text-xs truncate mt-1 event-offline-text">
                   {eventInfo.timeText}
                 </div>
               )}
 
             {/* Render sub-events if expanded */}
             {isExpanded && hasSubEvents && (
-              <div className="mt-2 border-t border-blue-200 pt-1">
-                <div className="text-xs font-medium mb-1">Sub-events:</div>
+              <div className="mt-2 border-t border-primary/20 pt-1">
+                <div className="text-xs font-medium mb-1 event-offline-text">
+                  Sub-events:
+                </div>
                 {subEvents.map((subEvent) => (
                   <div
                     key={subEvent.id}
-                    className="text-xs p-1 mb-1 bg-blue-50 rounded border border-blue-200 cursor-pointer"
+                    className="text-xs p-1 mb-1 bg-primary/5 rounded border border-primary/40 cursor-pointer hover:bg-primary/10 transition-colors event-offline-text"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditDialog(subEvent, e);
@@ -728,7 +739,7 @@ const Event = () => {
     if (isLoading) {
       return (
         <div className="flex flex-col items-center justify-center h-full">
-          <Loader2 className="h-8 w-8 animate-spin text-primary mb-4" />
+          <Loader2 className="h-8 w-8 animate-spin event-offline-text mb-4" />
           <p className="text-muted-foreground">Loading events...</p>
         </div>
       );
@@ -738,7 +749,7 @@ const Event = () => {
       <Card className="h-full overflow-auto p-6 bg-background border shadow-lg">
         <div className="mb-4 flex flex-col md:flex-row items-center gap-4 md:justify-between">
           <div className="flex items-center gap-2">
-            <Calendar className="h-5 w-5 text-primary" />
+            <Calendar className="h-5 w-5 event-offline-text" />
             <h2 className="text-xl font-semibold">Event Calendar</h2>
           </div>
 
@@ -788,6 +799,9 @@ const Event = () => {
           }}
           eventResize={handleEventResize}
           eventContent={renderEventContent}
+          eventClassNames={(info) => {
+            return ["event-offline"];
+          }}
           headerToolbar={{
             left: "prev,next today",
             center: "title",
@@ -821,7 +835,7 @@ const Event = () => {
               }
             }, 50);
             // close the dialog when the view changes
-            if (isDialogDocked ) {
+            if (isDialogDocked) {
               closeAddEventDialog();
             }
           }}
@@ -831,7 +845,23 @@ const Event = () => {
             }
           }}
           eventDrop={handleEventDrop}
-          selectAllow={(info) => !isDateInPast(info.start)}
+          selectAllow={function (selectInfo) {
+            const start = selectInfo.start;
+            const end = selectInfo.end;
+            // Prevent selection on past dates
+            if (isDateInPast(start)) {
+              return false;
+            }
+            // Allow only if start and end are on the same calendar day and starttime before endtime
+            if (start.getDate() !== end.getDate()) {
+              return false;
+            }
+            if (start.getHours() >= end.getHours()) {
+              return false;
+            }
+
+            return start.toDateString() === end.toDateString();
+          }}
           firstDay={1}
         />
       </Card>
@@ -860,8 +890,6 @@ const Event = () => {
           className="calendar-container transition-all duration-300 ease-in-out w-full"
           style={{
             marginRight: isDialogDocked ? "450px" : "0",
-            width: "100%",
-            overflowX: "auto", // Add horizontal scrolling capability
           }}
         >
           {renderCalendar()}
