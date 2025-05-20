@@ -12,7 +12,6 @@ import { Card } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
 import LeaveConfirmationDialog from "@/components/schedule/LeaveConfirmationDialog";
 import EventDialog from "@/components/events/EventDialog";
-import EventsBulkCreateUpdate from "@/components/events/EventsBulkCreateUpdate";
 import { axiosBackendInstance } from "@/api/config";
 import { useUser } from "@/context/UserContext";
 
@@ -28,11 +27,8 @@ const Event = () => {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [events, setEvents] = useState([]);
   const [currentView, setCurrentView] = useState("timeGrid4Day");
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [isLeaveConfirmOpen, setIsLeaveConfirmOpen] = useState(false);
   const [navigationPath, setNavigationPath] = useState("");
-  const [deletedEventIds, setDeletedEventIds] = useState([]);
-  const [deletedEvents, setDeletedEvents] = useState([]);
   const [isSubEvent, setIsSubEvent] = useState(false);
   const [parentEventId, setParentEventId] = useState(null);
   const [expandedEvents, setExpandedEvents] = useState({});
@@ -81,42 +77,6 @@ const Event = () => {
     [events]
   );
 
-  // Track unsaved changes
-  useEffect(() => {
-    const modifiedEvents = events.filter((event) => event.isModified);
-    setHasUnsavedChanges(
-      modifiedEvents.length > 0 || deletedEventIds.length > 0
-    );
-  }, [events, deletedEventIds]);
-  // Handle navigation warnings
-  useBeforeUnload(
-    useCallback(
-      (event) => {
-        if (hasUnsavedChanges) {
-          event.preventDefault();
-          return (event.returnValue =
-            "You have unsaved changes. Are you sure you want to leave?");
-        }
-      },
-      [hasUnsavedChanges]
-    )
-  );
-
-  useEffect(() => {
-    const originalPush = history.pushState;
-    history.pushState = function () {
-      if (hasUnsavedChanges) {
-        setIsLeaveConfirmOpen(true);
-        return;
-      }
-      return originalPush.apply(this, arguments);
-    };
-
-    return () => {
-      history.pushState = originalPush;
-    };
-  }, [hasUnsavedChanges]);
-
   // API calls
   const fetchEvents = useCallback(async () => {
     try {
@@ -136,8 +96,6 @@ const Event = () => {
       }));
 
       setEvents(fetchedEvents || []);
-      setDeletedEventIds([]);
-      setDeletedEvents([]);
     } catch (error) {
       console.error("Error fetching events:", error);
       toast.warning("No events found");
@@ -170,7 +128,7 @@ const Event = () => {
   }, [fetchEvents, fetchTracks]);
 
   // Event handlers
-  const handleEventSubmit = useCallback(() => {
+  const handleEventSubmit = useCallback(async () => {
     const eventData = selectedEvent || newEvent;
     const startDate = new Date(eventData.start);
     const endDate = new Date(eventData.end);
@@ -209,46 +167,82 @@ const Event = () => {
       }
     }
 
-    if (!selectedEvent) {
-      // Add mode
-      const newEventData = {
-        id: "react" + uuidv4(),
-        title: newEvent.title,
-        description: newEvent.description || "",
-        start: newEvent.start,
-        end: newEvent.end,
-        parentId: isSubEvent ? parentEventId : null,
-        audience_type: newEvent.audience_type,
-        is_mandatory: newEvent.is_mandatory || false,
-        target_tracks: newEvent.target_tracks || [],
-        isModified: true,
-      };
+    try {
+      if (!selectedEvent) {
+        // Add mode
+        const response = await axiosBackendInstance.post("/attendance/events/", {
+          title: newEvent.title,
+          description: newEvent.description || "",
+          event_date: startDate.toISOString().split('T')[0],
+          audience_type: newEvent.audience_type,
+          is_mandatory: newEvent.is_mandatory || false,
+          target_track_ids: newEvent.target_tracks || [],
+          sessions: isSubEvent ? [{
+            title: newEvent.title,
+            description: newEvent.description || "",
+            start_time: newEvent.start,
+            end_time: newEvent.end,
+            speaker: "TBD"
+          }] : []
+        });
 
-      setEvents((prev) => [...prev, newEventData]);
-      toast.success(
-        isSubEvent
-          ? "Sub-event added successfully. Remember to save changes!"
-          : "Event added successfully. Remember to save changes!"
-      );
-    } else {
-      // Edit mode
-      setEvents((prev) =>
-        prev.map((event) =>
-          event.id === selectedEvent.id
-            ? { ...selectedEvent, isModified: true }
-            : event
-        )
-      );
-      toast.success("Event updated successfully. Remember to save changes!");
+        const newEventData = {
+          id: response.data.id,
+          title: newEvent.title,
+          description: newEvent.description || "",
+          start: newEvent.start,
+          end: newEvent.end,
+          parentId: isSubEvent ? parentEventId : null,
+          audience_type: newEvent.audience_type,
+          is_mandatory: newEvent.is_mandatory || false,
+          target_tracks: newEvent.target_tracks || [],
+        };
+
+        setEvents((prev) => [...prev, newEventData]);
+        toast.success(
+          isSubEvent
+            ? "Sub-event added successfully!"
+            : "Event added successfully!"
+        );
+      } else {
+        // Edit mode
+        const response = await axiosBackendInstance.put(`/attendance/events/${selectedEvent.id}`, {
+          title: selectedEvent.title,
+          description: selectedEvent.description || "",
+          event_date: startDate.toISOString().split('T')[0],
+          audience_type: selectedEvent.audience_type,
+          is_mandatory: selectedEvent.is_mandatory || false,
+          target_track_ids: selectedEvent.target_tracks || [],
+          sessions: selectedEvent.parentId ? [{
+            title: selectedEvent.title,
+            description: selectedEvent.description || "",
+            start_time: selectedEvent.start,
+            end_time: selectedEvent.end,
+            speaker: "TBD"
+          }] : []
+        });
+
+        setEvents((prev) =>
+          prev.map((event) =>
+            event.id === selectedEvent.id
+              ? { ...selectedEvent }
+              : event
+          )
+        );
+        toast.success("Event updated successfully!");
+      }
+
+      // Reset state
+      setIsDialogOpen(false);
+      setSelectedEvent(null);
+      setIsSubEvent(false);
+      setParentEventId(null);
+      setNewEvent(createDefaultEvent());
+      refreshCalendar();
+    } catch (error) {
+      console.error("Error saving event:", error);
+      toast.error(error.response?.data?.message || "Failed to save event. Please try again.");
     }
-
-    // Reset state
-    setIsDialogOpen(false);
-    setSelectedEvent(null);
-    setIsSubEvent(false);
-    setParentEventId(null);
-    setNewEvent(createDefaultEvent());
-    refreshCalendar();
   }, [
     selectedEvent,
     newEvent,
@@ -260,7 +254,7 @@ const Event = () => {
   ]);
 
   const handleDeleteEvent = useCallback(
-    (eventId) => {
+    async (eventId) => {
       const event = events.find((e) => String(e.id) === String(eventId));
 
       if (event && isDateInPast(event.start)) {
@@ -268,48 +262,57 @@ const Event = () => {
         return;
       }
 
-      // For new events (not yet saved to backend)
-      if (!event || String(event.id).startsWith("react")) {
-        // Find and remove all sub-events
-        const subEventIds = events
-          .filter((e) => e.parentId === eventId)
-          .map((e) => e.id);
-
-        setEvents((prev) =>
-          prev.filter(
-            (e) =>
-              String(e.id) !== String(eventId) && !subEventIds.includes(e.id)
-          )
-        );
-
-        toast.success("Event cancelled.");
-        setIsDialogOpen(false);
+      // Show confirmation dialog
+      if (!window.confirm("Are you sure you want to delete this event?")) {
         return;
       }
 
-      // For existing events
-      setDeletedEvents((prev) => [...prev, event]);
-      setDeletedEventIds((prev) => [...prev, Number(eventId)]);
+      try {
+        // For new events (not yet saved to backend)
+        if (!event || String(event.id).startsWith("react")) {
+          // Find and remove all sub-events
+          const subEventIds = events
+            .filter((e) => e.parentId === eventId)
+            .map((e) => e.id);
 
-      // Handle sub-events
-      const subEvents = events.filter((e) => e.parentId === eventId);
-      if (subEvents.length > 0) {
-        const subEventIds = subEvents
-          .map((e) => Number(e.id))
-          .filter((id) => !isNaN(id));
+          setEvents((prev) =>
+            prev.filter(
+              (e) =>
+                String(e.id) !== String(eventId) && !subEventIds.includes(e.id)
+            )
+          );
 
-        setDeletedEventIds((prev) => [...prev, ...subEventIds]);
-        setDeletedEvents((prev) => [...prev, ...subEvents]);
+          toast.success("Event cancelled.");
+          setIsDialogOpen(false);
+          return;
+        }
+
+        // For existing events
+        await axiosBackendInstance.delete(`/attendance/events/${eventId}`);
+
+        // Handle sub-events
+        const subEvents = events.filter((e) => e.parentId === eventId);
+        if (subEvents.length > 0) {
+          // Delete all sub-events
+          await Promise.all(
+            subEvents.map((subEvent) =>
+              axiosBackendInstance.delete(`/attendance/events/${subEvent.id}`)
+            )
+          );
+        }
+
+        setEvents((prev) =>
+          prev.filter(
+            (e) => String(e.id) !== String(eventId) && e.parentId !== eventId
+          )
+        );
+
+        toast.success("Event deleted successfully!");
+        setIsDialogOpen(false);
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        toast.error(error.response?.data?.message || "Failed to delete event. Please try again.");
       }
-
-      setEvents((prev) =>
-        prev.filter(
-          (e) => String(e.id) !== String(eventId) && e.parentId !== eventId
-        )
-      );
-
-      toast.success("Event marked for deletion. Save changes to confirm.");
-      setIsDialogOpen(false);
     },
     [events, isDateInPast]
   );
@@ -579,7 +582,6 @@ const Event = () => {
   );
 
   const handleLeaveConfirm = useCallback(() => {
-    setHasUnsavedChanges(false);
     setIsLeaveConfirmOpen(false);
     if (navigationPath) {
       navigate(navigationPath);
@@ -696,7 +698,7 @@ const Event = () => {
                 {subEvents.map((subEvent) => (
                   <div
                     key={subEvent.id}
-                    className="text-xs p-1 mb-1 bg-primary/5 rounded border border-primary/40 cursor-pointer hover:bg-primary/10 transition-colors event-offline-text"
+                    className="text-xs p-1 mb-1 bg-primary/20 rounded border border-primary/60 cursor-pointer hover:bg-primary/30 transition-colors event-offline-text"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditDialog(subEvent, e);
@@ -752,23 +754,6 @@ const Event = () => {
             <Calendar className="h-5 w-5 event-offline-text" />
             <h2 className="text-xl font-semibold">Event Calendar</h2>
           </div>
-
-          {userRole === "coordinator" && hasUnsavedChanges && (
-            <EventsBulkCreateUpdate
-              events={events}
-              deletedEventIds={deletedEventIds}
-              deletedEvents={deletedEvents}
-              onSaveSuccess={() => {
-                setHasUnsavedChanges(false);
-                setDeletedEventIds([]);
-                setDeletedEvents([]);
-                setEvents((prev) =>
-                  prev.map((event) => ({ ...event, isModified: false }))
-                );
-                refreshCalendar();
-              }}
-            />
-          )}
         </div>
         <FullCalendar
           ref={calendarRef}
@@ -870,10 +855,6 @@ const Event = () => {
     isLoading,
     events,
     userRole,
-    hasUnsavedChanges,
-    deletedEventIds,
-    deletedEvents,
-    refreshCalendar,
     handleOpenAddDialog,
     handleDateClick,
     handleEventResize,

@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { format, addMinutes, parseISO } from 'date-fns';
+import { useState, useEffect, useRef } from 'react';
+import { format } from 'date-fns';
 
 const VisualEventTimePicker = ({ parentEvent, value, onChange }) => {
   const containerRef = useRef(null);
