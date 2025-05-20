@@ -547,3 +547,22 @@
 .fc-scroller {
   -webkit-overflow-scrolling: touch;
 }
+.docked-dialog {
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.1);
+  border-left: 1px solid hsl(var(--border));
+}
+
+/* Improved dock transition */
+.dock-transition {
+  transition: all 300ms cubic-bezier(0.25, 0.1, 0.25, 1.0) !important;
+}
+
+.dark .docked-dialog {
+  box-shadow: -5px 0 15px rgba(0, 0, 0, 0.3);
+}
+.docked-dialog {
+  transition: none;
+}
+.docked-dialog input[type="checkbox"]:checked + label {
+  transition: none;
+}

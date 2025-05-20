@@ -35,6 +35,7 @@ import CoordinatorForm from './pages/Management/CoordinatorForm';
 import CoordinatorManagement from './pages/Management/CoordinatorManagement';
 import TracksView from "./pages/Management/TracksView";
 import EventsReport from "./pages/Reports/EventsReport";
+import Event from "./pages/Event/Event";
 import Unauthorized from "./pages/Unauthorized"; // Import the Unauthorized component
 
 const queryClient = new QueryClient();
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
               <Route path="/tracks/add" element={<TrackForm />} />
               <Route path="/tracks" element={<TrackManagement />} />
+              <Route path="/events" element={<Event />} />
 
             </Route>
             <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["branch-manager"]} />}>
@@ -118,8 +120,10 @@ const App = () => (
             </Route>
             <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["admin", "branch-manager"]} />}>
               <Route path="/tracks/view" element={<TracksView />} />
+              <Route path="/events-report" element={<EventsReport />} />
               
             </Route>
+              {/* Not found route */}
             {/* Not found route */}
             {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
