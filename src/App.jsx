@@ -35,6 +35,7 @@ import CoordinatorForm from './pages/Management/CoordinatorForm';
 import CoordinatorManagement from './pages/Management/CoordinatorManagement';
 import TracksView from "./pages/Management/TracksView";
 import EventsReport from "./pages/Reports/EventsReport";
+import Unauthorized from "./pages/Unauthorized"; // Import the Unauthorized component
 
 const queryClient = new QueryClient();
 
@@ -68,37 +69,59 @@ const App = () => (
             {/* Authenticated-only routes */}
             <Route element={<ProtectedRoute requireAuth={true} />}>
               <Route path="/" element={<Index />} />
-              <Route path="/schedule" element={<Schedule />} />
               <Route path="/lost-found" element={<LostFound />} />
-              <Route path="/student-verification" element={<StudentVerification />} />
               <Route path="/report-lost-found" element={<ReportLostFound />} />
               <Route path="/item-details/:type/:id" element={<ItemDetail />} />
               <Route path="/matched-item-details/:id" element={<MatchedItemDetail />} />
               <Route path="/profile" element={<Profile />} />
-              <Route path="/previous-courses" element={<PreviousCourses />} />
               <Route path="/my-items" element={<ManageMyItems />} />
-              <Route path="/branches" element={<BranchManagement />} />
-              <Route path="/branches/add" element={<BranchForm />} />
-              <Route path="/branches/edit/:branchId" element={<BranchForm />} />
-              <Route path="/tracks" element={<TrackManagement />} />
-              <Route path="/tracks/add" element={<TrackForm />} />
-              <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
-              <Route path="/users" element={<UserManagement />} />
-              <Route path="/users/add" element={<UserForm />} />
-              <Route path="/users/edit/:userId" element={<UserForm />} />
+              <Route path="/unauthorized" element={<Unauthorized />} />
+
+            </Route>
+            {/* Student-only routes */}
+            <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["student"]} />}>
+              <Route path="/student-schedule" element={<StudentSchedule />} />
+              <Route path="/leave-request-form" element={<LeaveRequestForm />} />
+              <Route path="/previous-courses" element={<PreviousCourses />} />
+
+            </Route>
+            {/* Coordinator and Supervisor routes */}
+            <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["coordinator", "supervisor"]} />}>
+              <Route path="/schedule" element={<Schedule />} />
+              <Route path="/student-verification" element={<StudentVerification />} />
               <Route path="/attendance-status/:date" element={<AttendanceStatus />} />
               <Route path="/attendance-status" element={<AttendanceStatus />} />
-              <Route path="/leave-request-center" element={<LeaveRequestCenter />} />
-              <Route path="/leave-request-form" element={<LeaveRequestForm />} />
-              <Route path="/student-schedule" element={<StudentSchedule />} />
+              {/* <Route path="/events-schedule" element={<Schedule />} /> when events are implemented */}
               <Route path="/students-with-warnings" element={<StudentsWithWarnings />} />
-              <Route path="/coordinators" element={<CoordinatorManagement />} />
-              <Route path="/coordinators/add" element={<CoordinatorForm />} />
-              <Route path="/coordinators/edit/:coordinatorId" element={<CoordinatorForm />} />
-              <Route path="/tracks/view" element={<TracksView />} />
+              <Route path="/leave-request-center" element={<LeaveRequestCenter />} />
+
+            </Route>
+            <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["coordinator"]} />}>
               <Route path="/events-report" element={<EventsReport />} />
+              <Route path="/tracks/edit/:trackId" element={<TrackForm />} />
+              <Route path="/tracks/add" element={<TrackForm />} />
+              <Route path="/tracks" element={<TrackManagement />} />
+
+            </Route>
+            <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["branch-manager"]} />}>
+              <Route path="/coordinators/edit/:coordinatorId" element={<CoordinatorForm />} />
+              <Route path="/coordinators/add" element={<CoordinatorForm />} />
+              <Route path="/coordinators" element={<CoordinatorManagement />} />
+            </Route>
+            <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["admin"]} />}>
+              <Route path="/users/edit/:userId" element={<UserForm />} />
+              <Route path="/users/add" element={<UserForm />} />
+              <Route path="/users" element={<UserManagement />} />
+              <Route path="/branches/edit/:branchId" element={<BranchForm />} />
+              <Route path="/branches/add" element={<BranchForm />} />
+              <Route path="/branches" element={<BranchManagement />} />
+            </Route>
+            <Route element={<ProtectedRoute requireAuth={true} allowedRoles={["admin", "branch-manager"]} />}>
+              <Route path="/tracks/view" element={<TracksView />} />
+              
             </Route>
             {/* Not found route */}
+            {/* Catch-all route */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </TooltipProvider>

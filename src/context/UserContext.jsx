@@ -121,7 +121,7 @@ export const UserProvider = ({ children }) => {
 
   // Logout function to clear auth state
   const logout = async () => {
-    if (!localStorage.getItem("refresh")) {
+    if (localStorage.getItem("refresh")) {
       const response = await axiosBackendInstance.post(
         "accounts/auth/jwt/blacklist/",
         {
@@ -138,6 +138,7 @@ export const UserProvider = ({ children }) => {
     localStorage.removeItem("refresh");
     localStorage.removeItem("userFullName");
     localStorage.removeItem("studentTrack");
+    localStorage.removeItem("userId");
     setUserRole(null);
     setUserName(null);
     setStudentTrack(null);

@@ -216,6 +216,12 @@ const UserForm = () => {
                         Administrator
                       </Label>
                     </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="branch-manager" id="branch-manager" />
+                      <Label htmlFor="branch-manager" className="cursor-pointer">
+                        Branch Manager
+                      </Label>
+                    </div>
                   </RadioGroup>
                 </div>
 

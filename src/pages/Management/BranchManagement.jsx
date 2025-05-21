@@ -187,6 +187,7 @@ const BranchManagement = () => {
                       <TableHead>Latitude</TableHead>
                       <TableHead>Longitude</TableHead>
                       <TableHead>Radius</TableHead>
+                      <TableHead>Branch Manager</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -202,6 +203,7 @@ const BranchManagement = () => {
                             {branch.longitude || "Not provided"}
                           </TableCell>
                           <TableCell>{branch.radius || "Not provided"}</TableCell>
+                          <TableCell>{branch.branch_manager && branch.branch_manager.substring(0, branch.branch_manager.indexOf("(")) || "Not provided"}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button

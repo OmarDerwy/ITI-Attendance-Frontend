@@ -1,0 +1,18 @@
+FROM node:18
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json package-lock.json* ./
+RUN npm install
+
+# Copy the rest of the app (not needed for live development with volume mount)
+
+# Expose Vite dev server port
+EXPOSE 8080
+
+# Use a volume for live development (set in docker-compose or docker run)
+# VOLUME ["/app"]
+
+# Start Vite dev server on port 8080, host 0.0.0.0 for external access
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0", "--port", "8080"]

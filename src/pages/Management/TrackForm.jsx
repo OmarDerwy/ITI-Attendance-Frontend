@@ -44,7 +44,7 @@ const TrackFormPage = () => {
   const [branches, setBranches] = useState([]);
 
   useEffect(() => {
-    if (userRole !== "admin") {
+    if (!["admin", "coordinator"].includes(userRole)) {
       toast({
         title: "Access Denied",
         description: "You do not have permission to access this page.",
@@ -57,7 +57,7 @@ const TrackFormPage = () => {
     const fetchData = async () => {
       try {
         const [branchesRes, supervisorsRes] = await Promise.all([
-          axiosBackendInstance.get("/attendance/branches/"),
+          axiosBackendInstance.get("/attendance/branches/own-branch/"),
           axiosBackendInstance.get("/accounts/users/supervisors/"),
         ]);
 
@@ -323,7 +323,7 @@ const TrackFormPage = () => {
                           ?.name || "Select supervisor"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
+                    <PopoverContent className="p-0">
                       <div className="flex items-center border-b px-3 py-2">
                         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                         <Input
@@ -380,7 +380,7 @@ const TrackFormPage = () => {
                           "Select branch"}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-full p-0">
+                    <PopoverContent className="p-0">
                       <div className="flex items-center border-b px-3 py-2">
                         <Search className="mr-2 h-4 w-4 shrink-0 opacity-50" />
                         <Input

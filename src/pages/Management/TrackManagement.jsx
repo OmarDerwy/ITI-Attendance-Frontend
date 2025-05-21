@@ -71,7 +71,7 @@ const TrackManagement = () => {
 
   useEffect(() => {
     // Redirect if user is not an admin
-    if (userRole !== "admin") {
+    if (!["admin", "coordinator"].includes(userRole)) {
       navigate("/");
       return;
     }
