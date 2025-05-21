@@ -29,7 +29,7 @@ import EnrolledList from "./EnrolledList";
 
 const ITEMS_PER_PAGE = 5;
 
-const EventsTable = ({ events, isLoading }) => {
+const EventsTable = ({ events = [], isLoading }) => {
   const { toast } = useToast();
   const [expandedEventId, setExpandedEventId] = useState(null);
   const [expandedSection, setExpandedSection] = useState(null); // 'attendees' or 'enrolled'
@@ -58,20 +58,20 @@ const EventsTable = ({ events, isLoading }) => {
     if (section === 'enrolled') {
       // Get all enrolled participants (both attendees and guests)
       const enrolledParticipants = [
-        ...event.attendees.map(a => ({ ...a, type: 'attendee' })),
-        ...event.guests.map(g => ({ ...g, type: 'guest' }))
+        ...(event.attendees || []).map(a => ({ ...a, type: 'attendee' })),
+        ...(event.guests || []).map(g => ({ ...g, type: 'guest' }))
       ];
       
       csvHeader = "Name,Type,Contact,Details\n";
       csvRows = enrolledParticipants.map(p => {
         const contact = p.type === 'attendee' ? p.phone : '';
-        const details = p.type === 'attendee' ? p.college : p.organization;
+        const details = p.type === 'guest' ? p.organization : p.college;
         return `"${p.name}","${p.type}","${contact}","${details}"`;
       }).join("\n");
       filename = `${event.title.replace(/\s+/g, '_')}_enrolled.csv`;
     } else if (section === 'attendees') {
       csvHeader = "Name,Phone,College,Graduation Year,Previous Events,Previous Event Names\n";
-      csvRows = event.attendees.map(attendee => {
+      csvRows = (event.attendees || []).map(attendee => {
         const eventNames = attendee.previousEventNames ? 
           `"${attendee.previousEventNames.join('; ')}"` : 
           '""';
@@ -154,7 +154,7 @@ const EventsTable = ({ events, isLoading }) => {
                   <TableCell>{format(new Date(event.date), "MMMM d, yyyy")}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{event.attendees.length + event.guests.length}</Badge>
+                      <Badge variant="outline">{(event.attendees?.length || 0) + (event.guests?.length || 0)}</Badge>
                       <div className="flex items-center gap-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -196,7 +196,7 @@ const EventsTable = ({ events, isLoading }) => {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Badge variant="outline">{event.attendees.length}</Badge>
+                      <Badge variant="outline">{(event.attendees?.length || 0)}</Badge>
                       <div className="flex items-center gap-2">
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -242,11 +242,11 @@ const EventsTable = ({ events, isLoading }) => {
                         {event.attended} / {event.enrolled}
                       </div>
                       <Progress 
-                        value={(event.attended / event.enrolled) * 100}
+                        value={((event.attended || 0) / (event.enrolled || 1)) * 100}
                         className="h-2" 
                       />
                       <div className="text-xs text-muted-foreground">
-                        {Math.round((event.attended / event.enrolled) * 100)}% attendance
+                        {Math.round(((event.attended || 0) / (event.enrolled || 1)) * 100)}% attendance
                       </div>
                     </div>
                   </TableCell>
@@ -257,7 +257,7 @@ const EventsTable = ({ events, isLoading }) => {
                   <TableRow>
                     <TableCell colSpan={5} className="bg-muted/30 p-0">
                       <div className="p-4">
-                        <AttendeesList attendees={event.attendees} />
+                        <AttendeesList attendees={event.attendees || []} />
                       </div>
                     </TableCell>
                   </TableRow>
@@ -269,8 +269,8 @@ const EventsTable = ({ events, isLoading }) => {
                       <div className="p-4">
                         <EnrolledList 
                           enrolled={[
-                            ...event.attendees.map(a => ({ ...a, type: 'attendee' })),
-                            ...event.guests.map(g => ({ ...g, type: 'guest' }))
+                            ...(event.attendees || []).map(a => ({ ...a, type: 'attendee' })),
+                            ...(event.guests || []).map(g => ({ ...g, type: 'guest' }))
                           ]} 
                         />
                       </div>
