@@ -68,9 +68,7 @@ const Login = () => {
       } catch (profileError) {
         console.error("Failed to fetch user profile details:", profileError);
         // Don't block login flow if profile fetch fails
-      }
-
-      // Fetch user profile picture
+      }      // Fetch user profile picture
       try {
         const baseApiUrl = import.meta.env.VITE_API_BASE_URL;
         const photoGetEndpoint = `${baseApiUrl}accounts/users/photo/`;
@@ -82,9 +80,14 @@ const Login = () => {
 
         if (profilePhotoResponse.data && profilePhotoResponse.data.photo_url) {
           user.setUserProfilePic(profilePhotoResponse.data.photo_url);
+        } else {
+          // If user has no profile photo, reset to default
+          user.setUserProfilePic("/placeholder.svg");
         }
       } catch (photoError) {
         console.error("Failed to fetch profile picture:", photoError);
+        // Reset to default placeholder to avoid showing previous user's photo
+        user.setUserProfilePic("/placeholder.svg");
         // Don't block login flow if photo fetch fails
       }
 

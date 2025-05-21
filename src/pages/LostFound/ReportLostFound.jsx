@@ -118,15 +118,18 @@ const ReportLostFound = () => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${localStorage.getItem("access")}`,
         },
-      });
+      });      console.log("API response:", response.data);
 
-      console.log("API response:", response.data);
-
+      // Extract meaningful message from response if available
+      const serverMessage = response.data?.message || 
+                           (response.data?.item_id && `Item ID: ${response.data.item_id}`) || 
+                           "Your report has been submitted successfully.";
+      
       toast({
         title: `Item ${
           formData.type === "lost" ? "Lost" : "Found"
         } Report Submitted`,
-        description: "Your report has been submitted successfully.",
+        description: serverMessage,
       });
 
       // Reset form and images
@@ -140,15 +143,20 @@ const ReportLostFound = () => {
       setCloudinaryImageUrl(null);
 
       // Redirect to the lost & found page
-      navigate("/lost-found");
-    } catch (error) {
+      navigate("/lost-found");    } catch (error) {
       console.error("Error submitting form:", error);
 
+      // Extract detailed error message from response if available
+      const errorDetail = error.response?.data?.message || 
+                        error.response?.data?.detail ||
+                        error.response?.data?.error ||
+                        (error.response?.data && JSON.stringify(error.response.data)) ||
+                        error.message ||
+                        "Failed to submit report. Please try again.";
+                        
       toast({
-        title: "Error",
-        description:
-          error.response?.data?.message ||
-          "Failed to submit report. Please try again.",
+        title: "Error Submitting Report",
+        description: errorDetail,
         variant: "destructive",
       });
     } finally {
