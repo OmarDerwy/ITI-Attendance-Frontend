@@ -35,7 +35,7 @@ const CombinedScheduleCard = () => {
   const [upcomingClassesByDay, setUpcomingClassesByDay] = useState({});
   const [upcomingDays, setUpcomingDays] = useState([]);
   const [timeSlots, setTimeSlots] = useState([]);
-  const { studentTrack, attendanceStats, fetchAttendanceStats } = useUser();
+  const { attendanceStats, fetchAttendanceStats } = useUser();
   // Color variables to match Schedule.jsx and StudentSchedule.jsx
   const onlineForeground = "rgb(254, 230, 231)";
   const offlineForeground = "hsl(var(--accent-foreground))";
@@ -43,22 +43,19 @@ const CombinedScheduleCard = () => {
   const onlineTextClass = "text-accent-foreground";
 
   useEffect(() => {
-    if (studentTrack) {
-      fetchScheduleData(studentTrack.track.id);
+    fetchScheduleData();
 
-      // If attendance stats aren't loaded yet, fetch them
-      if (!attendanceStats) {
-        fetchAttendanceStats?.();
-      }
-    } else {
-      setIsLoading(false);
+    // If attendance stats aren't loaded yet, fetch them
+    if (!attendanceStats) {
+      fetchAttendanceStats?.();
     }
-  }, [studentTrack, attendanceStats, fetchAttendanceStats]);
 
-  const fetchScheduleData = async (trackId) => {
+  }, [attendanceStats, fetchAttendanceStats]);
+
+  const fetchScheduleData = async () => {
     try {
       const response = await axiosBackendInstance.get(
-        `attendance/sessions/calendar-data/?track_id=${trackId}`
+        `attendance/sessions/calendar-data/`
       );
 
       const currentTime = new Date();
@@ -167,9 +164,9 @@ const CombinedScheduleCard = () => {
       setTodayClasses(processedTodayEvents);
       setUpcomingClassesByDay(eventsByDay);
       setUpcomingDays(daysList);
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching schedule:", error);
+    } finally {
       setIsLoading(false);
     }
   };

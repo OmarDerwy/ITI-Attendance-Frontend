@@ -21,17 +21,13 @@ const StudentSchedule = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (studentTrack) {
-      fetchEvents(studentTrack.track.id);
-    } else {
-      setIsLoading(false);
-    }
-  }, [studentTrack, toast]);
+    fetchEvents();
+  }, [toast]);
 
-  const fetchEvents = async (trackId) => {
+  const fetchEvents = async () => {
     try {
       const response = await axiosBackendInstance.get(
-        `attendance/sessions/calendar-data/?track_id=${trackId}`
+        `attendance/sessions/calendar-data/`
       );
 
       const fetchedEvents = response.data.map((event) => ({
@@ -52,8 +48,8 @@ const StudentSchedule = () => {
       }));
 
       setEvents(fetchedEvents);
-      setIsLoading(false);
     } catch (error) {
+    } finally {
       setIsLoading(false);
     }
   };

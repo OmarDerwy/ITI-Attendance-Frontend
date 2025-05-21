@@ -16,20 +16,15 @@ import { parseISO, isToday, isBefore, isAfter, format } from "date-fns";
 const StudentDashboard = () => {
   const [todayClasses, setTodayClasses] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { studentTrack } = useUser();
 
   useEffect(() => {
-    if (studentTrack) {
-      fetchTodayClasses(studentTrack.track.id);
-    } else {
-      setIsLoading(false);
-    }
-  }, [studentTrack]);
+    fetchTodayClasses();
+  }, []);
 
-  const fetchTodayClasses = async (trackId) => {
+  const fetchTodayClasses = async () => {
     try {
       const response = await axiosBackendInstance.get(
-        `attendance/sessions/calendar-data/?track_id=${trackId}`
+        `attendance/sessions/calendar-data/`
       );
 
       const currentTime = new Date();
@@ -74,9 +69,9 @@ const StudentDashboard = () => {
       processedTodayEvents.sort((a, b) => a.start - b.start);
 
       setTodayClasses(processedTodayEvents);
-      setIsLoading(false);
     } catch (error) {
       console.error("Error fetching today's classes:", error);
+    } finally {
       setIsLoading(false);
     }
   };
