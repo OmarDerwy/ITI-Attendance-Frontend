@@ -11,7 +11,6 @@ import PageTitle from "@/components/ui/page-title";
 import { useUser } from "@/context/UserContext";
 import { useToast } from "@/hooks/use-toast";
 import { axiosBackendInstance } from "@/api/config";
-import { format, isToday, isFuture, isPast } from "date-fns";
 
 const StudentSchedule = () => {
   const { studentTrack, setStudentTrack } = useUser();
@@ -21,29 +20,11 @@ const StudentSchedule = () => {
   const [currentView, setCurrentView] = useState("timeGridWeek");
   const { toast } = useToast();
 
-  // Color variables with dark mode variants
-  const onlineForeground = "rgb(254, 230, 231)"; // Light red for light mode (unchanged)
-  const onlineForegroundDark = "#4C1B1B"; // Darker specific red for dark mode
-  const offlineForeground = "hsl(var(--primary))";
-  const offlineForegroundDark = "rgb(127, 0, 0)";
-  const offlineTextClass = "text-primary-foreground";
-  const onlineTextClass = "text-accent-foreground dark:text-red-100";
-
-  // Function to determine whether to use dark mode colors
-  const isDarkMode = () => {
-    return document.documentElement.classList.contains("dark");
-  };
-
   useEffect(() => {
     if (studentTrack) {
       fetchEvents(studentTrack.track.id);
     } else {
       setIsLoading(false);
-      // toast({
-      //   title: "No track found",
-      //   description: "You are not assigned to any track.",
-      //   variant: "destructive",
-      // });
     }
   }, [studentTrack, toast]);
 
@@ -62,115 +43,29 @@ const StudentSchedule = () => {
         isOnline: event.is_online,
         trackId: event.track_id,
         branch: event.branch,
-        backgroundColor: event.is_online
-          ? isDarkMode()
-            ? onlineForegroundDark
-            : onlineForeground
-          : isDarkMode()
-          ? offlineForegroundDark
-          : offlineForeground,
-        borderColor: event.is_online
-          ? isDarkMode()
-            ? onlineForegroundDark
-            : onlineForeground
-          : isDarkMode()
-          ? offlineForegroundDark
-          : offlineForeground,
-        textColor: event.is_online ? onlineTextClass : offlineTextClass,
-        // Store original colors to handle theme changes
-        originalColors: {
+        // Use extendedProps to store additional data
+        extendedProps: {
           isOnline: event.is_online,
-          light: {
-            bg: event.is_online ? onlineForeground : offlineForeground,
-          },
-          dark: {
-            bg: event.is_online ? onlineForegroundDark : offlineForegroundDark,
-          },
-        },
+          branch: event.branch,
+          instructor: event.instructor
+        }
       }));
 
       setEvents(fetchedEvents);
       setIsLoading(false);
     } catch (error) {
-      // console.error("Error fetching events:", error);
       setIsLoading(false);
-      // toast({
-      //   title: "Error",
-      //   description: "Failed to fetch your schedule. Please try again later.",
-      //   variant: "destructive",
-      // });
     }
   };
 
-  // Effect to update colors when theme changes
-  useEffect(() => {
-    const handleThemeChange = () => {
-      if (!calendarRef.current) return;
-
-      const api = calendarRef.current.getApi();
-      events.forEach((event) => {
-        const isDark = isDarkMode();
-        const eventObj = api.getEventById(event.id);
-        if (eventObj) {
-          eventObj.setProp(
-            "backgroundColor",
-            event.isOnline
-              ? isDark
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDark
-              ? offlineForegroundDark
-              : offlineForeground
-          );
-          eventObj.setProp(
-            "borderColor",
-            event.isOnline
-              ? isDark
-                ? onlineForegroundDark
-                : onlineForeground
-              : isDark
-              ? offlineForegroundDark
-              : offlineForeground
-          );
-        }
-      });
-    };
-
-    // Listen for dark mode changes
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === "class") {
-          handleThemeChange();
-        }
-      });
-    });
-
-    observer.observe(document.documentElement, { attributes: true });
-
-    return () => observer.disconnect();
-  }, [
-    events,
-    onlineForeground,
-    onlineForegroundDark,
-    offlineForeground,
-    offlineForegroundDark,
-  ]);
-
   const renderEventContent = (eventInfo) => {
     const isOnline = Boolean(eventInfo.event.extendedProps.isOnline);
-    const isDark = isDarkMode();
-    const textColor = isOnline ? onlineTextClass : offlineTextClass;
-
-    // Theme-aware colors for instructor name
-    const subtextColor = isOnline
-      ? "text-gray-700 dark:text-red-300"
-      : "text-primary-foreground/80 dark:text-primary-foreground/90";
-
-    // Theme-aware colors for branch location
-    const branchColor = isOnline
-      ? "text-gray-700 dark:text-red-300"
-      : "text-primary-foreground/90 dark:text-primary-foreground";
-
+    const isPastEvent = new Date(eventInfo.event.start) < new Date();
+    
+    // Apply the correct CSS classes based on online/offline status
+    const textClassName = isOnline ? "event-online-text" : "event-offline-text";
+    const branchClassName = isOnline ? "event-branch-online" : "event-branch-offline";
+    
     // Check if we're in list view
     const isListView = ["listDay", "listWeek", "listMonth"].includes(
       currentView
@@ -178,20 +73,13 @@ const StudentSchedule = () => {
 
     return (
       <div
-        className={`flex items-center p-1 ${textColor} rounded w-full h-full`}
-        style={{
-          backgroundColor: isOnline
-            ? isDark
-              ? onlineForegroundDark
-              : onlineForeground
-            : isDark
-            ? offlineForegroundDark
-            : offlineForeground,
-        }}
+        className={`flex items-center justify-between p-1 ${textClassName} rounded w-full h-full ${
+          isPastEvent ? "opacity-75" : ""
+        }`}
       >
         {!isListView && currentView !== "dayGridMonth" && (
           <div
-            className={`flex space-x-1 absolute left-1 bottom-1 items-center text-xs italic ${branchColor}`}
+            className={`flex space-x-1 absolute left-1 bottom-1 items-center text-xs italic ${branchClassName}`}
           >
             {isOnline ? (
               <>
@@ -208,22 +96,22 @@ const StudentSchedule = () => {
             )}
           </div>
         )}
-        <div className="p-1 flex-col w-full">
+        <div className="p-1 flex-col">
           <div className="whitespace-normal pr-6 truncate-multiline">
             {eventInfo.event.title}
           </div>
-          <div
-            className={`text-xs ${subtextColor} flex items-center justify-between`}
-          >
-            <span>{eventInfo.event.extendedProps.instructor || ""}</span>
-            {isListView && (
-              <span className="flex items-center ml-2">
-                <MapPin size={12} className="mr-1" />
-                {isOnline ? "Home" : eventInfo.event.extendedProps.branch?.name}
-              </span>
-            )}
+          <div className={`text-xs ${branchClassName}`}>
+            {eventInfo.event.extendedProps.instructor || ""}
           </div>
         </div>
+        {isListView && (
+          <div className={`flex items-center text-xs ${branchClassName}`}>
+            <MapPin size={12} className="mr-1" />
+            <span>
+              {isOnline ? "Home" : eventInfo.event.extendedProps.branch?.name}
+            </span>
+          </div>
+        )}
       </div>
     );
   };
@@ -266,6 +154,9 @@ const StudentSchedule = () => {
                 }}
                 events={events}
                 eventContent={renderEventContent}
+                eventClassNames={(info) => {
+                  return [info.event.extendedProps.isOnline ? 'event-online' : 'event-offline'];
+                }}
                 height="auto"
                 timeZone="local"
                 nowIndicator={true}
@@ -289,25 +180,11 @@ const StudentSchedule = () => {
               </h2>
               <div className="space-y-2">
                 <div className="flex items-center">
-                  <div
-                    className="w-4 h-4 rounded-full mr-2"
-                    style={{
-                      backgroundColor: isDarkMode()
-                        ? offlineForegroundDark
-                        : offlineForeground,
-                    }}
-                  ></div>
+                  <div className="w-4 h-4 rounded-full mr-2 legend-dot-offline"></div>
                   <span>Offline Session</span>
                 </div>
                 <div className="flex items-center">
-                  <div
-                    className="w-4 h-4 rounded-full mr-2"
-                    style={{
-                      backgroundColor: isDarkMode()
-                        ? onlineForegroundDark
-                        : onlineForeground,
-                    }}
-                  ></div>
+                  <div className="w-4 h-4 rounded-full mr-2 legend-dot-online"></div>
                   <span>Online Session</span>
                 </div>
               </div>
@@ -315,7 +192,6 @@ const StudentSchedule = () => {
           </div>
         </>
       )}
-   
     </Layout>
   );
 };

@@ -222,7 +222,7 @@ const StudentDetail = ({
                 variant="destructive"
                 className="w-full text-wrap"
                 onClick={() => {onRevoke(student.id)}}
-                disabled={status != "banned"}
+                disabled={status == "banned"}
               >
                 Revoke Verification
               </Button>

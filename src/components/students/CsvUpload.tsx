@@ -130,7 +130,7 @@ const CsvUpload = ({ onSuccess }: CsvUploadProps) => {
               email: student.email,
               first_name: student.first_name,
               last_name: student.last_name,
-              phone_number: student.phone_number || "",
+              phone_number: student.phone_number || null,
             })),
             track_id: parseInt(selectedTrack),
           });

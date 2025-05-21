@@ -18,7 +18,6 @@ import dayjs from 'dayjs';
 import { useToast } from '@/hooks/use-toast';
 
 function LeaveRequestCenter() {
-  const [adjustedTimes, setAdjustedTimes] = useState({});
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [leaveRequests, setLeaveRequests] = useState([]);
   const [nextPageUrl, setNextPageUrl] = useState(null);
@@ -56,28 +55,6 @@ function LeaveRequestCenter() {
     refetchOnWindowFocus: false,
   });
 
-  // Parse time from ISO string to hour, minute, period components
-  const parseTime = (isoString) => {
-    if (!isoString) {
-      return { hour: '8', minute: '00', period: 'AM' };
-    }
-
-    try {
-      const time = dayjs(isoString);
-      let hour = time.hour() % 12;
-      if (hour === 0) hour = 12;
-
-      return {
-        hour: hour.toString(),
-        minute: time.minute().toString().padStart(2, '0'),
-        period: time.hour() >= 12 ? 'PM' : 'AM'
-      };
-    } catch (error) {
-      console.error("Error parsing time:", error);
-      return { hour: '8', minute: '00', period: 'AM' };
-    }
-  };
-
   // Format ISO datetime to readable format
   const formatDateTime = (isoString) => {
     if (!isoString) return 'N/A';
@@ -100,74 +77,23 @@ function LeaveRequestCenter() {
     return typeMap[type] || type;
   };
 
-  // Initialize adjusted times with defaults based on expected times
+  // Initialize leave requests and next page (no more adjustedTimes logic)
   useEffect(() => {
     if (permissionData && permissionData.results) {
       setLeaveRequests(permissionData.results);
       setNextPageUrl(permissionData.next);
-
-      const initialTimes = {};
-      permissionData.results.forEach(request => {
-        // Use the adjusted_time if available, otherwise use a default time
-        initialTimes[request.id] = parseTime(request.adjusted_time);
-      });
-      setAdjustedTimes(initialTimes);
     }
   }, [permissionData]);
-
-  const handleTimeChange = (requestId, timeComponent, value) => {
-    setAdjustedTimes(prev => ({
-      ...prev,
-      [requestId]: {
-        ...prev[requestId],
-        [timeComponent]: value
-      }
-    }));
-  };
 
   const handleAccept = async (requestId) => {
     const request = leaveRequests.find(req => req.id === requestId);
     if (!request) return;
 
-    let payload = {};
-    if (request.request_type !== 'day_excuse') {
-      const timeSettings = adjustedTimes[requestId];
-
-      // Create a dayjs object from the request date
-      const requestDate = dayjs(request.created_at);
-
-      // Parse hour to number and handle 12-hour format
-      let hour = parseInt(timeSettings.hour, 10);
-      if (timeSettings.period === 'PM' && hour !== 12) {
-        hour += 12;
-      } else if (timeSettings.period === 'AM' && hour === 12) {
-        hour = 0;
-      }
-
-      // Create adjusted datetime by setting the hour and minute on the request date
-      const adjustedDateTime = requestDate
-        .hour(hour)
-        .minute(parseInt(timeSettings.minute, 10))
-        .second(0)
-        .toISOString();
-
-      payload.adjusted_time = adjustedDateTime;
-    }
-
-    console.log(
-      'Accept request',
-      requestId,
-      request.request_type !== 'day_excuse' ? 'with adjusted time' : 'without adjusted time'
-    );
-
+    // No payload needed, just approve
     try {
-      // API call to update the request status with adjusted time if applicable
-      const response = await axiosBackendInstance.post(
-        `attendance/permission-requests/${requestId}/approve/`,
-        payload
+      await axiosBackendInstance.post(
+        `attendance/permission-requests/${requestId}/approve/`
       );
-
-      // show a toast to notify acceptance successful
       toast({
         title: 'Request Accepted Successfully',
         description: `Leave request for ${getStudentName(request)} has been accepted.`,
@@ -175,9 +101,6 @@ function LeaveRequestCenter() {
         duration: 5000,
         action: <Button variant="link" onClick={() => setSelectedRequest(null)}>Close</Button>,
       });
-
-      console.log('FOCUS HERE: ', response.data);
-      // Refetch the data to update the UI
       refetch();
       setSelectedRequest(null);
     } catch (error) {
@@ -333,59 +256,7 @@ function LeaveRequestCenter() {
                                     </div>
                                   </div>
                                   <div className="flex flex-wrap items-center gap-3 mt-4">
-                                    {request.request_type !== 'day_excuse' && (
-                                      <div className="flex items-center space-x-2">
-                                        <div className="w-20">
-                                          <Select
-                                            value={adjustedTimes[request.id]?.hour || ''}
-                                            onValueChange={(value) => handleTimeChange(request.id, 'hour', value)}
-                                          >
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Hour" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              {Array.from({ length: 12 }, (_, i) => i + 1).map((hour) => (
-                                                <SelectItem key={hour} value={hour.toString()}>
-                                                  {hour}
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                        <span>:</span>
-                                        <div className="w-20">
-                                          <Select
-                                            value={adjustedTimes[request.id]?.minute || ''}
-                                            onValueChange={(value) => handleTimeChange(request.id, 'minute', value)}
-                                          >
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="Min" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              {Array.from({ length: 60 }, (_, i) => i).map((minute) => (
-                                                <SelectItem key={minute} value={minute}>
-                                                  {minute}
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                        <div className="w-20">
-                                          <Select
-                                            value={adjustedTimes[request.id]?.period || ''}
-                                            onValueChange={(value) => handleTimeChange(request.id, 'period', value)}
-                                          >
-                                            <SelectTrigger>
-                                              <SelectValue placeholder="AM/PM" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                              <SelectItem value="AM">AM</SelectItem>
-                                              <SelectItem value="PM">PM</SelectItem>
-                                            </SelectContent>
-                                          </Select>
-                                        </div>
-                                      </div>
-                                    )}
+                                    {/* Removed time adjustment controls */}
                                     {request.request_type === 'day_excuse' && (
                                       <div className="text-muted-foreground italic mr-auto">
                                         Time adjustment not applicable for Day Excuse
