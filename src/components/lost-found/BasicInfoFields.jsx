@@ -11,7 +11,7 @@ const BasicInfoFields = ({ form }) => {
           name="itemName"
           value={form.values.itemName || ""}
           onChange={form.handleChange}
-          placeholder="Enter item name"
+          placeholder="(ex: mobile phone)"
           required
         />
       </div>

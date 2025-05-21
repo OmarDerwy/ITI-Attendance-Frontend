@@ -28,7 +28,7 @@ const DateLocationFields = ({ form }) => {
         name="location"
         value={form.values.location || ""}
         onChange={form.handleChange}
-        placeholder="Where was the item lost/found?"
+        placeholder="Where was the item lost/found? (e.g. Library, 2nd floor)"
         required
       />
     </div>
