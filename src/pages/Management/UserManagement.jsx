@@ -229,6 +229,13 @@ const UserManagement = () => {
               >
                 Supervisor
               </Button>
+              <Button 
+                variant={userTypeFilter === "branch-manager" ? "default" : "outline"}
+                size="sm"
+                onClick={() => setUserTypeFilter("branch-manager")}
+              >
+                Branch Manager
+              </Button>
             </div>
           </div>
 
