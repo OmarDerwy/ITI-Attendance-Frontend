@@ -592,7 +592,7 @@ const Event = () => {
 
       return (
         <div
-          className={`flex flex-col justify-between p-1 bg-primary/10 event-offline-text border-primary/20 rounded w-full h-full ${
+          className={`flex flex-col justify-between p-1 event-special border-primary/20 rounded w-full h-full ${
             isPastEvent ? "opacity-75" : ""
           } border`}
         >
@@ -603,7 +603,7 @@ const Event = () => {
                   e.stopPropagation();
                   toggleEventExpansion(eventId);
                 }}
-                className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
+                className="hover:bg-primary/20 rounded p-0.5 event-special-text"
                 title={isExpanded ? "Collapse" : "Expand"}
               >
                 {isExpanded ? (
@@ -622,7 +622,7 @@ const Event = () => {
                     setSelectedEvent(event);
                     setIsDeleteConfirmOpen(true);
                   }}
-                  className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
+                  className="hover:bg-primary/20 rounded p-0.5 event-special-text"
                   title="Delete"
                 >
                   <X size={14} />
@@ -632,12 +632,12 @@ const Event = () => {
           </div>
 
           <div className="flex-grow flex flex-col min-h-0">
-            <div className="font-medium overflow-hidden text-ellipsis event-offline-text">
+            <div className="font-medium overflow-hidden text-ellipsis event-special-text">
               {eventInfo.event.title}
             </div>
             {currentView !== "dayGridMonth" &&
               currentView !== "multiMonthYear" && (
-                <div className="text-xs truncate mt-1 event-offline-text">
+                <div className="text-xs truncate mt-1 event-special-text">
                   {eventInfo.timeText}
                 </div>
               )}
@@ -645,13 +645,13 @@ const Event = () => {
             {/* Render sessions if expanded */}
             {isExpanded && event.sessions.length > 0 && (
               <div className="mt-2 border-t border-primary/20 pt-1">
-                <div className="text-xs font-medium mb-1 event-offline-text">
+                <div className="text-xs font-medium mb-1 event-special-text">
                   Sessions:
                 </div>
                 {event.sessions.map((session) => (
                   <div
                     key={session.id}
-                    className="text-xs p-1 mb-1 bg-primary/20 rounded border border-primary/60 cursor-pointer hover:bg-primary/30 transition-colors event-offline-text"
+                    className="text-xs p-1 mb-1 bg-primary/20 rounded border border-primary/60 cursor-pointer hover:bg-primary/30 transition-colors event-special-text"
                     onClick={(e) => {
                       e.stopPropagation();
                       openEditDialog(event, e);
@@ -739,7 +739,7 @@ const Event = () => {
           eventResize={handleEventResize}
           eventContent={renderEventContent}
           eventClassNames={(info) => {
-            return ["event-offline"];
+            return ["event-special"];
           }}
           headerToolbar={{
             left: "prev,next today",

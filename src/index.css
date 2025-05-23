@@ -63,10 +63,11 @@
     --event-online-text: rgb(155, 28, 28); /* Dark red text for online events */
     --event-offline-bg: hsl(355deg 61.79% 39.91%); /* Primary color for offline events */
     --event-offline-text: hsl(var(--primary-foreground)); /* White text for offline events */
-    --event-special-bg: rgb(139, 92, 246); /* Purple for special events */
+    --event-special-bg:   linear-gradient(to right,  #216b9c ,  #4163c0 );
+
     --event-special-text: rgb(255, 255, 255); /* White text for special events */
-    --event-special-border: rgb(124, 58, 237); /* Darker purple for borders */
-    --event-special-branch: rgb(233, 213, 255); /* Light purple for branch text */
+    --event-special-border: linear-gradient(to right,  #bc8034 ,  #bc8034 );
+    --event-special-branch: rgb(255, 255, 255); /* White text for branch */
   }
 
   .dark {
@@ -125,10 +126,11 @@
     --event-online-text: rgb(216, 210, 210); /* Light red text for online events in dark mode */
     --event-offline-bg: rgb(82, 33, 33); /* Primary color for offline events */
     --event-offline-text: rgb(216, 210, 210); /* White text for offline events */
-    --event-special-bg: rgb(124, 58, 237); /* Darker purple for special events in dark mode */
+    --event-special-bg:  linear-gradient(to right,  #216b9c ,  #3458bc );
+
     --event-special-text: rgb(255, 255, 255); /* White text for special events */
-    --event-special-border: rgb(139, 92, 246); /* Lighter purple for borders in dark mode */
-    --event-special-branch: rgb(167, 139, 250); /* Lighter purple for branch text in dark mode */
+    --event-special-border:  linear-gradient(to right,  #bc8034 ,  #bc8034 );
+    --event-special-branch: rgb(216, 210, 210); /* Light gray for branch text */
   }
 }
 
@@ -688,42 +690,48 @@ background-color: hsl(var(--background));
 
 /* Special Event Styles */
 .event-special {
-  background-color: var(--event-special-bg) !important;
-  border-color: var(--event-special-border) !important;
+  background: var(--event-special-bg) !important;
+  border: 1px solid var(--event-special-border) !important;
+  color: var(--event-special-text) !important;
+  position: relative;
 }
-
-.event-special-text {
+.event-special-text,
+.event-special-branch {
   color: var(--event-special-text) !important;
 }
 
-.event-special-branch {
-  color: var(--event-special-branch) !important;
-}
-
 .legend-dot-special {
-  background-color: var(--event-special-bg);
+  background: var(--event-special-bg);
   border: 1px solid var(--event-special-border);
+  border-radius: 4px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
 }
 
-/* Ensure popover content is visible */
-.fc-event {
-  cursor: pointer;
-  transition: filter 0.2s ease;
+.legend-dot-special::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0)
+  );
+  pointer-events: none;
 }
 
-.fc-event:hover {
-  filter: brightness(0.95);
+.dark .legend-dot-special {
+  background: var(--event-special-bg);
+  border-color: var(--event-special-border);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
 }
 
-/* Dark mode specific event styles */
-.dark .event-special {
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-.dark .event-special:hover {
-  filter: brightness(1.1);
-}
-
-.dark .event-special-branch {
-  opacity: 0.9;
+.dark .legend-dot-special::after {
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.15),
+    rgba(255, 255, 255, 0)
+  );
 }

@@ -293,7 +293,7 @@ const StudentSchedule = () => {
                 <BookOpen className="mr-2 h-5 w-5 text-primary" /> Schedule
                 Legend
               </h2>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 <div className="flex items-center">
                   <div className="w-4 h-4 rounded-full mr-2 legend-dot-offline"></div>
                   <span>Offline Session</span>
@@ -303,8 +303,8 @@ const StudentSchedule = () => {
                   <span>Online Session</span>
                 </div>
                 <div className="flex items-center">
-                  <div className="w-4 h-4 rounded-full mr-2 legend-dot-special"></div>
-                  <span>Special Event</span>
+                  <div className="w-4 h-4 rounded mr-2 legend-dot-special"></div>
+                  <span className="font-medium">Special Event</span>
                 </div>
               </div>
             </Card>
