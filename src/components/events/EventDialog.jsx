@@ -3,12 +3,36 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, X, ArrowRight, ArrowLeft } from "lucide-react";
+import { Trash2, X, ArrowRight, ArrowLeft, Edit, ChevronDown, ChevronUp } from "lucide-react";
 import SimpleTimePicker from "./SimpleTimePicker";
 import { motion } from "framer-motion";
 import { positionDialog, saveDialogPosition } from "@/utils/DialogPositioner";
 import "./EventDialog.css";
 import { CSSTransition } from 'react-transition-group';
+import { v4 as uuidv4 } from 'uuid';
+import { toast } from "react-hot-toast";
+
+class DialogManager {
+  constructor(dialogRef) {
+    this.dialogRef = dialogRef;
+  }
+
+  positionDialog(isDocked, isOpen, position, lastUndockedPosition, isUndocking, currentEvent) {
+    positionDialog({
+      dialogRef: this.dialogRef,
+      isDocked,
+      isOpen,
+      position,
+      lastUndockedPosition,
+      isUndocking,
+      currentEvent,
+    });
+  }
+
+  savePosition() {
+    return saveDialogPosition(this.dialogRef);
+  }
+}
 
 const EventDialog = ({
   isOpen,
@@ -25,12 +49,14 @@ const EventDialog = ({
   onDockStateChange = () => {},
 }) => {
   const dialogRef = useRef(null);
+  const [dialogManager] = useState(() => new DialogManager(dialogRef));
   const [isDocked, setIsDocked] = useState(false);
   const [lastUndockedPosition, setLastUndockedPosition] = useState(null);
   const [isUndocking, setIsUndocking] = useState(false);
+  const [isSubEvent, setIsSubEvent] = useState(false);
+  const [isAddingSession, setIsAddingSession] = useState(false);
+  const [editingSession, setEditingSession] = useState(null);
 
-  const isSubEvent =
-    selectedEvent?.parentId || (newEvent?.parentId && !selectedEvent);
   const currentEvent = selectedEvent || newEvent || {};
   const currentParentEvent =
     parentEvent ||
@@ -38,32 +64,26 @@ const EventDialog = ({
       ? { start: parentEvent?.start, end: parentEvent?.end }
       : null);
 
+  // Add isViewOnly check
+  const isViewOnly = selectedEvent?.isPastEvent;
+
   // Position the dialog using the utility function
   const handlePositionDialog = useCallback(() => {
-    positionDialog({
-      dialogRef,
+    dialogManager.positionDialog(
       isDocked,
       isOpen,
       position,
       lastUndockedPosition,
       isUndocking,
-      currentEvent,
-    });
+      currentEvent
+    );
     
-    // Reset undocking state after applying the position
     if (isUndocking) {
       setTimeout(() => {
         setIsUndocking(false);
       }, 300);
     }
-  }, [
-    isDocked,
-    isOpen,
-    position,
-    lastUndockedPosition,
-    isUndocking,
-    currentEvent,
-  ]);
+  }, [isDocked, isOpen, position, lastUndockedPosition, isUndocking, currentEvent, dialogManager]);
 
   // Update event fields
   const updateField = useCallback(
@@ -80,26 +100,22 @@ const EventDialog = ({
   const toggleDock = useCallback(() => {
     const newDockedState = !isDocked;
 
-    // If going from undocked to docked, save the current position
     if (newDockedState && dialogRef.current) {
-      setLastUndockedPosition(saveDialogPosition(dialogRef));
+      setLastUndockedPosition(dialogManager.savePosition());
     }
 
-    // Track if we're undocking (going from docked to undocked)
     if (!newDockedState) {
       setIsUndocking(true);
     } else {
       setIsUndocking(false);
     }
 
-    // Update dock state
     setIsDocked(newDockedState);
 
-    // Notify parent with slight delay to ensure smooth transition
     setTimeout(() => {
       onDockStateChange(newDockedState);
     }, 50);
-  }, [isDocked, onDockStateChange]);
+  }, [isDocked, onDockStateChange, dialogManager]);
 
   // Toggle track selection
   const toggleTrackSelection = useCallback(
@@ -186,6 +202,77 @@ const EventDialog = ({
     onOpenChange(false);
   }, [isDocked, onDockStateChange, onOpenChange]);
 
+  // Update the session editing logic
+  const handleEditSession = (session) => {
+    // Ensure we're working with string IDs
+    const sessionWithStringId = {
+      ...session,
+      id: String(session.id)
+    };
+    setEditingSession(sessionWithStringId);
+    setIsAddingSession(true);
+  };
+
+
+  const handleAddSession = () => {
+    const newSession = {
+      id: "react" + uuidv4(),
+      title: "",
+      description: "",
+      start: currentEvent.start,
+      end: currentEvent.end,
+      parentId: currentEvent.id,
+      speaker: "",
+    };
+    setEditingSession(newSession);
+    setIsAddingSession(true);
+  };
+
+  const handleSaveSession = () => {
+    if (!editingSession.title) {
+      toast.error("Session title is required");
+      return;
+    }
+
+    if (selectedEvent) {
+      // Update existing event's sessions
+      const updatedSessions = selectedEvent.sessions || [];
+      const sessionIndex = updatedSessions.findIndex(s => s.id === editingSession.id);
+
+      if (sessionIndex === -1) {
+        // New session
+        updatedSessions.push(editingSession);
+      } else {
+        // Update existing session
+        updatedSessions[sessionIndex] = editingSession;
+      }
+
+      onEventUpdate("sessions", updatedSessions);
+    } else {
+      // Add session to new event
+      const updatedSessions = newEvent.sessions || [];
+      const sessionIndex = updatedSessions.findIndex(s => s.id === editingSession.id);
+
+      if (sessionIndex === -1) {
+        // New session
+        updatedSessions.push(editingSession);
+      } else {
+        // Update existing session
+        updatedSessions[sessionIndex] = editingSession;
+      }
+
+      onNewEventChange({ ...newEvent, sessions: updatedSessions });
+    }
+
+    setIsAddingSession(false);
+    setEditingSession(null);
+  };
+
+  const handleDeleteSession = (sessionId) => {
+    const updatedSessions = (currentEvent.sessions || []).filter(s => s.id !== sessionId);
+    onEventUpdate("sessions", updatedSessions);
+  };
+
   // Don't render when closed
   if (!isOpen) return null;
 
@@ -209,7 +296,9 @@ const EventDialog = ({
             <div className="event-dialog__header">
               <h2 className="font-semibold text-lg">
                 {selectedEvent
-                  ? "Edit Event"
+                  ? isViewOnly
+                    ? "View Event"
+                    : "Edit Event"
                   : isSubEvent
                   ? "Add Sub-Event"
                   : "Add Event"}
@@ -239,34 +328,78 @@ const EventDialog = ({
               <div className="space-y-5 pr-1">
                 {/* Title Field */}
                 <div className="space-y-2">
-                  <Label htmlFor="event-title" className="text-sm font-medium">
+                  <Label htmlFor="title" className="text-sm font-medium">
                     Title <span className="text-red-500">*</span>
                   </Label>
                   <Input
-                    id="event-title"
-                    value={currentEvent.title || ""}
-                    onChange={(e) => updateField("title", e.target.value)}
+                    id="title"
+                    value={selectedEvent ? selectedEvent.title : newEvent.title}
+                    onChange={(e) =>
+                      selectedEvent
+                        ? onEventUpdate("title", e.target.value)
+                        : onNewEventChange({
+                            ...newEvent,
+                            title: e.target.value,
+                          })
+                    }
                     placeholder="Enter event title"
                     className="w-full"
+                    disabled={isViewOnly}
                   />
                 </div>
 
                 {/* Description Field */}
                 <div className="space-y-2">
                   <Label
-                    htmlFor="event-description"
+                    htmlFor="description"
                     className="text-sm font-medium"
                   >
                     Description
                   </Label>
                   <Textarea
-                    id="event-description"
-                    value={currentEvent.description || ""}
-                    onChange={(e) => updateField("description", e.target.value)}
+                    id="description"
+                    value={
+                      selectedEvent
+                        ? selectedEvent.description
+                        : newEvent.description
+                    }
+                    onChange={(e) =>
+                      selectedEvent
+                        ? onEventUpdate("description", e.target.value)
+                        : onNewEventChange({
+                            ...newEvent,
+                            description: e.target.value,
+                          })
+                    }
                     className="min-h-[80px] resize-y w-full"
                     placeholder="Enter event description"
+                    disabled={isViewOnly}
                   />
                 </div>
+
+                {(isSubEvent || (selectedEvent && selectedEvent.parentId)) && (
+                  <div className="space-y-2">
+                    <Label htmlFor="speaker">Speaker</Label>
+                    <Input
+                      id="speaker"
+                      value={
+                        selectedEvent
+                          ? selectedEvent.speaker || ""
+                          : newEvent.speaker || ""
+                      }
+                      onChange={(e) =>
+                        selectedEvent
+                          ? onEventUpdate("speaker", e.target.value)
+                          : onNewEventChange({
+                              ...newEvent,
+                              speaker: e.target.value,
+                            })
+                      }
+                      placeholder="Enter speaker name"
+                      disabled={isViewOnly}
+                    />
+                  </div>
+                )}
 
                 {/* Only show audience options for parent events */}
                 {!isSubEvent && (
@@ -294,6 +427,7 @@ const EventDialog = ({
                             }
                             className="w-full text-xs px-1 h-auto py-2"
                             size="sm"
+                            disabled={isViewOnly}
                           >
                             {option.label}
                           </Button>
@@ -311,6 +445,7 @@ const EventDialog = ({
                             updateField("is_mandatory", e.target.checked)
                           }
                           className="h-4 w-4 rounded border-gray-300"
+                          disabled={isViewOnly}
                         />
                         Mandatory Attendance
                       </Label>
@@ -319,44 +454,47 @@ const EventDialog = ({
                       </p>
                     </div>
 
-                    {/* Target Tracks */}
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium">Target Tracks</Label>
-                      <p className="text-xs text-gray-500 mb-2">
-                        Select specific tracks that can attend this event (leave
-                        empty for all tracks)
-                      </p>
+                    {/* Target Tracks - Only show if not guest_only */}
+                    {currentEvent.audience_type !== "guests_only" && (
+                      <div className="space-y-2">
+                        <Label className="text-sm font-medium">Target Tracks</Label>
+                        <p className="text-xs text-gray-500 mb-2">
+                          Select specific tracks that can attend this event (leave
+                          empty for all tracks)
+                        </p>
 
-                      <div className="grid grid-cols-1 gap-2 max-h-[150px] overflow-y-auto border rounded-md p-2">
-                        {tracks.map((track) => (
-                          <div
-                            key={track.id}
-                            className="flex items-center space-x-2"
-                          >
-                            <input
-                              type="checkbox"
-                              id={`track-${track.id}`}
-                              checked={(
-                                currentEvent.target_tracks || []
-                              ).includes(track.id)}
-                              onChange={() => toggleTrackSelection(track.id)}
-                              className="h-4 w-4 rounded border-gray-300"
-                            />
-                            <Label
-                              htmlFor={`track-${track.id}`}
-                              className="text-sm"
+                        <div className="grid grid-cols-1 gap-2 max-h-[150px] overflow-y-auto border rounded-md p-2">
+                          {tracks.map((track) => (
+                            <div
+                              key={track.id}
+                              className="flex items-center space-x-2"
                             >
-                              {track.name}
-                            </Label>
-                          </div>
-                        ))}
-                        {tracks.length === 0 && (
-                          <div className="text-sm text-gray-500 py-2 text-center">
-                            No tracks available
-                          </div>
-                        )}
+                              <input
+                                type="checkbox"
+                                id={`track-${track.id}`}
+                                checked={(
+                                  currentEvent.target_tracks || []
+                                ).includes(track.id)}
+                                onChange={() => toggleTrackSelection(track.id)}
+                                className="h-4 w-4 rounded border-gray-300"
+                                disabled={isViewOnly}
+                              />
+                              <Label
+                                htmlFor={`track-${track.id}`}
+                                className="text-sm"
+                              >
+                                {track.name}
+                              </Label>
+                            </div>
+                          ))}
+                          {tracks.length === 0 && (
+                            <div className="text-sm text-gray-500 py-2 text-center">
+                              No tracks available
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </>
                 )}
 
@@ -368,7 +506,170 @@ const EventDialog = ({
                       parentEvent={currentParentEvent}
                       value={currentEvent}
                       onChange={handleTimeRangeChange}
+                      disabled={isViewOnly}
                     />
+                  </div>
+                )}
+
+                {/* Sessions Section */}
+                {!isSubEvent && (
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <Label className="text-sm font-medium">Sessions</Label>
+                      {!isAddingSession && !isViewOnly && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleAddSession}
+                          className="h-8"
+                        >
+                          Add Session
+                        </Button>
+                      )}
+                    </div>
+
+                    {/* Session Form */}
+                    {isAddingSession && !isViewOnly && (
+                      <div className="border rounded-md p-3 bg-muted/50 space-y-3">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-medium text-sm">
+                            {String(editingSession?.id || '').startsWith("react") ? "New Session" : "Edit Session"}
+                          </h4>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setIsAddingSession(false);
+                              setEditingSession(null);
+                            }}
+                            className="h-6 w-6"
+                          >
+                            <X size={14} />
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="session-title">Title</Label>
+                          <Input
+                            id="session-title"
+                            value={editingSession.title}
+                            onChange={(e) =>
+                              setEditingSession(prev => ({
+                                ...prev,
+                                title: e.target.value
+                              }))
+                            }
+                            placeholder="Enter session title"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="session-speaker">Speaker</Label>
+                          <Input
+                            id="session-speaker"
+                            value={editingSession.speaker}
+                            onChange={(e) =>
+                              setEditingSession(prev => ({
+                                ...prev,
+                                speaker: e.target.value
+                              }))
+                            }
+                            placeholder="Enter speaker name"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Time Selection</Label>
+                          <SimpleTimePicker
+                            parentEvent={currentEvent}
+                            value={editingSession}
+                            onChange={(timeRange) =>
+                              setEditingSession(prev => ({
+                                ...prev,
+                                start: timeRange.start,
+                                end: timeRange.end
+                              }))
+                            }
+                          />
+                        </div>
+
+                        <div className="flex justify-end space-x-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setIsAddingSession(false);
+                              setEditingSession(null);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            size="sm"
+                            onClick={handleSaveSession}
+                          >
+                            Save Session
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Sessions List */}
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto border rounded-md p-2">
+                      {(selectedEvent?.sessions || newEvent?.sessions || [])?.map((session) => (
+                        <div
+                          key={session.id}
+                          className="flex flex-col space-y-1 p-2 bg-primary/5 rounded border border-primary/20"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{session.title}</div>
+                              <div className="text-xs text-muted-foreground">
+                                {new Date(session.start_time || session.start).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}{" "}
+                                -
+                                {new Date(session.end_time || session.end).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </div>
+                              {session.speaker && (
+                                <div className="text-xs text-muted-foreground mt-1">
+                                  Speaker: {session.speaker}
+                                </div>
+                              )}
+                            </div>
+                            {!isViewOnly && (
+                              <div className="flex space-x-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6"
+                                  onClick={() => handleEditSession(session)}
+                                >
+                                  <Edit size={14} />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-6 w-6 text-destructive hover:text-destructive/80"
+                                  onClick={() => handleDeleteSession(session.id)}
+                                >
+                                  <X size={14} />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {(!selectedEvent?.sessions?.length && !newEvent?.sessions?.length) && (
+                        <div className="text-sm text-muted-foreground py-2 text-center">
+                          No sessions added yet
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -376,7 +677,7 @@ const EventDialog = ({
 
             <div className="event-dialog__footer">
               <div className="flex justify-between items-center">
-                {selectedEvent && (
+                {selectedEvent && !isViewOnly && (
                   <Button
                     variant="destructive"
                     size="sm"
@@ -388,7 +689,7 @@ const EventDialog = ({
                 )}
                 <div
                   className={`${
-                    selectedEvent ? "" : "w-full"
+                    selectedEvent && !isViewOnly ? "" : "w-full"
                   } flex justify-end space-x-2`}
                 >
                   <Button
@@ -397,11 +698,13 @@ const EventDialog = ({
                     onClick={handleClose}
                     className="h-9"
                   >
-                    Cancel
+                    {isViewOnly ? "Close" : "Cancel"}
                   </Button>
-                  <Button size="sm" onClick={onSubmit} className="h-9">
-                    {selectedEvent ? "Update Event" : "Add Event"}
-                  </Button>
+                  {!isViewOnly && (
+                    <Button size="sm" onClick={onSubmit} className="h-9">
+                      {selectedEvent ? "Update Event" : "Add Event"}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>

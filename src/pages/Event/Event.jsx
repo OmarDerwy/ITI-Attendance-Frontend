@@ -7,18 +7,77 @@ import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
 import multiMonthPlugin from "@fullcalendar/multimonth";
-import { Calendar, Loader2, X, ChevronDown, ChevronRight } from "lucide-react";
+import { Calendar, Loader2, X, ChevronDown, ChevronRight, Edit } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import Layout from "@/components/layout/Layout";
 import LeaveConfirmationDialog from "@/components/schedule/LeaveConfirmationDialog";
 import EventDialog from "@/components/events/EventDialog";
 import { axiosBackendInstance } from "@/api/config";
 import { useUser } from "@/context/UserContext";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+
+class EventManager {
+  constructor(events = []) {
+    this.events = events;
+  }
+
+  findEvent(eventId) {
+    return this.events.find((e) => String(e.id) === String(eventId));
+  }
+
+  updateEvent(eventId, updates) {
+    this.events = this.events.map((event) =>
+      event.id === eventId ? { ...event, ...updates } : event
+    );
+    return this.events;
+  }
+
+  deleteEvent(eventId) {
+    this.events = this.events.filter((event) => event.id !== eventId);
+    return this.events;
+  }
+
+  addEvent(event) {
+    this.events = [...this.events, event];
+    return this.events;
+  }
+
+  updateSession(eventId, sessionId, updates) {
+    this.events = this.events.map((event) => {
+      if (event.id === eventId) {
+        return {
+          ...event,
+          sessions: event.sessions.map((session) =>
+            session.id === sessionId ? { ...session, ...updates } : session
+          ),
+        };
+      }
+      return event;
+    });
+    return this.events;
+  }
+
+  deleteSession(eventId, sessionId) {
+    this.events = this.events.map((event) => {
+      if (event.id === eventId) {
+        return {
+          ...event,
+          sessions: event.sessions.filter((session) => session.id !== sessionId),
+        };
+      }
+      return event;
+    });
+    return this.events;
+  }
+}
 
 const Event = () => {
   const navigate = useNavigate();
   const { userRole } = useUser();
   const calendarRef = useRef(null);
+  const [eventManager] = useState(() => new EventManager());
+  const [expandedEvents, setExpandedEvents] = useState({});
 
   // State management
   const [isLoading, setIsLoading] = useState(true);
@@ -31,10 +90,13 @@ const Event = () => {
   const [navigationPath, setNavigationPath] = useState("");
   const [isSubEvent, setIsSubEvent] = useState(false);
   const [parentEventId, setParentEventId] = useState(null);
-  const [expandedEvents, setExpandedEvents] = useState({});
   const [dialogPosition, setDialogPosition] = useState({ x: 0, y: 0 });
   const [tracks, setTracks] = useState([]);
   const [newEvent, setNewEvent] = useState(createDefaultEvent());
+  const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
+  const [isResizeConfirmOpen, setIsResizeConfirmOpen] = useState(false);
+  const [isMoveConfirmOpen, setIsMoveConfirmOpen] = useState(false);
+  const [pendingEventChanges, setPendingEventChanges] = useState(null);
 
   // Helper function to create a default event
   function createDefaultEvent() {
@@ -60,50 +122,54 @@ const Event = () => {
       calendarRef.current.getApi().refetchEvents();
     }
   }, []);
-
-  const isWithinParentBounds = useCallback(
-    (event, newStart, newEnd) => {
-      if (!event.parentId) return true;
-
-      const parentEvent = events.find(
-        (e) => String(e.id) === String(event.parentId)
-      );
-      if (!parentEvent) return true;
-
-      const parentStart = new Date(parentEvent.start);
-      const parentEnd = new Date(parentEvent.end);
-      return newStart >= parentStart && newEnd <= parentEnd;
-    },
-    [events]
-  );
-
   // API calls
   const fetchEvents = useCallback(async () => {
     try {
       setIsLoading(true);
-      const response = await axiosBackendInstance.get("events/calendar-data/");
+      const response = await axiosBackendInstance.get("/attendance/events");
+      console.log("Raw API response:", response?.data);
+      
+      const fetchedEvents = response?.data?.map((event) => {
+        // Get the first and last session times
+        const firstSession = event.sessions?.[0];
+        const lastSession = event.sessions?.[event.sessions.length - 1];
+        
+        // Format dates for FullCalendar
+        const start = firstSession ? new Date(firstSession.start_time).toISOString() : null;
+        const end = lastSession ? new Date(lastSession.end_time).toISOString() : null;
 
-      const fetchedEvents = response?.data?.map((event) => ({
-        id: event.id,
-        title: event.title,
-        description: event.description,
-        start: event.start,
-        end: event.end,
-        parentId: event.parentId || null,
-        audience_type: event.audience_type,
-        is_mandatory: event.is_mandatory,
-        target_tracks: event.target_tracks,
-      }));
+        const transformedEvent = {
+          id: event.id,
+          title: event.title,
+          description: event.description,
+          start: start,
+          end: end,
+          audience_type: event.audience_type,
+          is_mandatory: event.is_mandatory,
+          target_tracks: event.target_tracks.map(track => track.id),
+          branch: event.branch,
+          branch_name: event.branch_name,
+          sessions: event.sessions.map(session => ({
+            ...session,
+            start_time: new Date(session.start_time).toISOString(),
+            end_time: new Date(session.end_time).toISOString()
+          }))
+        };
+        console.log("Transformed event:", transformedEvent);
+        return transformedEvent;
+      });
 
       setEvents(fetchedEvents || []);
+      eventManager.events = fetchedEvents || [];
     } catch (error) {
       console.error("Error fetching events:", error);
       toast.warning("No events found");
       setEvents([]);
+      eventManager.events = [];
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [eventManager]);
 
   const fetchTracks = useCallback(async () => {
     try {
@@ -119,7 +185,6 @@ const Event = () => {
   useEffect(() => {
     fetchTracks();
     fetchEvents();
-
     return () => {
       if (calendarRef.current) {
         calendarRef.current.getApi().destroy();
@@ -149,173 +214,120 @@ const Event = () => {
       return;
     }
 
-    // Check parent bounds for sub-events
-    if (isSubEvent || (selectedEvent && selectedEvent.parentId)) {
-      const parentId = isSubEvent ? parentEventId : selectedEvent.parentId;
-      const parentEvent = events.find((e) => String(e.id) === String(parentId));
-
-      if (parentEvent) {
-        const parentStart = new Date(parentEvent.start);
-        const parentEnd = new Date(parentEvent.end);
-
-        if (startDate < parentStart || endDate > parentEnd) {
-          toast.error(
-            "Sub-events must stay within the time bounds of their parent event"
-          );
-          return;
-        }
-      }
+    if (!eventData.sessions || eventData.sessions.length === 0) {
+      toast.error("At least one session is required.");
+      return;
     }
 
     try {
+      const eventPayload = {
+        title: eventData.title,
+        description: eventData.description || "",
+        event_date: startDate.toISOString().split('T')[0],
+        audience_type: eventData.audience_type,
+        is_mandatory: eventData.is_mandatory || false,
+        target_track_ids: eventData.target_tracks || [],
+        sessions: eventData.sessions.map(session => {
+          // Ensure we have valid date objects
+          const startTime = new Date(session.start_time || session.start);
+          const endTime = new Date(session.end_time || session.end);
+
+          // Validate dates
+          if (isNaN(startTime.getTime()) || isNaN(endTime.getTime())) {
+            throw new Error('Invalid date values in session');
+          }
+
+          return {
+            id: session.id,
+            title: session.title,
+            speaker: session.speaker || "",
+            start_time: startTime.toISOString(),
+            end_time: endTime.toISOString(),
+            session_type: "offline"
+          };
+        })
+      };
+
+      let response;
       if (!selectedEvent) {
-        // Add mode
-        const response = await axiosBackendInstance.post("/attendance/events/", {
-          title: newEvent.title,
-          description: newEvent.description || "",
-          event_date: startDate.toISOString().split('T')[0],
-          audience_type: newEvent.audience_type,
-          is_mandatory: newEvent.is_mandatory || false,
-          target_track_ids: newEvent.target_tracks || [],
-          sessions: isSubEvent ? [{
-            title: newEvent.title,
-            description: newEvent.description || "",
-            start_time: newEvent.start,
-            end_time: newEvent.end,
-            speaker: "TBD"
-          }] : []
-        });
-
+        // Add new event
+        response = await axiosBackendInstance.post("/attendance/events/", eventPayload);
         const newEventData = {
+          ...eventData,
           id: response.data.id,
-          title: newEvent.title,
-          description: newEvent.description || "",
-          start: newEvent.start,
-          end: newEvent.end,
-          parentId: isSubEvent ? parentEventId : null,
-          audience_type: newEvent.audience_type,
-          is_mandatory: newEvent.is_mandatory || false,
-          target_tracks: newEvent.target_tracks || [],
+          sessions: eventData.sessions.map(session => ({
+            ...session,
+            parentId: response.data.id
+          }))
         };
-
-        setEvents((prev) => [...prev, newEventData]);
-        toast.success(
-          isSubEvent
-            ? "Sub-event added successfully!"
-            : "Event added successfully!"
-        );
+        setEvents(prev => [...prev, newEventData]);
+        toast.success("Event added successfully!");
       } else {
-        // Edit mode
-        const response = await axiosBackendInstance.put(`/attendance/events/${selectedEvent.id}`, {
-          title: selectedEvent.title,
-          description: selectedEvent.description || "",
-          event_date: startDate.toISOString().split('T')[0],
-          audience_type: selectedEvent.audience_type,
-          is_mandatory: selectedEvent.is_mandatory || false,
-          target_track_ids: selectedEvent.target_tracks || [],
-          sessions: selectedEvent.parentId ? [{
-            title: selectedEvent.title,
-            description: selectedEvent.description || "",
-            start_time: selectedEvent.start,
-            end_time: selectedEvent.end,
-            speaker: "TBD"
-          }] : []
-        });
-
-        setEvents((prev) =>
-          prev.map((event) =>
+        // Update event (including sessions)
+        response = await axiosBackendInstance.put(`/attendance/events/${selectedEvent.id}`, eventPayload);
+        
+        // Update the events state with the modified event and sessions
+        setEvents(prev =>
+          prev.map(event =>
             event.id === selectedEvent.id
-              ? { ...selectedEvent }
+              ? {
+                  ...selectedEvent,
+                  ...response.data,
+                  sessions: response.data.sessions.map(session => ({
+                    ...session,
+                    parentId: selectedEvent.id
+                  }))
+                }
               : event
           )
         );
         toast.success("Event updated successfully!");
       }
 
-      // Reset state
+      // Reset state and refresh
       setIsDialogOpen(false);
       setSelectedEvent(null);
       setIsSubEvent(false);
       setParentEventId(null);
       setNewEvent(createDefaultEvent());
-      refreshCalendar();
+      await fetchEvents();
+      
+      if (calendarRef.current) {
+        const calendarApi = calendarRef.current.getApi();
+        setTimeout(() => calendarApi.updateSize(), 100);
+      }
     } catch (error) {
       console.error("Error saving event:", error);
       toast.error(error.response?.data?.message || "Failed to save event. Please try again.");
     }
-  }, [
-    selectedEvent,
-    newEvent,
-    events,
-    isSubEvent,
-    parentEventId,
-    isDateInPast,
-    refreshCalendar,
-  ]);
+  }, [selectedEvent, newEvent, isSubEvent, parentEventId, isDateInPast, fetchEvents]);
 
-  const handleDeleteEvent = useCallback(
-    async (eventId) => {
-      const event = events.find((e) => String(e.id) === String(eventId));
+  const handleDeleteEvent = useCallback(async (eventId) => {
+    const event = events.find(e => String(e.id) === String(eventId));
 
-      if (event && isDateInPast(event.start)) {
-        toast.error("Cannot delete events from past dates");
-        return;
-      }
+    if (event && isDateInPast(event.start)) {
+      toast.error("Cannot delete events from past dates");
+      return;
+    }
 
-      // Show confirmation dialog
-      if (!window.confirm("Are you sure you want to delete this event?")) {
-        return;
-      }
-
-      try {
-        // For new events (not yet saved to backend)
-        if (!event || String(event.id).startsWith("react")) {
-          // Find and remove all sub-events
-          const subEventIds = events
-            .filter((e) => e.parentId === eventId)
-            .map((e) => e.id);
-
-          setEvents((prev) =>
-            prev.filter(
-              (e) =>
-                String(e.id) !== String(eventId) && !subEventIds.includes(e.id)
-            )
-          );
-
-          toast.success("Event cancelled.");
-          setIsDialogOpen(false);
-          return;
-        }
-
-        // For existing events
-        await axiosBackendInstance.delete(`/attendance/events/${eventId}`);
-
-        // Handle sub-events
-        const subEvents = events.filter((e) => e.parentId === eventId);
-        if (subEvents.length > 0) {
-          // Delete all sub-events
-          await Promise.all(
-            subEvents.map((subEvent) =>
-              axiosBackendInstance.delete(`/attendance/events/${subEvent.id}`)
-            )
-          );
-        }
-
-        setEvents((prev) =>
-          prev.filter(
-            (e) => String(e.id) !== String(eventId) && e.parentId !== eventId
-          )
-        );
-
-        toast.success("Event deleted successfully!");
+    try {
+      if (!event || String(event.id).startsWith("react")) {
+        setEvents(prev => prev.filter(e => String(e.id) !== String(eventId) && e.parentId !== eventId));
+        toast.success("Event cancelled.");
         setIsDialogOpen(false);
-      } catch (error) {
-        console.error("Error deleting event:", error);
-        toast.error(error.response?.data?.message || "Failed to delete event. Please try again.");
+        return;
       }
-    },
-    [events, isDateInPast]
-  );
+
+      // Delete event (this will also delete all associated sessions)
+      await axiosBackendInstance.delete(`/attendance/events/${eventId}`);
+      setEvents(prev => prev.filter(e => String(e.id) !== String(eventId) && e.parentId !== eventId));
+      toast.success("Event deleted successfully!");
+      setIsDialogOpen(false);
+    } catch (error) {
+      console.error("Error deleting event:", error);
+      toast.error(error.response?.data?.message || "Failed to delete event. Please try again.");
+    }
+  }, [events, isDateInPast]);
 
   const handleEventResize = useCallback(
     (resizeInfo) => {
@@ -331,31 +343,17 @@ const Event = () => {
       const newStart = new Date(resizeInfo.event.start);
       const newEnd = new Date(resizeInfo.event.end);
 
-      // Check parent bounds for sub-events
-      if (event && event.parentId) {
-        if (!isWithinParentBounds(event, newStart, newEnd)) {
-          resizeInfo.revert();
-          toast.error(
-            "Sub-events must stay within the time bounds of their parent event"
-          );
-          return;
-        }
-      }
-
-      setEvents((prev) =>
-        prev.map((e) =>
-          String(e.id) === String(eventId)
-            ? {
-                ...e,
-                start: resizeInfo.event.startStr,
-                end: resizeInfo.event.endStr,
-                isModified: true,
-              }
-            : e
-        )
-      );
+      // Show confirmation dialog
+      setPendingEventChanges({
+        type: 'resize',
+        eventId,
+        newStart,
+        newEnd,
+        revert: resizeInfo.revert
+      });
+      setIsResizeConfirmOpen(true);
     },
-    [events, isDateInPast, isWithinParentBounds]
+    [events, isDateInPast]
   );
 
   const handleEventDrop = useCallback(
@@ -372,214 +370,173 @@ const Event = () => {
       const newStart = new Date(dropInfo.event.start);
       const newEnd = new Date(dropInfo.event.end);
 
-      // For sub-events, check parent bounds
-      if (event && event.parentId) {
-        if (!isWithinParentBounds(event, newStart, newEnd)) {
-          dropInfo.revert();
-          toast.error(
-            "Sub-events must stay within the time bounds of their parent event"
-          );
-          return;
-        }
-      }
-
-      // If this is a parent event, also move all sub-events
-      const isParent = events.some((e) => e.parentId === eventId);
-      if (isParent) {
-        const subEvents = events.filter((e) => e.parentId === eventId);
-        const timeDiff = newStart - new Date(event.start);
-
-        subEvents.forEach((subEvent) => {
-          const newSubStart = new Date(
-            new Date(subEvent.start).getTime() + timeDiff
-          );
-          const newSubEnd = new Date(
-            new Date(subEvent.end).getTime() + timeDiff
-          );
-
-          setEvents((prev) =>
-            prev.map((e) =>
-              String(e.id) === String(subEvent.id)
-                ? {
-                    ...e,
-                    start: newSubStart.toISOString(),
-                    end: newSubEnd.toISOString(),
-                    isModified: true,
-                  }
-                : e
-            )
-          );
-        });
-      }
-
-      setEvents((prev) =>
-        prev.map((e) =>
-          String(e.id) === String(eventId)
-            ? {
-                ...e,
-                start: dropInfo.event.startStr,
-                end: dropInfo.event.endStr,
-                isModified: true,
-              }
-            : e
-        )
-      );
-    },
-    [events, isDateInPast, isWithinParentBounds]
-  );
-
-  const handleDateClick = useCallback(
-    (info) => {
-      if (userRole !== "coordinator") return;
-      if (isDateInPast(info.date)) {
-        toast.error("Cannot add events to past dates");
-        return;
-      }
-
-      setSelectedEvent(null);
-      setIsSubEvent(false);
-      setParentEventId(null);
-
-      const startDate = new Date(info.date);
-      const endDate = new Date(startDate);
-      endDate.setHours(startDate.getHours() + 1);
-
-      setNewEvent({
-        id: "react" + uuidv4(),
-        title: "",
-        description: "",
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-        parentId: null,
-        audience_type: "both",
-        is_mandatory: false,
-        target_tracks: [],
+      // Show confirmation dialog
+      setPendingEventChanges({
+        type: 'move',
+        eventId,
+        newStart,
+        newEnd,
+        revert: dropInfo.revert
       });
-
-      // Set position from the click event
-      if (info.jsEvent) {
-        setDialogPosition({ x: info.jsEvent.clientX, y: info.jsEvent.clientY });
-      }
-
-      setIsDialogOpen(true);
+      setIsMoveConfirmOpen(true);
     },
-    [userRole, isDateInPast]
+    [events, isDateInPast]
   );
 
-  const handleOpenAddDialog = useCallback(
-    (selectInfo) => {
-      if (userRole !== "coordinator") return;
-      if (isDateInPast(selectInfo.start)) {
-        toast.error("Cannot add events to past dates");
-        return;
+  const handleConfirmChanges = useCallback(async () => {
+    if (!pendingEventChanges) return;
+
+    const { type, eventId, newStart, newEnd } = pendingEventChanges;
+    const event = events.find(e => String(e.id) === String(eventId));
+
+    try {
+      if (type === 'resize' || type === 'move') {
+        const updatedEvent = {
+          ...event,
+          event_date: newStart.toISOString().split('T')[0],
+          sessions: event.sessions.map(session => ({
+            ...session,
+            start_time: new Date(session.start_time).getTime() + (newStart - new Date(event.start)),
+            end_time: new Date(session.end_time).getTime() + (newEnd - new Date(event.end))
+          }))
+        };
+
+        const response = await axiosBackendInstance.put(`/attendance/events/${eventId}`, updatedEvent);
+        setEvents(prev =>
+          prev.map(e =>
+            String(e.id) === String(eventId)
+              ? {
+                  ...e,
+                  ...response.data,
+                  sessions: response.data.sessions.map(session => ({
+                    ...session,
+                    parentId: eventId
+                  }))
+                }
+              : e
+          )
+        );
+        toast.success("Event updated successfully!");
       }
+    } catch (error) {
+      console.error("Error updating event:", error);
+      toast.error("Failed to update event. Please try again.");
+      pendingEventChanges.revert();
+    } finally {
+      setPendingEventChanges(null);
+      setIsResizeConfirmOpen(false);
+      setIsMoveConfirmOpen(false);
+    }
+  }, [pendingEventChanges, events]);
 
-      // Check if start and end dates are on the same day
-      if (selectInfo.start.toDateString() !== selectInfo.end.toDateString()) {
-        toast.error("Events must be on the same day");
-        return;
-      }
+  const handleCancelChanges = useCallback(() => {
+    if (pendingEventChanges) {
+      pendingEventChanges.revert();
+      setPendingEventChanges(null);
+    }
+    setIsResizeConfirmOpen(false);
+    setIsMoveConfirmOpen(false);
+  }, [pendingEventChanges]);
 
-      setSelectedEvent(null);
-      setIsSubEvent(false);
-      setParentEventId(null);
 
-      const startDate = new Date(selectInfo.start);
-      const endDate = new Date(selectInfo.end);
+  const handleDateClick = useCallback((info) => {
+    if (userRole !== "coordinator" || isDateInPast(info.date)) {
+      toast.error("Cannot add events to past dates");
+      return;
+    }
 
-      setNewEvent({
-        id: "react" + uuidv4(),
-        title: "",
-        description: "",
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-        parentId: null,
-        audience_type: "both",
-        is_mandatory: false,
-        target_tracks: [],
-      });
+    const startDate = new Date(info.date);
+    const endDate = new Date(startDate);
+    endDate.setHours(startDate.getHours() + 1);
 
-      // Set position from the selection event
-      if (selectInfo.jsEvent) {
-        setDialogPosition({
-          x: selectInfo.jsEvent.clientX,
-          y: selectInfo.jsEvent.clientY,
-        });
-      }
+    setNewEvent({
+      id: "react" + uuidv4(),
+      title: "",
+      description: "",
+      start: startDate.toISOString(),
+      end: endDate.toISOString(),
+      parentId: null,
+      audience_type: "both",
+      is_mandatory: false,
+      target_tracks: [],
+    });
 
-      setIsDialogOpen(true);
-    },
-    [userRole, isDateInPast]
-  );
+    setSelectedEvent(null);
+    setIsSubEvent(false);
+    setParentEventId(null);
+    setDialogPosition(info.jsEvent ? { x: info.jsEvent.clientX, y: info.jsEvent.clientY } : { x: 0, y: 0 });
+    setIsDialogOpen(true);
+  }, [userRole, isDateInPast]);
 
-  const openEditDialog = useCallback(
-    (event, jsEvent) => {
-      if (isDateInPast(event.start)) {
-        toast.info("Cannot modify events from past dates");
-        return;
-      }
+  const handleOpenAddDialog = useCallback((selectInfo) => {
+    if (userRole !== "coordinator" || isDateInPast(selectInfo.start)) {
+      toast.error("Cannot add events to past dates");
+      return;
+    }
 
-      setSelectedEvent(event);
-      if (jsEvent) {
-        setDialogPosition({ x: jsEvent.clientX, y: jsEvent.clientY });
-      }
-      setIsDialogOpen(true);
-    },
-    [isDateInPast]
-  );
+    if (selectInfo.start.toDateString() !== selectInfo.end.toDateString()) {
+      toast.error("Events must be on the same day");
+      return;
+    }
 
-  const toggleEventExpansion = useCallback(
-    (eventId) => {
-      setExpandedEvents((prev) => ({
-        ...prev,
-        [eventId]: !prev[eventId],
-      }));
-      refreshCalendar();
-    },
-    [refreshCalendar]
-  );
+    setNewEvent({
+      id: "react" + uuidv4(),
+      title: "",
+      description: "",
+      start: selectInfo.start.toISOString(),
+      end: selectInfo.end.toISOString(),
+      parentId: null,
+      audience_type: "both",
+      is_mandatory: false,
+      target_tracks: [],
+    });
 
-  const addSubEvent = useCallback(
-    (parentEvent, jsEvent) => {
-      if (isDateInPast(parentEvent.start)) {
-        toast.error("Cannot add sub-events to past events");
-        return;
-      }
+    setSelectedEvent(null);
+    setIsSubEvent(false);
+    setParentEventId(null);
+    setDialogPosition(selectInfo.jsEvent ? { x: selectInfo.jsEvent.clientX, y: selectInfo.jsEvent.clientY } : { x: 0, y: 0 });
+    setIsDialogOpen(true);
+  }, [userRole, isDateInPast]);
 
-      setSelectedEvent(null);
-      setIsSubEvent(true);
-      setParentEventId(parentEvent.id);
+  const openEditDialog = useCallback((event, jsEvent) => {
+    setSelectedEvent({ ...event, isPastEvent: isDateInPast(event.start) });
+    setDialogPosition(jsEvent ? { x: jsEvent.clientX, y: jsEvent.clientY } : { x: 0, y: 0 });
+    setIsDialogOpen(true);
+  }, [isDateInPast]);
 
-      const parentStart = new Date(parentEvent.start);
-      const parentEnd = new Date(parentEvent.end);
+  const toggleEventExpansion = useCallback((eventId) => {
+    setExpandedEvents(prev => ({ ...prev, [eventId]: !prev[eventId] }));
+    refreshCalendar();
+  }, [refreshCalendar]);
 
-      // Calculate default sub-event time (centered within parent)
-      const duration = parentEnd - parentStart;
-      const subEventDuration = Math.min(duration * 0.5, 30 * 60 * 1000); // 30 minutes or half of parent
+  const addSubEvent = useCallback((parentEvent, jsEvent) => {
+    if (isDateInPast(parentEvent.start)) {
+      toast.error("Cannot add sub-events to past events");
+      return;
+    }
 
-      const subStart = new Date(
-        parentStart.getTime() + (duration - subEventDuration) / 2
-      );
-      const subEnd = new Date(subStart.getTime() + subEventDuration);
+    const parentStart = new Date(parentEvent.start);
+    const parentEnd = new Date(parentEvent.end);
+    const duration = parentEnd - parentStart;
+    const subEventDuration = Math.min(duration * 0.5, 30 * 60 * 1000);
+    const subStart = new Date(parentStart.getTime() + (duration - subEventDuration) / 2);
+    const subEnd = new Date(subStart.getTime() + subEventDuration);
 
-      setNewEvent({
-        id: "react" + uuidv4(),
-        title: "",
-        description: "",
-        start: subStart.toISOString(),
-        end: subEnd.toISOString(),
-        parentId: parentEvent.id,
-      });
+    setNewEvent({
+      id: "react" + uuidv4(),
+      title: "",
+      description: "",
+      start: subStart.toISOString(),
+      end: subEnd.toISOString(),
+      parentId: parentEvent.id,
+    });
 
-      // Set position if jsEvent is provided
-      if (jsEvent) {
-        setDialogPosition({ x: jsEvent.clientX, y: jsEvent.clientY });
-      }
-
-      setIsDialogOpen(true);
-    },
-    [isDateInPast]
-  );
+    setSelectedEvent(null);
+    setIsSubEvent(true);
+    setParentEventId(parentEvent.id);
+    setDialogPosition(jsEvent ? { x: jsEvent.clientX, y: jsEvent.clientY } : { x: 0, y: 0 });
+    setIsDialogOpen(true);
+  }, [isDateInPast]);
 
   const handleLeaveConfirm = useCallback(() => {
     setIsLeaveConfirmOpen(false);
@@ -589,25 +546,20 @@ const Event = () => {
   }, [navigate, navigationPath]);
 
   const updateSelectedEvent = useCallback((field, value) => {
-    setSelectedEvent((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    setSelectedEvent(prev => ({ ...prev, [field]: value }));
   }, []);
 
   // Handle dialog state changes
   const handleDialogStateChange = useCallback((open) => {
     setIsDialogOpen(open);
     if (!open) {
-      // Reset dialog state
       setSelectedEvent(null);
       setIsDialogDocked(false);
-      // Force calendar resize after dialog closes
       setTimeout(() => {
         if (calendarRef.current) {
           calendarRef.current.getApi().updateSize();
         }
-      }, 350); // Wait for transition to complete
+      }, 350);
     }
   }, []);
 
@@ -616,15 +568,10 @@ const Event = () => {
     (eventInfo) => {
       const isPastEvent = isDateInPast(eventInfo.event.start);
       const eventId = eventInfo.event.id;
-      const event = events.find((e) => String(e.id) === String(eventId));
-
-      if (event && event.parentId) {
-        return null;
-      }
-
-      const hasSubEvents = events.some((e) => e.parentId === eventId);
+      const event = eventManager.findEvent(eventId);
       const isExpanded = expandedEvents[eventId];
-      const subEvents = events.filter((e) => e.parentId === eventId);
+
+      if (!event) return null;
 
       return (
         <div
@@ -633,7 +580,7 @@ const Event = () => {
           } border`}
         >
           <div className="flex justify-between mb-1">
-            {hasSubEvents ? (
+            {event.sessions.length > 0 && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
@@ -648,8 +595,6 @@ const Event = () => {
                   <ChevronRight size={14} />
                 )}
               </button>
-            ) : (
-              <div></div> // Empty div to maintain layout
             )}
 
             {!isPastEvent && userRole === "coordinator" && (
@@ -657,17 +602,18 @@ const Event = () => {
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    addSubEvent(event, e);
+                    openEditDialog(event, e);
                   }}
                   className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
-                  title="Add Sub-Event"
+                  title="Edit Event"
                 >
-                  +
+                  <Edit size={14} />
                 </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    handleDeleteEvent(eventId);
+                    setSelectedEvent(event);
+                    setIsDeleteConfirmOpen(true);
                   }}
                   className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
                   title="Delete"
@@ -689,32 +635,35 @@ const Event = () => {
                 </div>
               )}
 
-            {/* Render sub-events if expanded */}
-            {isExpanded && hasSubEvents && (
+            {/* Render sessions if expanded */}
+            {isExpanded && event.sessions.length > 0 && (
               <div className="mt-2 border-t border-primary/20 pt-1">
                 <div className="text-xs font-medium mb-1 event-offline-text">
-                  Sub-events:
+                  Sessions:
                 </div>
-                {subEvents.map((subEvent) => (
+                {event.sessions.map((session) => (
                   <div
-                    key={subEvent.id}
+                    key={session.id}
                     className="text-xs p-1 mb-1 bg-primary/20 rounded border border-primary/60 cursor-pointer hover:bg-primary/30 transition-colors event-offline-text"
                     onClick={(e) => {
                       e.stopPropagation();
-                      openEditDialog(subEvent, e);
+                      openEditDialog(event, e);
                     }}
                   >
-                    <div className="font-medium truncate">{subEvent.title}</div>
+                    <div className="font-medium truncate">{session.title}</div>
                     <div className="text-xs opacity-80">
-                      {new Date(subEvent.start).toLocaleTimeString([], {
+                      {new Date(session.start_time).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}{" "}
                       -
-                      {new Date(subEvent.end).toLocaleTimeString([], {
+                      {new Date(session.end_time).toLocaleTimeString([], {
                         hour: "2-digit",
                         minute: "2-digit",
                       })}
+                      {session.speaker && (
+                        <span className="ml-2">• {session.speaker}</span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -731,8 +680,6 @@ const Event = () => {
       userRole,
       expandedEvents,
       openEditDialog,
-      addSubEvent,
-      handleDeleteEvent,
       toggleEventExpansion,
     ]
   );
@@ -883,7 +830,7 @@ const Event = () => {
           onEventUpdate={updateSelectedEvent}
           onNewEventChange={setNewEvent}
           onSubmit={handleEventSubmit}
-          onDelete={handleDeleteEvent}
+          onDelete={() => setIsDeleteConfirmOpen(true)}
           parentEvent={
             isSubEvent || (selectedEvent && selectedEvent.parentId)
               ? events.find(
@@ -897,12 +844,11 @@ const Event = () => {
           position={dialogPosition}
           onDockStateChange={(docked) => {
             setIsDialogDocked(docked);
-            // Force calendar resize after state change
             setTimeout(() => {
               if (calendarRef.current) {
                 calendarRef.current.getApi().updateSize();
               }
-            }, 350); // Wait for transition to complete
+            }, 350);
           }}
         />
         <LeaveConfirmationDialog
@@ -912,6 +858,69 @@ const Event = () => {
           onStay={() => setIsLeaveConfirmOpen(false)}
           onLeave={handleLeaveConfirm}
         />
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={isDeleteConfirmOpen} onOpenChange={setIsDeleteConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Delete Event</DialogTitle>
+              <DialogDescription>
+                Are you sure you want to delete this event? This action cannot be undone.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteConfirmOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  handleDeleteEvent(selectedEvent?.id);
+                  setIsDeleteConfirmOpen(false);
+                }}
+              >
+                Delete
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Resize Confirmation Dialog */}
+        <Dialog open={isResizeConfirmOpen} onOpenChange={setIsResizeConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Resize Event</DialogTitle>
+              <DialogDescription>
+                Do you want to save the changes to this event's duration?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCancelChanges}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmChanges}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+        {/* Move Confirmation Dialog */}
+        <Dialog open={isMoveConfirmOpen} onOpenChange={setIsMoveConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Move Event</DialogTitle>
+              <DialogDescription>
+                Do you want to save the changes to this event's time?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={handleCancelChanges}>
+                Cancel
+              </Button>
+              <Button onClick={handleConfirmChanges}>
+                Save Changes
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </Layout>
   );

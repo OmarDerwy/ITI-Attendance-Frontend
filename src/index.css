@@ -63,6 +63,10 @@
     --event-online-text: rgb(155, 28, 28); /* Dark red text for online events */
     --event-offline-bg: hsl(355deg 61.79% 39.91%); /* Primary color for offline events */
     --event-offline-text: hsl(var(--primary-foreground)); /* White text for offline events */
+    --event-special-bg: rgb(139, 92, 246); /* Purple for special events */
+    --event-special-text: rgb(255, 255, 255); /* White text for special events */
+    --event-special-border: rgb(124, 58, 237); /* Darker purple for borders */
+    --event-special-branch: rgb(233, 213, 255); /* Light purple for branch text */
   }
 
   .dark {
@@ -117,10 +121,14 @@
     --card-warning-text: 0 84% 80%; /* red-400 */
     
     /* Calendar event colors - updated for dark mode */
-    --event-online-bg: rgb(78 73 73); /* Darker red for online events in dark mode */
-    --event-online-text:rgb(216, 210, 210); /* Light red text for online events in dark mode */
-    --event-offline-bg: rgb(82, 33, 33) ; /* Primary color for offline events */
+    --event-online-bg: rgb(78, 73, 73); /* Darker red for online events in dark mode */
+    --event-online-text: rgb(216, 210, 210); /* Light red text for online events in dark mode */
+    --event-offline-bg: rgb(82, 33, 33); /* Primary color for offline events */
     --event-offline-text: rgb(216, 210, 210); /* White text for offline events */
+    --event-special-bg: rgb(124, 58, 237); /* Darker purple for special events in dark mode */
+    --event-special-text: rgb(255, 255, 255); /* White text for special events */
+    --event-special-border: rgb(139, 92, 246); /* Lighter purple for borders in dark mode */
+    --event-special-branch: rgb(167, 139, 250); /* Lighter purple for branch text in dark mode */
   }
 }
 
@@ -567,26 +575,6 @@
   transition: none;
 }
 
-/* EventDialog styles (global override for theming and dark mode) */
-/* .event-dialog {
-  background: hsl(var(--card));
-  border: 1px solid hsl(var(--border));
-  color: hsl(var(--card-foreground));
-}
-.event-dialog--docked {
-  background: hsl(var(--card));
-  border-left: 1px solid hsl(var(--border));
-}
-.event-dialog--undocked {
-  background: hsl(var(--card));
-  border-radius: var(--radius);
-}
-.event-dialog__header,
-.event-dialog__footer {
-  background: hsl(var(--card));
-  border-color: hsl(var(--border));
-} */
-
 .dark .event-dialog {
   background: hsl(var(--card));
   border: 1px solid hsl(var(--border));
@@ -625,4 +613,117 @@
 
 .time-picker-label {
   @apply text-muted-foreground text-xs;
+}
+/* .fc .fc-daygrid-day-frame {
+background-color: hsl(var(--background));
+} */
+
+.dark .fc-daygrid-day-frame {
+  background-color: hsl(var(--background));
+  border: 0.5px solid hsl(var(--border));
+}
+
+.dark .fc-daygrid-day {
+  border: 0.5px solid hsl(var(--border));
+}
+
+/* .dark .fc-daygrid-day-number {
+  color: rgba(220, 220, 220, 0.85) !important;
+} */
+
+/* Add border color customization for year view */
+.dark .fc-daygrid-body,
+.dark .fc-daygrid-body-unbalanced {
+  border-color: hsl(var(--border));
+}
+
+/* FullCalendar popover dark mode styling */
+.dark .fc-popover {
+  background-color: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+}
+
+.dark .fc-popover-header {
+  background-color: hsl(var(--card)) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+
+.dark .fc-popover-title {
+  color: hsl(var(--card-foreground)) !important;
+}
+
+.dark .fc-popover-close {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.dark .fc-popover-close:hover {
+  color: hsl(var(--foreground)) !important;
+  background-color: hsl(var(--muted)) !important;
+}
+
+.dark .fc-popover-body {
+  background-color: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
+}
+
+.dark .fc-popover .fc-event {
+  background-color: hsl(var(--muted)) !important;
+  border-color: hsl(var(--border)) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .fc-popover .fc-event:hover {
+  background-color: hsl(var(--accent)) !important;
+}
+
+.dark .fc-popover .fc-event-title {
+  color: hsl(var(--foreground)) !important;
+}
+
+.dark .fc-popover .fc-event-time {
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Special Event Styles */
+.event-special {
+  background-color: var(--event-special-bg) !important;
+  border-color: var(--event-special-border) !important;
+}
+
+.event-special-text {
+  color: var(--event-special-text) !important;
+}
+
+.event-special-branch {
+  color: var(--event-special-branch) !important;
+}
+
+.legend-dot-special {
+  background-color: var(--event-special-bg);
+  border: 1px solid var(--event-special-border);
+}
+
+/* Ensure popover content is visible */
+.fc-event {
+  cursor: pointer;
+  transition: filter 0.2s ease;
+}
+
+.fc-event:hover {
+  filter: brightness(0.95);
+}
+
+/* Dark mode specific event styles */
+.dark .event-special {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.dark .event-special:hover {
+  filter: brightness(1.1);
+}
+
+.dark .event-special-branch {
+  opacity: 0.9;
 }
