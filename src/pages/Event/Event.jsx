@@ -241,8 +241,8 @@ const Event = () => {
             id: session.id,
             title: session.title,
             speaker: session.speaker || "",
-            start_time: startTime.getTime(), // Convert to milliseconds timestamp
-            end_time: endTime.getTime(), // Convert to milliseconds timestamp
+            start_time: startTime.toISOString(), // Send as ISO string
+            end_time: endTime.toISOString(), // Send as ISO string
             session_type: "offline"
           };
         })
@@ -394,11 +394,26 @@ const Event = () => {
         const updatedEvent = {
           ...event,
           event_date: newStart.toISOString().split('T')[0],
-          sessions: event.sessions.map(session => ({
-            ...session,
-            start_time: new Date(session.start_time).getTime() + (newStart - new Date(event.start)),
-            end_time: new Date(session.end_time).getTime() + (newEnd - new Date(event.end))
-          }))
+          sessions: event.sessions.map((session, index) => {
+            const sessionStart = new Date(session.start_time);
+            const sessionEnd = new Date(session.end_time);
+            const timeDiff = newStart - new Date(event.start);
+            
+            // For resize operation, adjust the last session's end time to match the new event end time
+            if (type === 'resize' && index === event.sessions.length - 1) {
+              return {
+                ...session,
+                start_time: new Date(sessionStart.getTime() + timeDiff).toISOString(),
+                end_time: newEnd.toISOString()
+              };
+            }
+            
+            return {
+              ...session,
+              start_time: new Date(sessionStart.getTime() + timeDiff).toISOString(),
+              end_time: new Date(sessionEnd.getTime() + timeDiff).toISOString()
+            };
+          })
         };
 
         const response = await axiosBackendInstance.put(`/attendance/events/${eventId}`, updatedEvent);
