@@ -10,12 +10,25 @@ export const UserProvider = ({ children }) => {
   const [userName, setUserName] = useState("");
   const [userFullName, setUserFullName] = useState("");
   const [userItems, setUserItems] = useState([]);
-  const [userProfilePic, setUserProfilePic] = useState("/placeholder.svg");
+  // Initialize profile pic from localStorage or use placeholder
+  const [userProfilePic, setUserProfilePicState] = useState(
+    localStorage.getItem("userProfilePic") || "/placeholder.svg"
+  );
   const [userAnnouncements, setUserAnnouncements] = useState([]);
   const [readAnnouncements, setReadAnnouncements] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [studentTrack, setStudentTrack] = useState(null);
   const [attendanceStats, setAttendanceStats] = useState(null);
+
+  // Custom setter for profile picture that also saves to localStorage
+  const setUserProfilePic = (url) => {
+    setUserProfilePicState(url);
+    if (url && url !== "/placeholder.svg") {
+      localStorage.setItem("userProfilePic", url);
+    } else {
+      localStorage.removeItem("userProfilePic");
+    }
+  };
 
   const addUserItem = (item) => {
     setUserItems([...userItems, item]);
@@ -106,6 +119,32 @@ export const UserProvider = ({ children }) => {
         if (storedFullName) {
           setUserFullName(storedFullName);
         }
+        
+        // Try to fetch fresh profile picture if we have a token
+        try {
+          const photoResponse = await axiosBackendInstance.get("accounts/users/photo/");
+          if (photoResponse.data && photoResponse.data.photo_url) {
+            setUserProfilePic(photoResponse.data.photo_url);
+          } else {
+            // If the user doesn't have a profile photo, ensure we reset to placeholder
+            setUserProfilePic("/placeholder.svg");
+          }
+        } catch (photoError) {
+          console.error("Failed to fetch profile picture:", photoError);
+          // Check if current user has no photo but we're showing someone else's
+          const storedPhotoUrl = localStorage.getItem("userProfilePic");
+          if (storedPhotoUrl && storedPhotoUrl !== "/placeholder.svg") {
+            // Verify this photo belongs to current user by trying to load it with current token
+            try {
+              await fetch(storedPhotoUrl, {
+                headers: { Authorization: `Bearer ${token}` }
+              });
+            } catch (e) {
+              // If fetch fails, the photo likely belongs to previous user
+              setUserProfilePic("/placeholder.svg");
+            }
+          }
+        }
       } catch (error) {
         console.error("Failed to initialize authentication:", error);
         // Clear invalid token
@@ -132,13 +171,19 @@ export const UserProvider = ({ children }) => {
         toast.success("Logged out successfully!");
       } else {
         toast.error("Failed to log out.");
-      }
-    }
+      }    }
+    // Reset profile picture to default
+    setUserProfilePic("/placeholder.svg");
+    
+    // Clear all localStorage items
     localStorage.removeItem("access");
     localStorage.removeItem("refresh");
     localStorage.removeItem("userFullName");
     localStorage.removeItem("studentTrack");
     localStorage.removeItem("userId");
+    localStorage.removeItem("userProfilePic");
+    
+    // Reset all user state
     setUserRole(null);
     setUserName(null);
     setStudentTrack(null);
