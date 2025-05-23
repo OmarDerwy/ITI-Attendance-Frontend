@@ -168,6 +168,12 @@ const Sidebar = () => {
       to: "/schedule",
       roles: ["supervisor", "coordinator"],
     },
+      {
+      icon: CalendarDays,
+      label: "Events",
+      to: "/events",
+      roles: ["coordinator"],
+    },
     {
       icon: CalendarDays,
       label: "Schedule",

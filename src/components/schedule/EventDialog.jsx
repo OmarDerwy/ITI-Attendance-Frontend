@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { Trash2 } from "lucide-react";
 import {
   Dialog,
@@ -11,17 +10,17 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from "@/components/ui/textarea";
 
-const EventDialog = ({ 
-  isOpen, 
-  onOpenChange, 
-  selectedEvent, 
-  newEvent, 
-  onEventUpdate, 
-  onNewEventChange, 
-  onSubmit, 
-  onDelete 
+const EventDialog = ({
+  isOpen,
+  onOpenChange,
+  selectedEvent,
+  newEvent,
+  onEventUpdate,
+  onNewEventChange,
+  onSubmit,
+  onDelete,
 }) => {
   // Helper function to update selected event
   const updateSelectedEvent = (field, value) => {
@@ -29,10 +28,7 @@ const EventDialog = ({
   };
 
   return (
-    <Dialog
-      open={isOpen}
-      onOpenChange={onOpenChange}
-    >
+    <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
@@ -70,7 +66,10 @@ const EventDialog = ({
               onChange={(e) =>
                 selectedEvent
                   ? updateSelectedEvent("instructor", e.target.value)
-                  : onNewEventChange({ ...newEvent, instructor: e.target.value })
+                  : onNewEventChange({
+                      ...newEvent,
+                      instructor: e.target.value,
+                    })
               }
               className="col-span-3 truncate" // Allow long text
             />
@@ -102,10 +101,7 @@ const EventDialog = ({
             </Label>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 col-span-3 w-full">
               <div className="space-y-1">
-                <Label
-                  htmlFor="event-start"
-                  className="text-xs text-gray-500"
-                >
+                <Label htmlFor="event-start" className="text-xs text-gray-500">
                   Start
                 </Label>
                 <Input
