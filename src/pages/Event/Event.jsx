@@ -241,8 +241,8 @@ const Event = () => {
             id: session.id,
             title: session.title,
             speaker: session.speaker || "",
-            start_time: startTime.toISOString(),
-            end_time: endTime.toISOString(),
+            start_time: startTime.getTime(), // Convert to milliseconds timestamp
+            end_time: endTime.getTime(), // Convert to milliseconds timestamp
             session_type: "offline"
           };
         })
@@ -362,7 +362,7 @@ const Event = () => {
       const event = events.find((e) => String(e.id) === String(eventId));
 
       if (isDateInPast(dropInfo.event.start)) {
-        dropInfo.revert();
+        dropInfo.revhandleEventDropert();
         toast.error("Cannot modify events from past dates");
         return;
       }
@@ -417,6 +417,8 @@ const Event = () => {
           )
         );
         toast.success("Event updated successfully!");
+        // Reload events after successful update
+        await fetchEvents();
       }
     } catch (error) {
       console.error("Error updating event:", error);
@@ -427,7 +429,7 @@ const Event = () => {
       setIsResizeConfirmOpen(false);
       setIsMoveConfirmOpen(false);
     }
-  }, [pendingEventChanges, events]);
+  }, [pendingEventChanges, events, fetchEvents]);
 
   const handleCancelChanges = useCallback(() => {
     if (pendingEventChanges) {
@@ -599,16 +601,6 @@ const Event = () => {
 
             {!isPastEvent && userRole === "coordinator" && (
               <div className="flex space-x-1">
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openEditDialog(event, e);
-                  }}
-                  className="hover:bg-primary/20 rounded p-0.5 event-offline-text"
-                  title="Edit Event"
-                >
-                  <Edit size={14} />
-                </button>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -830,7 +822,7 @@ const Event = () => {
           onEventUpdate={updateSelectedEvent}
           onNewEventChange={setNewEvent}
           onSubmit={handleEventSubmit}
-          onDelete={() => setIsDeleteConfirmOpen(true)}
+          onDelete={handleDeleteEvent}
           parentEvent={
             isSubEvent || (selectedEvent && selectedEvent.parentId)
               ? events.find(

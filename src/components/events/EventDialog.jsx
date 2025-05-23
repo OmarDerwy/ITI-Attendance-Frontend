@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, X, ArrowRight, ArrowLeft, Edit, ChevronDown, ChevronUp } from "lucide-react";
+import { Trash2, X, ArrowRight, ArrowLeft, Edit, ChevronDown, ChevronUp, Loader2 } from "lucide-react";
 import SimpleTimePicker from "./SimpleTimePicker";
 import { motion } from "framer-motion";
 import { positionDialog, saveDialogPosition } from "@/utils/DialogPositioner";
@@ -56,6 +56,7 @@ const EventDialog = ({
   const [isSubEvent, setIsSubEvent] = useState(false);
   const [isAddingSession, setIsAddingSession] = useState(false);
   const [editingSession, setEditingSession] = useState(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const currentEvent = selectedEvent || newEvent || {};
   const currentParentEvent =
@@ -228,44 +229,60 @@ const EventDialog = ({
     setIsAddingSession(true);
   };
 
-  const handleSaveSession = () => {
+  // Handle save with loading state
+  const handleSave = async () => {
+    try {
+      setIsSaving(true);
+      await onSubmit();
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Handle session save with loading state
+  const handleSaveSession = async () => {
     if (!editingSession.title) {
       toast.error("Session title is required");
       return;
     }
 
-    if (selectedEvent) {
-      // Update existing event's sessions
-      const updatedSessions = selectedEvent.sessions || [];
-      const sessionIndex = updatedSessions.findIndex(s => s.id === editingSession.id);
+    try {
+      setIsSaving(true);
+      if (selectedEvent) {
+        // Update existing event's sessions
+        const updatedSessions = selectedEvent.sessions || [];
+        const sessionIndex = updatedSessions.findIndex(s => s.id === editingSession.id);
 
-      if (sessionIndex === -1) {
-        // New session
-        updatedSessions.push(editingSession);
+        if (sessionIndex === -1) {
+          // New session
+          updatedSessions.push(editingSession);
+        } else {
+          // Update existing session
+          updatedSessions[sessionIndex] = editingSession;
+        }
+
+        onEventUpdate("sessions", updatedSessions);
       } else {
-        // Update existing session
-        updatedSessions[sessionIndex] = editingSession;
+        // Add session to new event
+        const updatedSessions = newEvent.sessions || [];
+        const sessionIndex = updatedSessions.findIndex(s => s.id === editingSession.id);
+
+        if (sessionIndex === -1) {
+          // New session
+          updatedSessions.push(editingSession);
+        } else {
+          // Update existing session
+          updatedSessions[sessionIndex] = editingSession;
+        }
+
+        onNewEventChange({ ...newEvent, sessions: updatedSessions });
       }
 
-      onEventUpdate("sessions", updatedSessions);
-    } else {
-      // Add session to new event
-      const updatedSessions = newEvent.sessions || [];
-      const sessionIndex = updatedSessions.findIndex(s => s.id === editingSession.id);
-
-      if (sessionIndex === -1) {
-        // New session
-        updatedSessions.push(editingSession);
-      } else {
-        // Update existing session
-        updatedSessions[sessionIndex] = editingSession;
-      }
-
-      onNewEventChange({ ...newEvent, sessions: updatedSessions });
+      setIsAddingSession(false);
+      setEditingSession(null);
+    } finally {
+      setIsSaving(false);
     }
-
-    setIsAddingSession(false);
-    setEditingSession(null);
   };
 
   const handleDeleteSession = (sessionId) => {
@@ -601,14 +618,23 @@ const EventDialog = ({
                               setIsAddingSession(false);
                               setEditingSession(null);
                             }}
+                            disabled={isSaving}
                           >
                             Cancel
                           </Button>
                           <Button
                             size="sm"
                             onClick={handleSaveSession}
+                            disabled={isSaving}
                           >
-                            Save Session
+                            {isSaving ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Saving...
+                              </>
+                            ) : (
+                              "Save Session"
+                            )}
                           </Button>
                         </div>
                       </div>
@@ -681,8 +707,12 @@ const EventDialog = ({
                   <Button
                     variant="destructive"
                     size="sm"
-                    onClick={() => onDelete(selectedEvent.id)}
+                    onClick={() => {
+                      onDelete(selectedEvent.id);
+                      handleClose();
+                    }}
                     className="h-9"
+                    disabled={isSaving}
                   >
                     <Trash2 className="h-4 w-4 mr-2" /> Delete
                   </Button>
@@ -697,12 +727,25 @@ const EventDialog = ({
                     size="sm"
                     onClick={handleClose}
                     className="h-9"
+                    disabled={isSaving}
                   >
                     {isViewOnly ? "Close" : "Cancel"}
                   </Button>
                   {!isViewOnly && (
-                    <Button size="sm" onClick={onSubmit} className="h-9">
-                      {selectedEvent ? "Update Event" : "Add Event"}
+                    <Button 
+                      size="sm" 
+                      onClick={handleSave} 
+                      className="h-9"
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {selectedEvent ? "Updating..." : "Adding..."}
+                        </>
+                      ) : (
+                        selectedEvent ? "Update Event" : "Add Event"
+                      )}
                     </Button>
                   )}
                 </div>
