@@ -50,9 +50,12 @@ const EnrolledList = ({ enrolled }) => {
           <TableHeader>
             <TableRow>
               <TableHead>Name</TableHead>
-              <TableHead>Type</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Details</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>College</TableHead>
+              <TableHead>University</TableHead>
+              <TableHead>Graduation year</TableHead>
+              
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -60,13 +63,11 @@ const EnrolledList = ({ enrolled }) => {
               currentItems.map(person => (
                 <TableRow key={person.id} className="hover:bg-muted/50">
                   <TableCell className="font-medium">{person.name}</TableCell>
-                  <TableCell>
-                    <Badge variant={person.type === 'guest' ? "secondary" : "outline"}>
-                      {person.type === 'guest' ? 'Speaker/VIP' : 'Attendee'}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>{person.phone || person.organization || "—"}</TableCell>
-                  <TableCell>{person.college || person.organization || "—"}</TableCell>
+                  <TableCell>{person.email}</TableCell>
+                  <TableCell>{person.phone_number}</TableCell>
+                  <TableCell>{person.college_name}</TableCell>
+                  <TableCell>{person.college_name}</TableCell>
+                  <TableCell>{person.gradyear}</TableCell>
                 </TableRow>
               ))
             ) : (

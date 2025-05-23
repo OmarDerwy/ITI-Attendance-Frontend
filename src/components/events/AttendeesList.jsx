@@ -49,11 +49,12 @@ import {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>College</TableHead>
-                <TableHead>Graduation</TableHead>
-                <TableHead className="text-right">Previous Events</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Email</TableHead>
+              <TableHead>Phone</TableHead>
+              <TableHead>College</TableHead>
+              <TableHead>University</TableHead>
+              <TableHead>Graduation year</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
