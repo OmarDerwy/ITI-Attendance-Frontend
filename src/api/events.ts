@@ -13,7 +13,7 @@ export const attendance_stats = async (eventID: number) => {
 
 export const getEvents = async () => {
   try {
-    const response = await axiosBackendInstance.get("attendance/events/");
+    const response = await axiosBackendInstance.get("attendance/events/");    
     return response.data;
   } catch (error) {
     throw error;
