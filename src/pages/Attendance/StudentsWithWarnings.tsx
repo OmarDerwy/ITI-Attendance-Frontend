@@ -194,10 +194,10 @@ const StudentsWithWarnings = () => {
                         </div>
                         <div className="col-span-2">
                           <Badge
-                            variant={student.warning_type === "unexcused" ? "destructive" : "secondary"}
+                            variant={student.warning_type.toLowerCase() === "unexcused" ? "destructive" : "secondary"}
                             className="font-normal"
                           >
-                            {student.warning_type === "unexcused" ? "Unexcused" : "Excused"}
+                            {student.warning_type}
                           </Badge>
                         </div>
                         <div className="col-span-2">
