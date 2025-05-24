@@ -9,7 +9,6 @@ import {
   Percent,
   Link as LinkIcon,
   Info,
-  Phone, // Add Phone icon import
 } from "lucide-react";
 import { format } from "date-fns";
 import Layout from "@/components/layout/Layout";
@@ -28,12 +27,9 @@ const MatchedItemDetail = () => {
   const navigate = useNavigate();
   const [matchedItem, setMatchedItem] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [confirming, setConfirming] = useState(false);
+  const [error, setError] = useState(null);  const [confirming, setConfirming] = useState(false);
   const [declining, setDeclining] = useState(false);
   const { toast } = useToast(); // Add this line to get the toast function
-  const [lostUser, setLostUser] = useState(null);
-  const [foundUser, setFoundUser] = useState(null);
   // get current user from local storage or context
   const currentUser = JSON.parse(localStorage.getItem("userId"));
   // Add default image URL constant near the top of the component
@@ -61,59 +57,15 @@ const MatchedItemDetail = () => {
         console.error(`Error fetching matched item:`, err);
         setError(`Failed to load matched item details. ${err.message}`);
       } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchLostUserDetails = async () => {
-      try {
-        const response = await axios.get(
-          `${
-            import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
-          }accounts/auth/users/${matchedItem.lost_item_user}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("access")}`,
-            },
-          }
-        );
-        setLostUser(response.data);
-      } catch (err) {
-        console.error("Error fetching lost user details:", err);
-      }
-    };
-
-    const fetchFoundUserDetails = async () => {
-      try {
-        const response = await axios.get(
-          `${
-            import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1/"
-          }accounts/auth/users/${matchedItem.found_item_user}/`,
-          {
-            headers: {
-              Authorization: `Bearer ${localStorage.getItem("access")}`,
-            },
-          }
-        );
-        setFoundUser(response.data);
-      } catch (err) {
-        console.error("Error fetching found user details:", err);
-      }
+        setLoading(false);      }
     };
 
     fetchMatchedItemDetails();
-    fetchLostUserDetails();
-    fetchFoundUserDetails();
   }, [id]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "Unknown date";
     return format(new Date(dateString), "MMMM d, yyyy 'at' h:mm a");
-  };
-
-  // Helper function to format phone numbers
-  const formatPhoneNumber = (phone) => {
-    return phone || "Not available";
   };
 
   const getStatusBadge = (status) => {
@@ -331,20 +283,10 @@ const MatchedItemDetail = () => {
                                 matchedItem.lost_item_details.lost_at
                               )}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-2">
+                          </div>                          <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
                               {matchedItem.lost_item_details.user}
-                            </span>
-                          </div>
-                          {/* Add Phone Number - Change color from green to match other icons */}
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {lostUser
-                                ? formatPhoneNumber(lostUser.phone_number)
-                                : "Loading..."}
                             </span>
                           </div>
                         </div>
@@ -393,20 +335,10 @@ const MatchedItemDetail = () => {
                                 matchedItem.found_item_details.found_at
                               )}
                             </span>
-                          </div>
-                          <div className="flex items-center gap-2">
+                          </div>                          <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
                             <span className="text-sm">
                               {matchedItem.found_item_details.user}
-                            </span>
-                          </div>
-                          {/* Add Phone Number - Change color from green to match other icons */}
-                          <div className="flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">
-                              {foundUser
-                                ? formatPhoneNumber(foundUser.phone_number)
-                                : "Loading..."}
                             </span>
                           </div>
                         </div>
@@ -530,21 +462,7 @@ const MatchedItemDetail = () => {
                                         "Anonymous"}
                                     </span>
                                   </div>
-                                </div>
-                              </div>
-
-                              {/* Add Phone Number - Change color from green to match other icons */}
-                              <div className="flex items-start gap-2">
-                                <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                                <div>
-                                  <h4 className="font-medium">Contact Phone</h4>
-                                  <p className="text-muted-foreground">
-                                    {lostUser
-                                      ? formatPhoneNumber(lostUser.phone_number)
-                                      : "Loading..."}
-                                  </p>
-                                </div>
-                              </div>
+                                </div>                              </div>
                             </div>
                           </div>
                         </div>
@@ -631,23 +549,7 @@ const MatchedItemDetail = () => {
                                         "Anonymous"}
                                     </span>
                                   </div>
-                                </div>
-                              </div>
-
-                              {/* Add Phone Number - Change color from green to match other icons */}
-                              <div className="flex items-start gap-2">
-                                <Phone className="h-5 w-5 text-muted-foreground mt-0.5" />
-                                <div>
-                                  <h4 className="font-medium">Contact Phone</h4>
-                                  <p className="text-muted-foreground">
-                                    {foundUser
-                                      ? formatPhoneNumber(
-                                          foundUser.phone_number
-                                        )
-                                      : "Loading..."}
-                                  </p>
-                                </div>
-                              </div>
+                                </div>                              </div>
                             </div>
                           </div>
                         </div>
