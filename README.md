@@ -1,3 +1,7 @@
+Back End Repo: https://github.com/OmarDerwy/ITI-Attendance-Backend
+
+React Native App Repo: https://github.com/OmarDerwy/ITI-Attendance-FrontendRN
+
 # ITI Attendance Frontend
 
 This project is the frontend for the ITI Attendance Tracking system, a web application designed to manage student attendance, schedules, leave requests, and lost & found items within the institution.
