@@ -1,5 +1,25 @@
-Back End Repo: https://github.com/OmarDerwy/ITI-Attendance-Backend
+# Live demo link (check credentials below)
+http://intrack-ai-frontend-hmiucs-1c8685-130-61-217-161.traefik.me/
 
+## Credentials to log into the demo
+### admin
+email: admin@admin.com
+password: admin
+### supervisor
+email: Edward.Braun@yahoo.com
+password: test
+### branch manager:
+email: orland95@gmail.com
+password: test
+### coordinator:
+email: kareem@coordinator.com
+password: test
+### student:
+email: stu@stu.com
+password: test
+
+## The other repos
+Back End Repo: https://github.com/OmarDerwy/ITI-Attendance-Backend
 React Native App Repo: https://github.com/OmarDerwy/ITI-Attendance-FrontendRN
 
 # ITI Attendance Frontend
